@@ -1,5 +1,5 @@
 // ============================================================
-// САУНДТРЕКИ (music.js) — ИСПРАВЛЕННАЯ ВЕРСИЯ
+// САУНДТРЕКИ (soundtracks.js) — правильная версия
 // ============================================================
 
 // Определяем базовый путь для аудиофайлов
@@ -7,7 +7,7 @@ const baseAudioPath = window.location.hostname === 'localhost' || window.locatio
     ? 'resources/soundtracks/' 
     : '/soldaty-site/resources/soundtracks/';
 
-console.log("Базовый путь к аудио:", baseAudioPath);
+console.log("🎵 Базовый путь к аудио:", baseAudioPath);
 
 // БАЗА ДАННЫХ САУНДТРЕКОВ
 const songsData = [
@@ -83,7 +83,7 @@ function loadSong(index) {
     const song = songsData[index];
     if (!song) return;
     
-    console.log("Загружаем:", song.title, song.audioUrl);
+    console.log("Загружаем:", song.title, "→", song.audioUrl);
     
     currentSongTitle.textContent = song.title;
     currentSongArtist.textContent = song.artist;
@@ -94,7 +94,10 @@ function loadSong(index) {
 
 // Воспроизвести/Пауза
 function togglePlay() {
-    if (!audioPlayer.src) return;
+    if (!audioPlayer.src) {
+        console.warn("Нет загруженного трека");
+        return;
+    }
     
     if (isPlaying) {
         audioPlayer.pause();
@@ -107,12 +110,8 @@ function togglePlay() {
                 playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
                 isPlaying = true;
             }).catch((error) => {
-                console.log("Автовоспроизведение заблокировано:", error);
-                const msg = document.createElement('div');
-                msg.textContent = 'Нажмите ещё раз для воспроизведения';
-                msg.style.cssText = 'position:fixed;bottom:100px;left:20px;background:#bd8a3e;color:#0f1a0f;padding:8px 16px;border-radius:20px;z-index:1001;font-size:12px;';
-                document.body.appendChild(msg);
-                setTimeout(() => msg.remove(), 2000);
+                console.error("Ошибка воспроизведения:", error);
+                alert("Не удалось воспроизвести. Проверьте наличие аудиофайлов в папке resources/soundtracks/");
             });
         }
     }
@@ -146,7 +145,6 @@ function updateProgress() {
     }
 }
 
-// Форматировать время
 function formatTime(seconds) {
     if (isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
@@ -154,7 +152,6 @@ function formatTime(seconds) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Перемотка по клику
 function setProgress(e) {
     const rect = progressBar.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
@@ -163,7 +160,6 @@ function setProgress(e) {
     }
 }
 
-// Отрисовать список песен
 function renderMusicGrid() {
     const grid = document.getElementById('musicGrid');
     if (!grid) return;
@@ -188,11 +184,10 @@ function renderMusicGrid() {
     `).join('');
 }
 
-// Воспроизвести песню по индексу
 function playSongByIndex(index) {
     currentSongIndex = index;
     loadSong(currentSongIndex);
-    audioPlayer.play().catch(e => console.log("Автовоспроизведение заблокировано"));
+    audioPlayer.play().catch(e => console.log(e));
     isPlaying = true;
     playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
     renderMusicGrid();
@@ -216,6 +211,8 @@ window.onload = () => {
         audioPlayer.setAttribute('playsinline', '');
         audioPlayer.setAttribute('webkit-playsinline', '');
         audioPlayer.preload = 'metadata';
+    } else {
+        console.error("❌ Аудиоплеер не найден на странице!");
     }
 
     loadSong(0);
@@ -236,6 +233,6 @@ window.onload = () => {
     }
     
     console.log("✅ Музыкальный плеер загружен");
-    console.log("Базовый путь:", baseAudioPath);
-    console.log("Первый трек:", songsData[0].audioUrl);
+    console.log("📁 Базовый путь:", baseAudioPath);
+    console.log("🎵 Первый трек:", songsData[0].audioUrl);
 };
