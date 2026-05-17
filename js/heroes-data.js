@@ -5,7 +5,7 @@ const heroesData = [
         actor: "Алексей Маклаков",
         role: "Прапорщик / Старшина",
         description: "Легендарный персонаж, гроза солдат и любимец зрителей. Его фраза «Ё-моё!» стала крылатой. Строгий, но справедливый, с уникальным чувством юмора и харизмой.",
-        imageUrl: "../resources/shmatko.jpg",
+        imageUrl: "../Resources/shmatko.jpg",
     },
     {
         id: 2,
@@ -13,7 +13,7 @@ const heroesData = [
         actor: "Борис Щербаков",
         role: "Полковник → Генерал",
         description: "Строгий, но мудрый командир части. За внешней суровостью скрывается заботливая душа. Знает армию изнутри как никто другой.",
-        imageUrl: "../resources/borodin.jpg"
+        imageUrl: "../Resources/borodin.jpg"
     },
     {
         id: 3,
@@ -21,7 +21,7 @@ const heroesData = [
         actor: "Роман Мадянов",
         role: "Замполит → Полковник",
         description: "Главный «злодей» сериала. Очень ревновал к Медведеву. Хитрый, коварный, но иногда попадает в нелепые ситуации. Гениальный отрицательный персонаж.",
-        imageUrl: "../resources/kolobkov.jpg",
+        imageUrl: "../Resources/kolobkov.jpg",
     },
     {
         id: 4,
@@ -29,7 +29,7 @@ const heroesData = [
         actor: "Вячеслав Гришечкин",
         role: "Майор → Полковник",
         description: "Замполит с крылатыми фразами: «Интересно девки пляшут!», «Вапще!». Очень колоритный персонаж, который украсил поздние сезоны.",
-        imageUrl: "../resources/starokon.jpg",
+        imageUrl: "../Resources/starokon.jpg",
     },
     {
         id: 5,
@@ -37,7 +37,7 @@ const heroesData = [
         actor: "Алексей Ошурков",
         role: "Капитан → Полковник",
         description: "Командир роты, строгий и справедливый. Прошёл путь от капитана до полковника. Пользовался уважением у солдат.",
-        imageUrl: "../resources/zubov.webp",
+        imageUrl: "../Resources/zubov.webp",
     },
     {
         id: 6,
@@ -45,7 +45,7 @@ const heroesData = [
         actor: "Игнатий Акрачков",
         role: "Лейтенант → Капитан",
         description: "Молодой взводный со странными идеями. Часто попадал в комичные ситуации. Фраза «Я вас вылечу!» стала известной.",
-        imageUrl: "../resources/smalkov.jpg",
+        imageUrl: "../Resources/smalkov.jpg",
 
     },
     {
@@ -54,7 +54,7 @@ const heroesData = [
         actor: "Павел Майков",
         role: "Капитан",
         description: "Строгий ротный, любит орать на подчинённых. За внешней грубостью скрывается настоящий офицер, заботящийся о солдатах.",
-        imageUrl: "../resources/kudashyov.jpg",
+        imageUrl: "../Resources/kudashyov.jpg",
     },
     {
         id: 8,
@@ -62,7 +62,7 @@ const heroesData = [
         actor: "Анатолий Кощеев",
         role: "Прапорщик",
         description: "Друг Шматко, служит на вещевом складе. Вместе с Шматко они — легендарный дуэт прапорщиков.",
-        imageUrl: "../resources/danilych.jpg",
+        imageUrl: "../Resources/danilych.jpg",
     },
 
     // === СОЛДАТЫ-СРОЧНИКИ ===
@@ -72,7 +72,7 @@ const heroesData = [
         actor: "Александр Лымарев",
         role: "Рядовой → Лейтенант",
         description: "«Медведь», городской мажор. Прошёл путь от новобранца до офицера. Один из главных героев всех сезонов. Любимец девушек.",
-        imageUrl: "../resources/medvedev.webp",
+        imageUrl: "../Resources/medvedev.webp",
     },
     {
         id: 10,
@@ -80,7 +80,7 @@ const heroesData = [
         actor: "Иван Моховиков",
         role: "Рядовой → Лейтенант",
         description: "Деревенский парень, друг Медведева. Прошёл путь от рядового до офицера. Женился на Варе, прошёл войну в Чечне.",
-        imageUrl: "../resources/sokolov.jpg",
+        imageUrl: "../Resources/sokolov.jpg",
     },
     {
         id: 11,
@@ -88,7 +88,7 @@ const heroesData = [
         actor: "Павел Кассинский",
         role: "Сержант",
         description: "«Рыло», сержант из первого призыва. Строгий старослужащий, который помогал новобранцам осваиваться.",
-        imageUrl: "../resources/ryleev.webp",
+        imageUrl: "../Resources/ryleev.webp",
     },
     {
         id: 12,
@@ -96,7 +96,7 @@ const heroesData = [
         actor: "Антон Эльдаров",
         role: "Рядовой → Сержант",
         description: "«Гуня», весёлый и хитрый парень. Всегда готов придумать план, как отмазаться от наряда или найти приключения.",
-        imageUrl: "../resources/gunko.webp",
+        imageUrl: "../Resources/gunko.webp",
     },
     {
         id: 13,
@@ -104,7 +104,7 @@ const heroesData = [
         actor: "Игорь Гаспарян",
         role: "Сержант",
         description: "Армянин с отличным чувством юмора. Его диалоги и акцент стали визитной карточкой поздних сезонов.",
-        imageUrl: "../resources/pogosyan.webp",
+        imageUrl: "../Resources/pogosyan.webp",
     },
 
     // === МЕДСЁСТРЫ ===
@@ -114,7 +114,7 @@ const heroesData = [
         actor: "Ольга Фадеева",
         role: "Сержант медслужбы",
         description: "Любовь Медведева. Была замужем за Колобковым. Красивая, добрая и сильная женщина.",
-        imageUrl: "../resources/medvedeva.jpg",
+        imageUrl: "../Resources/medvedeva.jpg",
     },
     {
         id: 15,
@@ -122,7 +122,7 @@ const heroesData = [
         actor: "Екатерина Юдина",
         role: "Сержант медслужбы",
         description: "Новая медсестра в части. Вокруг неё был любовный треугольник с Медведевым и Соколовым.",
-        imageUrl: "../resources/schekochihina.jpg",
+        imageUrl: "../Resources/schekochihina.jpg",
     },
 
     // === ГРАЖДАНСКИЕ ===
@@ -132,7 +132,7 @@ const heroesData = [
         actor: "Софья Ануфриева",
         role: "Невеста / жена Кузьмы",
         description: "Ждала Кузьму из армии, вышла за него замуж. Прошла через все испытания вместе с ним.",
-        imageUrl: "../resources/varvara.webp",
+        imageUrl: "../Resources/varvara.webp",
     },
     {
         id: 17,
@@ -140,7 +140,7 @@ const heroesData = [
         actor: "Ольга Юрасова",
         role: "Жена прапорщика",
         description: "Любимая жена Олега Шматко. Терпеливая и мудрая женщина, которая умеет управлять даже таким мужем.",
-        imageUrl: "../resources/masha_shmatko.webp",
+        imageUrl: "../Resources/masha_shmatko.webp",
     },
     {
         id: 18,
@@ -148,7 +148,7 @@ const heroesData = [
         actor: "Татьяна Кузнецова",
         role: "Тёща Шматко",
         description: "Колоритная тёща, которая постоянно давит на Шматко и Машу. Её появления всегда были комичными.",
-        imageUrl: "../resources/angela.webp",
+        imageUrl: "../Resources/angela.webp",
     },
     {
         id: 19,
@@ -156,7 +156,7 @@ const heroesData = [
         actor: "Мария Аронова",
         role: "«Чепочница»",
         description: "Возлюбленная Смалькова. Эксцентричная и весёлая девушка, которая добавила красок в жизнь лейтенанта.",
-        imageUrl: "../resources/evelina.jpg",
+        imageUrl: "../Resources/evelina.jpg",
     }
 ];
 
