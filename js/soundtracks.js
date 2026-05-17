@@ -1,17 +1,22 @@
-// --------------------------------------------------------------
-// БАЗА ДАННЫХ САУНДТРЕКОВ
-// --------------------------------------------------------------
-const baseAudioPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? '' 
-    : '/soldaty-site';
+// ============================================================
+// САУНДТРЕКИ (music.js) — ИСПРАВЛЕННАЯ ВЕРСИЯ
+// ============================================================
 
+// Определяем базовый путь для аудиофайлов
+const baseAudioPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'resources/soundtracks/' 
+    : '/soldaty-site/resources/soundtracks/';
+
+console.log("Базовый путь к аудио:", baseAudioPath);
+
+// БАЗА ДАННЫХ САУНДТРЕКОВ
 const songsData = [
     {
         id: 1,
         title: "Юность в сапогах",
         artist: "Конец фильма",
         description: "Главный хит сериала, неофициальный гимн. Открывает многие серии.",
-        audioUrl: baseAudioPath + "/resources/soundtracks/yunost_v_sapogakh.mp3",
+        audioUrl: baseAudioPath + "yunost_v_sapogakh.mp3",
         duration: "3:06",
     },
     {
@@ -19,7 +24,7 @@ const songsData = [
         title: "Дембельская",
         artist: "Конец фильма",
         description: "Песня о возвращении домой, которую в сериале исполняет сержант Фомин",
-        audioUrl: baseAudioPath + "/resources/soundtracks/Dembelskaya.mp3",
+        audioUrl: baseAudioPath + "Dembelskaya.mp3",
         duration: "3:21",
     },
     {
@@ -27,7 +32,7 @@ const songsData = [
         title: "Жили-были",
         artist: "Юта",
         description: "Лирическая и трогательная песня, которая звучит в драматических моментах",
-        audioUrl: baseAudioPath + "/resources/soundtracks/zhili-byli.mp3",
+        audioUrl: baseAudioPath + "zhili-byli.mp3",
         duration: "4:45",
     },
     {
@@ -35,7 +40,7 @@ const songsData = [
         title: "Прапорщик-блюз",
         artist: "Конец фильма",
         description: "«Визитная карточка» прапорщика Шматко.",
-        audioUrl: baseAudioPath + "/resources/soundtracks/Praporshhik-blyuz.mp3",
+        audioUrl: baseAudioPath + "Praporshhik-blyuz.mp3",
         duration: "4:05",
     },
     {
@@ -43,7 +48,7 @@ const songsData = [
         title: "Та самая девчонка / Отчизне служи",
         artist: "Юта",
         description: "Романтическая композиция о любви и службе",
-        audioUrl: baseAudioPath + "/resources/soundtracks/YUta_-_Ta_samaya_devchonka_48098087.mp3",
+        audioUrl: baseAudioPath + "YUta_-_Ta_samaya_devchonka_48098087.mp3",
         duration: "2:23",
     },
     {
@@ -51,7 +56,7 @@ const songsData = [
         title: "Хорошо",
         artist: "Юта feat. Конец фильма",
         description: "Спокойная, «уютная» песня",
-        audioUrl: baseAudioPath + "/resources/soundtracks/YUta_-_KHorosho_iz_ser_Soldaty_67370349.mp3",
+        audioUrl: baseAudioPath + "YUta_-_KHorosho_iz_ser_Soldaty_67370349.mp3",
         duration: "3:15",
     },
 ];
@@ -78,38 +83,37 @@ function loadSong(index) {
     const song = songsData[index];
     if (!song) return;
     
+    console.log("Загружаем:", song.title, song.audioUrl);
+    
     currentSongTitle.textContent = song.title;
     currentSongArtist.textContent = song.artist;
     audioPlayer.src = song.audioUrl;
     
-    // Обновляем активный стиль в списке
     renderMusicGrid();
 }
 
-// Воспроизвести/Пауза (объединённая версия)
+// Воспроизвести/Пауза
 function togglePlay() {
-    if (audioPlayer.src) {
-        if (isPlaying) {
-            audioPlayer.pause();
-            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-            isPlaying = false;
-        } else {
-            // Для мобильных: play() может быть заблокирован
-            const playPromise = audioPlayer.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    isPlaying = true;
-                }).catch(() => {
-                    console.log("Автовоспроизведение заблокировано. Нажмите ещё раз.");
-                    // Показываем подсказку
-                    const msg = document.createElement('div');
-                    msg.textContent = 'Нажмите ещё раз для воспроизведения';
-                    msg.style.cssText = 'position:fixed;bottom:100px;left:20px;background:#bd8a3e;color:#0f1a0f;padding:8px 16px;border-radius:20px;z-index:1001;font-size:12px;';
-                    document.body.appendChild(msg);
-                    setTimeout(() => msg.remove(), 2000);
-                });
-            }
+    if (!audioPlayer.src) return;
+    
+    if (isPlaying) {
+        audioPlayer.pause();
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        isPlaying = false;
+    } else {
+        const playPromise = audioPlayer.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                isPlaying = true;
+            }).catch((error) => {
+                console.log("Автовоспроизведение заблокировано:", error);
+                const msg = document.createElement('div');
+                msg.textContent = 'Нажмите ещё раз для воспроизведения';
+                msg.style.cssText = 'position:fixed;bottom:100px;left:20px;background:#bd8a3e;color:#0f1a0f;padding:8px 16px;border-radius:20px;z-index:1001;font-size:12px;';
+                document.body.appendChild(msg);
+                setTimeout(() => msg.remove(), 2000);
+            });
         }
     }
 }
@@ -137,7 +141,6 @@ function updateProgress() {
     if (audioPlayer.duration) {
         const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
         progressFill.style.width = `${percent}%`;
-        
         currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
         durationSpan.textContent = formatTime(audioPlayer.duration);
     }
@@ -151,7 +154,7 @@ function formatTime(seconds) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Перемотка по клику на прогресс-бар
+// Перемотка по клику
 function setProgress(e) {
     const rect = progressBar.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
@@ -209,7 +212,6 @@ function escapeHtml(str) {
 window.onload = () => {
     audioPlayer = document.getElementById('audioPlayer');
     
-    // Настройки для мобильных
     if (audioPlayer) {
         audioPlayer.setAttribute('playsinline', '');
         audioPlayer.setAttribute('webkit-playsinline', '');
@@ -219,7 +221,6 @@ window.onload = () => {
     loadSong(0);
     renderMusicGrid();
     
-    // События
     if (playPauseBtn) playPauseBtn.onclick = togglePlay;
     if (prevBtn) prevBtn.onclick = prevSong;
     if (nextBtn) nextBtn.onclick = nextSong;
@@ -234,6 +235,7 @@ window.onload = () => {
         };
     }
     
-    console.log("✅ Музыкальный плеер загружен. Базовый путь:", baseAudioPath);
-    console.log("✅ Всего песен:", songsData.length);
+    console.log("✅ Музыкальный плеер загружен");
+    console.log("Базовый путь:", baseAudioPath);
+    console.log("Первый трек:", songsData[0].audioUrl);
 };
