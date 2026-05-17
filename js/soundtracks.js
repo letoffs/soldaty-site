@@ -111,7 +111,7 @@ function togglePlay() {
                 isPlaying = true;
             }).catch((error) => {
                 console.error("Ошибка воспроизведения:", error);
-                alert("Не удалось воспроизвести. Проверьте наличие аудиофайлов в папке resources/soundtracks/");
+                alert("Не удалось воспроизвести. Проверьте наличие аудиофайлов в папке Resources/soundtracks/");
             });
         }
     }
