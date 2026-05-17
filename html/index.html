@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Солдаты — смотреть все серии онлайн</title>
+
+    <!-- SEO метатеги -->
+     <meta name="description" content="Смотрите все сезоны и серии культового сериала «Солдаты» онлайн бесплатно. Прапорщик Шматко, Михаил Медведев, Кузьма Соколов и другие герои. 17 сезонов, 557 серий.">
+     <meta name="keywords" content="Солдаты, сериал Солдаты, смотреть Солдаты, все серии Солдаты, прапорщик Шматко, Алексей Маклаков, армейский сериал">
+     <meta name="author" content="Фан-сайт сериала Солдаты">
+     <meta name="robots" content="index, follow">
+     
+    <!-- Open Graph (для соцсетей) -->
+    <meta property="og:title" content="Солдаты — смотреть все серии онлайн">
+    <meta property="og:description" content="Культовый российский сериал об армейской жизни. Все сезоны и серии с прапорщиком Шматко и другими героями.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="../resources/soldaty_icon.png">
+    <meta property="og:url" content="https://fan_soldaty.ru/index.html">
+      
+    <!-- Технические метатеги -->
+    <meta name="theme-color" content="#1a2a1a">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" type="image/png" href="../resources/soldaty_icon.png">
+    <link rel="shortcut icon" href="../resources/soldaty_icon.png">
+    
+    <!-- Иконки Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Наши стили (путь из папки html на уровень выше в папку css) -->
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <!-- ЛОГОТИП (путь из папки html на уровень выше в папку resources) -->
+        <a href="#" class="logo-link" onclick="location.reload(); return false;">
+            <img src="../resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
+        </a>
+        <p>Все сезоны и серии культового сериала про армию, дружбу и... прапорщика Шматко!</p>
+        <div class="badge"><i class="fas fa-shield-alt"></i> 16+ · YouTube-плеер</div>
+    </div>
+
+    <div class="nav-menu">
+        <a href="index.html" class="nav-link active">Сериал</a>
+        <a href="heroes.html" class="nav-link">Персонажи</a>
+        <a href="soundtracks.html" class="nav-link">Саундтреки</a>
+        <a href="quiz.html" class="nav-link">Викторина</a>
+    </div>
+
+    <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
+    <div id="authButtons" class="auth-buttons">
+        <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
+        <button onclick="showAuthModal()" class="auth-header-btn register"><i class="fas fa-user-plus"></i> Регистрация</button>
+    </div>
+    <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ -->
+    <div id="userInfo" class="user-info" style="display: none;">
+        <img id="userAvatar" class="user-avatar" src="" alt="avatar">
+        <div class="user-details">
+            <span id="userName"></span>
+            <span id="userEmail"></span>
+        </div>
+        <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeAuthModal()">&times;</span>
+        
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="showLoginForm()">Вход</button>
+                <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
+            </div>
+        
+            <div id="loginForm" class="auth-form">
+                <h3>Вход в аккаунт</h3>
+                <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
+                <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
+                <button onclick="login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)" class="auth-btn">
+                    <i class="fas fa-sign-in-alt"></i> Войти
+                </button>
+                <div class="auth-divider">или</div>
+                <button onclick="loginWithGoogle()" class="auth-btn google">
+                    <i class="fab fa-google"></i> Войти через Google
+                </button>
+            </div>
+            
+            <div id="registerForm" class="auth-form" style="display: none;">
+                <h3>Регистрация</h3>
+                <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
+                <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
+                <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
+                <button onclick="register(document.getElementById('registerEmail').value, document.getElementById('registerPassword').value, document.getElementById('registerName').value)" class="auth-btn">
+                    <i class="fas fa-user-plus"></i> Зарегистрироваться
+                </button>
+                <div class="auth-divider">или</div>
+                <button onclick="loginWithGoogle()" class="auth-btn google">
+                    <i class="fab fa-google"></i> Регистрация через Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ОПИСАНИЕ СЕРИАЛА -->
+    <div class="series-description">
+        <h2 class="description-title"><i class="fas fa-info-circle"></i> О сериале «Солдаты»</h2>
+        <div class="description-content">
+            <p><strong>«Солдаты»</strong> — это культовый российский комедийный сериал об армейской жизни, который выходил с 2004 по 2013 год и завоевал огромную популярность у зрителей.</p>
+            
+            <p>Два товарища, потерявшие связь друг с другом на гражданке, неожиданно встречаются в военкомате. Городской мажор и деревенский паренек теперь будут вместе тянуть армейскую лямку. Выполнение гражданского долга, как обычно, сопровождается большим количеством неприятностей. Главная напасть - «настоящий полковник».</p>
+            
+            <p>С новобранцами случаются обычные истории, присущие военной жизни: от «дедов» до самоволок. Иногда в расположении российских войск врываются неуставные романтические отношения. А чего стоит легендарный прапорщик Шматко (Алексей Маклаков) — гроза солдат и любимец зрителей!</p>
+            
+            <p>«Солдаты» — это сага об армейской жизни. О том, сколь разительные перемены в жизни человека может произвести клочок казенной бумаги по имени повестка, равно, как и о важности обладания новобранцем хорошей дыхалкой, о роли спиртного и футбольных трансляций по телевизору в обустройстве армейской жизни.</p>
+            
+            <div class="description-features">
+                <div class="feature">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>17 сезонов + 6 спецвыпусков</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-film"></i>
+                    <span>557 серий</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-star"></i>
+                    <span>Культовый статус</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-laugh"></i>
+                    <span>Комедия / Драма</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="player-section">
+        <!-- КОНТЕЙНЕР ДЛЯ YOUTUBE ПЛЕЕРА -->
+        <div id="youtubePlayer" style="width: 100%; aspect-ratio: 16 / 9; background: #000;">
+            <div id="youtubePlayerContainer"></div>
+            <!-- Сюда будет вставлен iframe -->
+        </div>
+
+        <div style="text-align: center;">
+           <p>Включите VPN для просмотра серий, если YouTube не работает</p>
+        </div>
+        
+        <div class="series-info">
+            <div class="series-title" id="currentSeriesTitle">Солдаты 1 сезон · 1 серия</div>
+            <div class="series-desc" id="currentSeriesDesc">«Призывниками не рождаются, а становятся» — знакомство с героями</div>
+
+            <div class="series-actions">
+                <button id="favoriteBtn" class="favorite-btn" onclick="toggleFavorite()">
+                    <i class="far fa-heart"></i> В избранное
+                </button>
+            </div>
+
+            <div class="autoplay-control">
+                <label class="autoplay-switch">
+                    <input type="checkbox" id="autoplayToggle" checked>
+                    <span class="autoplay-slider"></span>
+                </label>
+                <span class="autoplay-label">
+                    <i class="fas fa-forward"></i> Следующая серия через 10 сек
+                </span>
+                <span class="autoplay-timer" id="autoplayTimer"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="comments-section">
+        <div class="comments-header">
+            <i class="fas fa-comments"></i> Комментарии
+            <span class="comments-count" id="commentsCount">0</span>
+        </div>
+
+        <div class="comment-form">
+            <div class="comment-input-row">
+                <textarea id="commentText" rows="2" placeholder="Поделитесь впечатлением о серии..."></textarea>
+             </div>
+        
+            
+            <div class="form-rating">
+                <span class="form-rating-label">Ваша оценка:</span>
+                <div class="stars-container" id="formStarsContainer">
+                <!-- Звёзды будут добавлены через JS -->
+                </div>
+                <span class="form-rating-value" id="formRatingValue">Не выбрано</span>
+            </div>
+        
+            <button id="submitCommentBtn" class="submit-comment-btn">
+                <i class="fas fa-paper-plane"></i> Оставить комментарий
+            </button>
+        </div>
+
+        <div class="comments-list" id="commentsList">
+            <div class="comment-empty">Пока нет комментариев. Будьте первым!</div>
+        </div>
+
+    </div>
+
+
+    <div class="season-nav" id="seasonNav"></div>
+    <div class="episodes-grid" id="episodesGrid"></div>
+
+    <div class="footer"> Фан-сайт сериала «Солдаты» · Видео предоставлены YouTube-каналом "Дембельский альбом"</div>
+</div>
+
+<!-- Данные о сериях -->
+<script src="../js/episodes-data.js"></script>
+<!-- 1. СНАЧАЛА Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<!-- 2. ПОТОМ ваш конфиг -->
+<script src="../firebase-config.js"></script>
+<!-- 3. ПОТОМ авторизация -->
+<script src="../js/firebase-auth.js"></script> 
+<!-- Логика сайта -->
+<script src="../js/script.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>

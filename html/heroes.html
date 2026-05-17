@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Солдаты — Главные герои</title>
+
+    <!-- SEO метатеги -->
+    <meta name="description" content="Все главные герои сериала «Солдаты». Биографии актёров и персонажей.">
+    <meta name="keywords" content="персонажи Солдаты">
+    <meta name="author" content="Фан-сайт сериала Солдаты">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Герои сериала Солдаты — все персонажи и актёры">
+    <meta property="og:description" content="Легендарные персонажи культового армейского сериала.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="../resources/soldaty_icon.png">
+    
+    <!-- Технические метатеги -->
+    <meta name="theme-color" content="#1a2a1a">
+    <link rel="icon" type="image/png" href="../resources/soldaty_icon.png">
+    <link rel="shortcut icon" href="../resources/soldaty_icon.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+        <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Ваш конфиг -->
+    <script src="../firebase-config.js"></script>
+
+    <!-- Авторизация -->
+    <script src="../js/firebase-auth.js"></script> 
+</head>
+<body>
+
+<div class="container">
+    <div class="header heroes-header">
+        <a href="index.html" class="logo-link">
+            <img src="../resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
+        </a>
+
+        <p>Персонажи культового сериала «Солдаты»</p>
+
+        <div class="heroes-top-line"></div>
+
+        <div class="nav-menu">
+            <a href="index.html" class="nav-link">Сериал</a>
+            <a href="heroes.html" class="nav-link active">Персонажи</a>
+            <a href="soundtracks.html" class="nav-link">Саундтреки</a>
+            <a href="quiz.html" class="nav-link">Викторина</a>
+        </div>
+    </div>
+
+    <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
+    <div id="authButtons" class="auth-buttons">
+        <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
+        <button onclick="showAuthModal()" class="auth-header-btn register"><i class="fas fa-user-plus"></i> Регистрация</button>
+    </div>
+    <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ -->
+    <div id="userInfo" class="user-info" style="display: none;">
+        <img id="userAvatar" class="user-avatar" src="" alt="avatar">
+        <div class="user-details">
+            <span id="userName"></span>
+            <span id="userEmail"></span>
+        </div>
+        <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeAuthModal()">&times;</span>
+        
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="showLoginForm()">Вход</button>
+                <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
+            </div>
+        
+            <div id="loginForm" class="auth-form">
+                <h3>Вход в аккаунт</h3>
+                <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
+                <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
+                <button onclick="login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)" class="auth-btn">
+                    <i class="fas fa-sign-in-alt"></i> Войти
+                </button>
+                <div class="auth-divider">или</div>
+                <button onclick="loginWithGoogle()" class="auth-btn google">
+                    <i class="fab fa-google"></i> Войти через Google
+                </button>
+            </div>
+            
+            <div id="registerForm" class="auth-form" style="display: none;">
+                <h3>Регистрация</h3>
+                <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
+                <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
+                <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
+                <button onclick="register(document.getElementById('registerEmail').value, document.getElementById('registerPassword').value, document.getElementById('registerName').value)" class="auth-btn">
+                    <i class="fas fa-user-plus"></i> Зарегистрироваться
+                </button>
+                <div class="auth-divider">или</div>
+                <button onclick="loginWithGoogle()" class="auth-btn google">
+                    <i class="fab fa-google"></i> Регистрация через Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-description">
+        <h2 class="description-title"><i class="fas fa-users"></i> Персонажи сериала «Солдаты»</h2>
+        <div class="description-content">
+            <p>Сериал «Солдаты» подарил зрителям множество ярких, запоминающихся персонажей. От легендарного прапорщика Шматко до хитрого майора Колобкова — каждый герой стал любимым и узнаваемым.</p>
+            
+            <p>Здесь собраны главные персонажи всех сезонов — офицеры, солдаты, медсёстры и гражданские, которые создали неповторимую атмосферу армейской саги. Многие актёры стали настоящими звёздами благодаря своим ролям в этом культовом сериале.</p>
+            
+            <div class="description-features">
+                <div class="feature">
+                    <i class="fas fa-user-tie"></i>
+                    <span>19+ персонажей</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-star"></i>
+                    <span>Актёры с душой</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-laugh-squint"></i>
+                    <span>Крылатые фразы</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- СЕТКА ГЕРОЕВ -->
+    <div class="heroes-grid" id="heroesGrid">
+        <!-- Карточки будут загружены через JavaScript -->
+    </div>
+
+    <div class="footer"> Фан-сайт сериала «Солдаты» </div>
+</div>
+
+<script src="../js/heroes-data.js"></script>
+<script src="../js/heroes.js"></script>
+</body>
+</html>

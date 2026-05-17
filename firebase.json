@@ -1,0 +1,14 @@
+{
+  "comments": {
+    "comment1": {
+      "userId": "test123",
+      "userName": "Тестовый пользователь",
+      "season": 1,
+      "episode": 1,
+      "seriesTitle": "Призыв не по плану",
+      "text": "Это тестовый комментарий",
+      "rating": 5,
+      "date": "2024-01-01T12:00:00.000Z"
+    }
+  }
+}
