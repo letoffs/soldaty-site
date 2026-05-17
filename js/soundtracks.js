@@ -1,16 +1,15 @@
 // --------------------------------------------------------------
 // БАЗА ДАННЫХ САУНДТРЕКОВ
 // --------------------------------------------------------------
-const baseAudioPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? '' 
-    : '/soldaty-site';
+const baseAudioPath = window.location.hostname === 'localhost' ? '' : '/soldaty-site';
+
 const songsData = [
     {
         id: 1,
         title: "Юность в сапогах",
         artist: "Конец фильма",
         description: "Главный хит сериала, неофициальный гимн. Открывает многие серии. Является самой популярной композицией",
-        audioUrl: "/soldaty-site/resources/soundtracks/yunost_v_sapogakh.mp3",
+        audioUrl: baseAudioPath + "/resources/soundtracks/yunost_v_sapogakh.mp3",
         duration: "3:06",
     },
     {
@@ -18,7 +17,7 @@ const songsData = [
         title: "Дембельская",
         artist: "Конец фильма",
         description: "Песня о возвращении домой, которую в сериале исполняет сержант Фомин",
-        audioUrl: "/soldaty-site/resources/soundtracks/Dembelskaya.mp3",
+        audioUrl: baseAudioPath + "/resources/soundtracks/Dembelskaya.mp3",
         duration: "3:21",
     },
     {
@@ -26,7 +25,7 @@ const songsData = [
         title: "Жили-были",
         artist: "Юта",
         description: "Лирическая и трогательная песня, которая звучит в драматических моментах",
-        audioUrl: "/soldaty-site/resources/soundtracks/zhili-byli.mp3",
+        audioUrl: baseAudioPath + "/resources/soundtracks/zhili-byli.mp3",
         duration: "4:45",
     },
     {
@@ -34,7 +33,7 @@ const songsData = [
         title: "Прапорщик-блюз",
         artist: "Конец фильма",
         description: "«Визитная карточка» прапорщика Шматко. Подчеркивает его характер",
-        audioUrl: "/soldaty-site/resources/soundtracks/Praporshhik-blyuz.mp3",
+        audioUrl: baseAudioPath + "/resources/soundtracks/Praporshhik-blyuz.mp3",
         duration: "4:05",
     },
     {
@@ -42,7 +41,7 @@ const songsData = [
         title: "Та самая девчонка/Отчизне служи",
         artist: "Юта",
         description: "Романтическая композиция о любви и службе",
-        audioUrl: "/soldaty-site/resources/soundtracks/YUta_-_Ta_samaya_devchonka_48098087.mp3",
+        audioUrl: baseAudioPath + "/resources/soundtracks/YUta_-_Ta_samaya_devchonka_48098087.mp3",
         duration: "2:23",
     },
     {
@@ -50,7 +49,7 @@ const songsData = [
         title: "Хорошо",
         artist: "Юта feat. Конец фильма",
         description: "Спокойная, «уютная» песня, создающая приятную атмосферу",
-        audioUrl: "/soldaty-site/resources/soundtracks/YUta_-_KHorosho_iz_ser_Soldaty_67370349.mp3",
+        audioUrl: baseAudioPath + "/resources/soundtracks/YUta_-_KHorosho_iz_ser_Soldaty_67370349.mp3",
         duration: "3:15",
     },
 ];
