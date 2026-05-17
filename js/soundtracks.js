@@ -1,7 +1,9 @@
 // --------------------------------------------------------------
 // БАЗА ДАННЫХ САУНДТРЕКОВ
 // --------------------------------------------------------------
-const baseAudioPath = window.location.hostname === 'localhost' ? '' : '/soldaty-site';
+const baseAudioPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? '' 
+    : '/soldaty-site';
 
 const songsData = [
     {
