@@ -4,8 +4,8 @@
 
 // Определяем базовый путь для аудиофайлов
 const baseAudioPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'resources/soundtracks/' 
-    : '/soldaty-site/resources/soundtracks/';
+    ? 'Resources/soundtracks/' 
+    : '/soldaty-site/Resources/soundtracks/';
 
 console.log("🎵 Базовый путь к аудио:", baseAudioPath);
 
