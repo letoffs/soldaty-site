@@ -1,5 +1,5 @@
 // ============================================================
-// САУНДТРЕКИ (soundtracks.js) — правильная версия
+// САУНДТРЕКИ (soundtracks.js) — исправленный путь к Resources
 // ============================================================
 
 // Определяем базовый путь для аудиофайлов
@@ -15,7 +15,7 @@ const songsData = [
         id: 1,
         title: "Юность в сапогах",
         artist: "Конец фильма",
-        description: "Главный хит сериала, неофициальный гимн. Открывает многие серии.",
+        description: "Главный хит сериала, неофициальный гимн.",
         audioUrl: baseAudioPath + "yunost_v_sapogakh.mp3",
         duration: "3:06",
     },
@@ -23,7 +23,7 @@ const songsData = [
         id: 2,
         title: "Дембельская",
         artist: "Конец фильма",
-        description: "Песня о возвращении домой, которую в сериале исполняет сержант Фомин",
+        description: "Песня о возвращении домой.",
         audioUrl: baseAudioPath + "Dembelskaya.mp3",
         duration: "3:21",
     },
@@ -31,7 +31,7 @@ const songsData = [
         id: 3,
         title: "Жили-были",
         artist: "Юта",
-        description: "Лирическая и трогательная песня, которая звучит в драматических моментах",
+        description: "Лирическая и трогательная песня.",
         audioUrl: baseAudioPath + "zhili-byli.mp3",
         duration: "4:45",
     },
@@ -45,7 +45,7 @@ const songsData = [
     },
     {
         id: 5,
-        title: "Та самая девчонка / Отчизне служи",
+        title: "Та самая девчонка",
         artist: "Юта",
         description: "Романтическая композиция о любви и службе",
         audioUrl: baseAudioPath + "YUta_-_Ta_samaya_devchonka_48098087.mp3",
@@ -211,8 +211,6 @@ window.onload = () => {
         audioPlayer.setAttribute('playsinline', '');
         audioPlayer.setAttribute('webkit-playsinline', '');
         audioPlayer.preload = 'metadata';
-    } else {
-        console.error("❌ Аудиоплеер не найден на странице!");
     }
 
     loadSong(0);
