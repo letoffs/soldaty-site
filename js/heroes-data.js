@@ -300,7 +300,7 @@ const heroesData = [
         actor: "Филипп Бажин",
         role: "Рядовой → Лейтенант",
         description: "Прошёл путь от солдата до офицера. На собственном опыте знает, что такое армейские будни.",
-        imageUrl: ".=/soldaty-site/Resources/pirozhak.webp",
+        imageUrl: "./soldaty-site/Resources/pirozhak.webp",
     },
     {
         id: 38,
@@ -432,7 +432,7 @@ const heroesData = [
         actor: "Михаил Горский",
         role: "Рядовой",
         description: "По прозвищу «Макс». Солдат из поздних призывов, весёлый и компанейский парень.",
-        imageUrl: "../resources/maksimenko.jpg",
+        imageUrl: "/soldaty-site/Resources/maksimenko.jpg",
     },
     {
         id: 54,
