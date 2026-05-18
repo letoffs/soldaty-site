@@ -1,3 +1,9 @@
+// --------------------------------------------------------------
+// ВИКТОРИНА «СОЛДАТЫ» - ОСНОВНАЯ ЛОГИКА
+// Данные вопросов загружаются из quiz-levels.js (массив quizLevels)
+// Вопросы выводятся в СЛУЧАЙНОМ порядке на каждом уровне
+// --------------------------------------------------------------
+
 // Глобальные переменные
 let currentLevel = 0;
 let currentQuestionIndex = 0;
@@ -5,6 +11,8 @@ let userAnswers = [];
 let quizCompleted = false;
 let quizStarted = false;
 let selectedLevel = null;
+let shuffledQuestions = [];     // 🔄 Массив для перемешанных вопросов
+let originalQuestions = [];     // 📁 Оригинальные вопросы (для сохранения прогресса)
 
 // Структура прогресса (10 уровней)
 let progress = {
@@ -15,13 +23,52 @@ let progress = {
     level9Passed: false, level10Passed: false
 };
 
-// Загрузка прогресса из localStorage
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+
+// Функция для перемешивания массива (алгоритм Фишера-Йетса)
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+// Функция для перемешивания вопросов уровня
+function shuffleLevelQuestions(levelIndex) {
+    const level = quizLevels[levelIndex];
+    if (!level) return [];
+    
+    // Сохраняем оригинальные вопросы (с правильными ответами и пояснениями)
+    originalQuestions = [...level.questions];
+    
+    // Перемешиваем копию вопросов
+    shuffledQuestions = shuffleArray(level.questions);
+    
+    console.log(`🔄 Вопросы уровня "${level.name}" перемешаны в случайном порядке`);
+    return shuffledQuestions;
+}
+
+// ========== ПРОВЕРКА ЗАГРУЗКИ ДАННЫХ ==========
+function isQuizDataLoaded() {
+    if (typeof quizLevels === 'undefined') {
+        console.error("❌ ОШИБКА: Данные викторины (quizLevels) не загружены!");
+        return false;
+    }
+    if (!quizLevels || quizLevels.length === 0) {
+        console.error("❌ ОШИБКА: quizLevels пуст!");
+        return false;
+    }
+    return true;
+}
+
+// ========== РАБОТА С ПРОГРЕССОМ ==========
 function loadProgress() {
     const saved = localStorage.getItem('soldaty_quiz_progress_v2');
     if (saved) {
         try {
             const loaded = JSON.parse(saved);
-            // Объединяем с дефолтным прогрессом (на случай новых полей)
             Object.assign(progress, loaded);
         } catch(e) {
             console.error("Ошибка загрузки прогресса", e);
@@ -30,25 +77,24 @@ function loadProgress() {
     console.log("Загружен прогресс:", progress);
 }
 
-// Сохранение прогресса
 function saveProgress() {
     localStorage.setItem('soldaty_quiz_progress_v2', JSON.stringify(progress));
     console.log("Сохранён прогресс:", progress);
 }
 
-// Проверка доступности уровня (levelIndex: 0-9)
+// ========== ПРОВЕРКА ДОСТУПНОСТИ УРОВНЯ ==========
 function isLevelUnlocked(levelIndex) {
-    if (levelIndex === 0) return true; // Рядовой открыт всегда
+    if (!isQuizDataLoaded()) return false;
+    if (levelIndex === 0) return true;
     
     const prevLevelIndex = levelIndex - 1;
     const prevLevelKey = `level${prevLevelIndex + 1}Passed`;
     const isPrevPassed = progress[prevLevelKey] === true;
     
-    console.log(`Проверка уровня ${levelIndex+1}: предыдущий уровень ${prevLevelIndex+1} пройден = ${isPrevPassed}`);
     return isPrevPassed;
 }
 
-// Сохранить результат после прохождения уровня
+// ========== СОХРАНЕНИЕ РЕЗУЛЬТАТА ==========
 function saveLevelResult(levelIndex, correctCount, passed) {
     const levelNum = levelIndex + 1;
     const scoreKey = `level${levelNum}Score`;
@@ -59,26 +105,27 @@ function saveLevelResult(levelIndex, correctCount, passed) {
         progress[passedKey] = true;
         console.log(`✅ Уровень ${levelNum} пройден! Открывается следующий.`);
     } else if (!passed) {
-        console.log(`❌ Уровень ${levelNum} не пройден. Нужно ${quizLevels[levelIndex].minPass} правильных, получено ${correctCount}`);
+        console.log(`❌ Уровень ${levelNum} не пройден.`);
     }
     
     saveProgress();
 }
 
-// Получить следующий уровень для открытия (нужно для отладки)
-function getNextLockedLevel() {
-    for (let i = 0; i < quizLevels.length; i++) {
-        if (!isLevelUnlocked(i)) {
-            return i + 1;
-        }
-    }
-    return null;
-}
-
-// ------------------------------------------------------------------
-// ПРИВЕТСТВЕННЫЙ ЭКРАН С ВЫБОРОМ УРОВНЯ
-// ------------------------------------------------------------------
+// ========== ПРИВЕТСТВЕННЫЙ ЭКРАН ==========
 function renderWelcomeScreen() {
+    if (!isQuizDataLoaded()) {
+        quizContainer.innerHTML = `
+            <div class="error-screen" style="text-align: center; padding: 40px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #e74c3c;"></i>
+                <h2>Ошибка загрузки данных!</h2>
+                <p>Не удалось загрузить вопросы викторины.</p>
+                <p>Убедитесь, что файл <strong>quiz-levels.js</strong> подключен перед <strong>quiz.js</strong>.</p>
+                <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">Перезагрузить</button>
+            </div>
+        `;
+        return;
+    }
+    
     const levels = quizLevels;
     
     let html = `
@@ -89,6 +136,9 @@ function renderWelcomeScreen() {
             <h2 class="welcome-title">Викторина «Солдаты»</h2>
             <div class="welcome-text">
                 <p>Выберите уровень сложности и проверьте свои знания!</p>
+                <p style="font-size: 0.85rem; color: #bd8a3e; margin-top: 10px;">
+                    <i class="fas fa-random"></i> Вопросы на каждом уровне выдаются в случайном порядке!
+                </p>
             </div>
             
             <div class="levels-container">
@@ -98,6 +148,7 @@ function renderWelcomeScreen() {
         const level = levels[i];
         const unlocked = isLevelUnlocked(i);
         const passed = progress[`level${i+1}Passed`] === true;
+        const score = progress[`level${i+1}Score`] || 0;
         
         html += `
             <div class="level-card ${!unlocked ? 'locked' : ''}" data-level="${i}">
@@ -105,23 +156,25 @@ function renderWelcomeScreen() {
                 <div class="level-name">${level.name}</div>
                 <div class="level-desc">${level.description}</div>
                 <div class="level-requirement">
-                    ${!unlocked ? `<i class="fas fa-lock"></i> Требуется пройти уровень "${levels[i-1]?.name}"` : 
+                    ${!unlocked ? `<i class="fas fa-lock"></i> Требуется пройти "${levels[i-1]?.name}"` : 
                         `<i class="fas fa-check-circle"></i> Доступен`}
                 </div>
-                ${passed ? '<div class="level-completed">✅ Пройден</div>' : ''}
-                ${!unlocked && i > 0 && progress[`level${i}Passed`] ? '<div class="level-completed">🔓 Откроется после перезагрузки</div>' : ''}
+                ${passed ? `<div class="level-completed">✅ Пройден (${score}/${level.questions.length})</div>` : 
+                           `<div class="level-requirement">📋 Нужно ${level.minPass} из ${level.questions.length}</div>`}
             </div>
         `;
     }
     
     html += `
             </div>
+            <div class="reset-progress" style="margin-top: 30px; text-align: center;">
+                <button id="resetProgressBtn" class="reset-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;"><i class="fas fa-trash-alt"></i> Сбросить прогресс</button>
+            </div>
         </div>
     `;
     
     quizContainer.innerHTML = html;
     
-    // Навешиваем обработчики на карточки уровней
     document.querySelectorAll('.level-card').forEach(card => {
         const levelIdx = parseInt(card.dataset.level);
         if (isLevelUnlocked(levelIdx)) {
@@ -134,12 +187,22 @@ function renderWelcomeScreen() {
             };
         }
     });
+    
+    const resetBtn = document.getElementById('resetProgressBtn');
+    if (resetBtn) {
+        resetBtn.onclick = () => {
+            if (confirm('⚠️ ВНИМАНИЕ! Это действие удалит ВЕСЬ ваш прогресс. Вы уверены?')) {
+                localStorage.removeItem('soldaty_quiz_progress_v2');
+                location.reload();
+            }
+        };
+    }
 }
 
-// ------------------------------------------------------------------
-// НАЧАТЬ ВИКТОРИНУ
-// ------------------------------------------------------------------
+// ========== НАЧАТЬ ВИКТОРИНУ ==========
 function startQuiz(levelIndex) {
+    if (!isQuizDataLoaded()) return;
+    
     if (!isLevelUnlocked(levelIndex)) {
         alert(`Уровень "${quizLevels[levelIndex].name}" недоступен! Сначала пройдите предыдущий уровень.`);
         return;
@@ -148,15 +211,23 @@ function startQuiz(levelIndex) {
     selectedLevel = levelIndex;
     currentLevel = levelIndex;
     currentQuestionIndex = 0;
-    userAnswers = new Array(quizLevels[levelIndex].questions.length).fill(null);
+    
+    // 🔄 ПЕРЕМЕШИВАЕМ ВОПРОСЫ ПРИ СТАРТЕ УРОВНЯ
+    shuffleLevelQuestions(levelIndex);
+    
+    // Инициализируем массив ответов (размер равен количеству перемешанных вопросов)
+    userAnswers = new Array(shuffledQuestions.length).fill(null);
     quizStarted = true;
     quizCompleted = false;
     renderCurrentQuestion();
 }
 
-// ------------------------------------------------------------------
-// ОСНОВНАЯ ЛОГИКА ВИКТОРИНЫ
-// ------------------------------------------------------------------
+// ========== ПОЛУЧИТЬ ТЕКУЩИЙ ВОПРОС (из перемешанного массива) ==========
+function getCurrentQuestion() {
+    return shuffledQuestions[currentQuestionIndex];
+}
+
+// ========== ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВОПРОСА ==========
 function renderCurrentQuestion() {
     if (!quizStarted) {
         renderWelcomeScreen();
@@ -164,25 +235,27 @@ function renderCurrentQuestion() {
     }
     
     if (quizCompleted) {
-        renderResults();
         return;
     }
     
     const level = quizLevels[currentLevel];
-    const questions = level.questions;
-    const question = questions[currentQuestionIndex];
+    const question = getCurrentQuestion();
     const selectedAnswer = userAnswers[currentQuestionIndex];
+    const totalQuestions = shuffledQuestions.length;
     
     const html = `
         <div class="quiz-card">
             <div class="level-badge">
                 <span class="level-icon">${level.icon}</span>
                 <span class="level-name">${level.name}</span>
+                <span class="level-requirement-mini" style="margin-left: auto; font-size: 12px;">
+                    <i class="fas fa-random"></i> Нужно ${level.minPass}/${totalQuestions}
+                </span>
             </div>
             <div class="quiz-progress">
-                Вопрос ${currentQuestionIndex + 1} из ${questions.length}
+                Вопрос ${currentQuestionIndex + 1} из ${totalQuestions}
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${((currentQuestionIndex + 1) / questions.length) * 100}%"></div>
+                    <div class="progress-fill" style="width: ${((currentQuestionIndex + 1) / totalQuestions) * 100}%"></div>
                 </div>
             </div>
             
@@ -202,9 +275,9 @@ function renderCurrentQuestion() {
             
             <div class="quiz-navigation">
                 ${currentQuestionIndex > 0 ? '<button id="prevBtn" class="quiz-nav-btn"><i class="fas fa-arrow-left"></i> Назад</button>' : ''}
-                ${currentQuestionIndex < questions.length - 1 ? 
+                ${currentQuestionIndex < totalQuestions - 1 ? 
                     '<button id="nextBtn" class="quiz-nav-btn primary">Далее <i class="fas fa-arrow-right"></i></button>' : 
-                    '<button id="submitBtn" class="quiz-nav-btn success"><i class="fas fa-check"></i> Завершить</button>'}
+                    '<button id="submitBtn" class="quiz-nav-btn success"><i class="fas fa-check"></i> Завершить уровень</button>'}
             </div>
         </div>
     `;
@@ -216,12 +289,15 @@ function renderCurrentQuestion() {
     });
     
     if (currentQuestionIndex > 0) {
-        document.getElementById('prevBtn').onclick = prevQuestion;
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) prevBtn.onclick = prevQuestion;
     }
-    if (currentQuestionIndex < questions.length - 1) {
-        document.getElementById('nextBtn').onclick = nextQuestion;
+    if (currentQuestionIndex < totalQuestions - 1) {
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) nextBtn.onclick = nextQuestion;
     } else {
-        document.getElementById('submitBtn').onclick = submitQuiz;
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.onclick = submitQuiz;
     }
 }
 
@@ -247,6 +323,7 @@ function prevQuestion() {
     renderCurrentQuestion();
 }
 
+// ========== ПОДСЧЁТ РЕЗУЛЬТАТОВ И ИХ ОТОБРАЖЕНИЕ ==========
 function submitQuiz() {
     if (!quizStarted || quizCompleted) return;
     
@@ -257,86 +334,184 @@ function submitQuiz() {
     }
     
     const level = quizLevels[currentLevel];
-    const questions = level.questions;
     let correctCount = 0;
     
-    userAnswers.forEach((answer, idx) => {
-        if (answer === questions[idx].correct) correctCount++;
-    });
+    // Собираем детальную информацию о каждом ответе (из перемешанного порядка)
+    const detailedResults = [];
+    for (let i = 0; i < shuffledQuestions.length; i++) {
+        const q = shuffledQuestions[i];
+        const answer = userAnswers[i];
+        const isCorrect = (answer === q.correct);
+        if (isCorrect) correctCount++;
+        
+        detailedResults.push({
+            questionText: q.question,
+            userAnswerText: q.options[answer],
+            correctAnswerText: q.options[q.correct],
+            isCorrect: isCorrect,
+            explanation: q.explanation
+        });
+    }
     
     const passed = correctCount >= level.minPass;
+    const percentage = Math.round((correctCount / shuffledQuestions.length) * 100);
     
-    // СОХРАНЯЕМ РЕЗУЛЬТАТ
+    // Сохраняем результат
     saveLevelResult(currentLevel, correctCount, passed);
     
     quizCompleted = true;
-    renderResults(correctCount, passed);
+    
+    // ОТОБРАЖАЕМ ПОЛНЫЙ ЭКРАН РЕЗУЛЬТАТОВ
+    renderResultsScreen(correctCount, shuffledQuestions.length, percentage, passed, detailedResults, level);
 }
 
-function renderResults(correctCount, passed) {
-    const level = quizLevels[currentLevel];
-    const total = level.questions.length;
-    const percentage = Math.round((correctCount / total) * 100);
+function renderResultsScreen(correctCount, total, percentage, passed, detailedResults, level) {
+    const nextLevelName = currentLevel + 1 < quizLevels.length ? quizLevels[currentLevel + 1].name : '—';
     
-    let message = '';
-    if (passed) {
-        message = `Поздравляем! Вы прошли уровень «${level.name}»! ${percentage}% правильных ответов.`;
-        if (currentLevel + 1 < quizLevels.length) {
-            message += ` Теперь вам открыт уровень «${quizLevels[currentLevel+1].name}»! Обновите страницу, чтобы увидеть изменения.`;
-        }
-    } else {
-        message = `К сожалению, вы не прошли уровень «${level.name}». Нужно ${level.minPass} правильных ответов из ${total}, получено ${correctCount}. Попробуйте ещё раз!`;
+    // Генерация HTML для детальных результатов
+    let detailsHtml = '';
+    for (let i = 0; i < detailedResults.length; i++) {
+        const r = detailedResults[i];
+        detailsHtml += `
+            <div class="result-detail-card ${r.isCorrect ? 'correct' : 'incorrect'}">
+                <div class="result-detail-header">
+                    <span class="result-detail-num">Вопрос ${i + 1}</span>
+                    <span class="result-detail-status">${r.isCorrect ? '✅ Верно' : '❌ Неверно'}</span>
+                </div>
+                <div class="result-detail-question">${escapeHtml(r.questionText)}</div>
+                <div class="result-detail-answer">
+                    <div class="your-answer">📝 Ваш ответ: ${escapeHtml(r.userAnswerText)}</div>
+                    ${!r.isCorrect ? `<div class="correct-answer">✓ Правильный ответ: ${escapeHtml(r.correctAnswerText)}</div>` : ''}
+                </div>
+                <div class="result-detail-explanation">
+                    <i class="fas fa-info-circle"></i> ${escapeHtml(r.explanation)}
+                </div>
+            </div>
+        `;
     }
     
     const html = `
-        <div class="quiz-results">
+        <div class="results-fullscreen">
             <div class="results-header">
-                <i class="fas fa-trophy"></i> Результаты уровня «${level.name}»
+                <i class="fas fa-trophy"></i>
+                <h2>Результаты уровня «${level.name}»</h2>
             </div>
-            <div class="results-score">
-                <span class="score-number">${correctCount}</span>
-                <span class="score-total">/${total}</span>
-                <span class="score-percent">(${percentage}%)</span>
+            
+            <div class="results-summary">
+                <div class="summary-score">
+                    <div class="score-circle">
+                        <span class="score-number">${correctCount}</span>
+                        <span class="score-total">/${total}</span>
+                    </div>
+                    <div class="score-percent">${percentage}%</div>
+                </div>
+                
+                <div class="summary-status ${passed ? 'success' : 'fail'}">
+                    ${passed ? '🎉 ПОЗДРАВЛЯЮ! УРОВЕНЬ ПРОЙДЕН! 🎉' : '😔 К СОЖАЛЕНИЮ, УРОВЕНЬ НЕ ПРОЙДЕН 😔'}
+                </div>
+                
+                <div class="summary-info">
+                    <div class="info-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Правильных ответов: ${correctCount}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Неправильных ответов: ${total - correctCount}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Требовалось для прохода: ${level.minPass} из ${total}</span>
+                    </div>
+                </div>
+                
+                ${passed && currentLevel + 1 < quizLevels.length ? `
+                    <div class="next-level-unlock">
+                        <i class="fas fa-unlock-alt"></i> Открыт новый уровень: «${nextLevelName}»!
+                    </div>
+                ` : ''}
+                
+                ${!passed ? `
+                    <div class="fail-message">
+                        <i class="fas fa-redo-alt"></i> Попробуйте ещё раз! Вам нужно набрать ${level.minPass} правильных ответов.
+                    </div>
+                ` : ''}
             </div>
-            <div class="results-message ${passed ? 'success' : 'fail'}">
-                ${passed ? '🎉 ' + message : '😔 ' + message}
+            
+            <div class="results-details-title">
+                <i class="fas fa-list-alt"></i> Подробный разбор всех вопросов:
             </div>
+            
+            <div class="results-details-list">
+                ${detailsHtml}
+            </div>
+            
             <div class="results-buttons">
-                ${!passed ? `<button id="retryBtn" class="restart-btn"><i class="fas fa-redo"></i> Пройти заново</button>` : ''}
-                <button id="menuBtn" class="restart-btn"><i class="fas fa-home"></i> К выбору уровня</button>
+                ${!passed ? `<button id="retryBtn" class="result-btn retry-btn"><i class="fas fa-redo"></i> Пройти заново</button>` : ''}
+                <button id="menuBtn" class="result-btn menu-btn"><i class="fas fa-home"></i> К выбору уровня</button>
+                ${passed && currentLevel + 1 < quizLevels.length ? 
+                    `<button id="nextLevelBtn" class="result-btn next-btn"><i class="fas fa-arrow-right"></i> Следующий уровень</button>` : ''}
             </div>
         </div>
     `;
     
     quizContainer.innerHTML = html;
     
+    // Навешиваем обработчики
     if (!passed) {
-        document.getElementById('retryBtn').onclick = () => {
+        const retryBtn = document.getElementById('retryBtn');
+        if (retryBtn) {
+            retryBtn.onclick = () => {
+                quizStarted = false;
+                startQuiz(currentLevel);
+            };
+        }
+    }
+    
+    const menuBtn = document.getElementById('menuBtn');
+    if (menuBtn) {
+        menuBtn.onclick = () => {
             quizStarted = false;
-            startQuiz(currentLevel);
+            renderWelcomeScreen();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
     }
-    document.getElementById('menuBtn').onclick = () => {
-        quizStarted = false;
-        renderWelcomeScreen();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    
+    const nextLevelBtn = document.getElementById('nextLevelBtn');
+    if (nextLevelBtn) {
+        nextLevelBtn.onclick = () => {
+            if (currentLevel + 1 < quizLevels.length && isLevelUnlocked(currentLevel + 1)) {
+                quizStarted = false;
+                startQuiz(currentLevel + 1);
+            } else {
+                alert('Сначала обновите страницу, чтобы открылись новые уровни!');
+                quizStarted = false;
+                renderWelcomeScreen();
+            }
+        };
+    }
 }
 
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
-// Запуск
+// ========== ЗАПУСК ==========
 window.onload = () => {
     loadProgress();
     renderWelcomeScreen();
-    console.log("✅ Викторина с уровнями загружена!");
-    console.log("📊 Текущий прогресс:", progress);
+    console.log("✅ Викторина «Солдаты» загружена!");
+    console.log("🔄 Вопросы на каждом уровне будут выдаваться в случайном порядке!");
     
-    // Выводим информацию о доступных уровнях
-    for (let i = 0; i < quizLevels.length; i++) {
-        console.log(`Уровень ${i+1} (${quizLevels[i].name}): открыт = ${isLevelUnlocked(i)}`);
+    if (typeof quizLevels !== 'undefined') {
+        console.log(`📊 Загружено ${quizLevels.length} уровней, ${quizLevels.reduce((sum, l) => sum + l.questions.length, 0)} вопросов`);
+    } else {
+        console.error("❌ quizLevels не определён! Подключите quiz-levels.js ПЕРЕД quiz.js");
     }
 };
