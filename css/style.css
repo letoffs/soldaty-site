@@ -3516,3 +3516,84 @@ button,
 .quiz-nav-btn.success:hover {
     background: #3e9142;
 }
+
+/* ===== БЛОК ОПИСАНИЯ СЕЗОНА ===== */
+.season-description-block {
+    background: linear-gradient(135deg, #0f1a0f 0%, #0a120a 100%);
+    border-radius: 20px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    border-left: 4px solid #bd8a3e;
+}
+
+.season-description-header {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffd966;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.season-description-header i {
+    color: #bd8a3e;
+    font-size: 1.3rem;
+}
+
+.season-description-content {
+    color: #ccc;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Ряд кнопок навигации по сериям */
+.series-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.series-nav-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.episode-nav-btn {
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    padding: 8px 16px;
+    border-radius: 30px;
+    color: #ddd;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.episode-nav-btn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    border-color: #bd8a3e;
+}
+
+.episode-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+    .series-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .series-nav-buttons {
+        justify-content: center;
+    }
+    .episode-nav-btn {
+        flex: 1;
+        text-align: center;
+    }
+}
