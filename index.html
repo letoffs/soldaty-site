@@ -27,14 +27,13 @@
     <!-- Иконки Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Наши стили (путь из папки html на уровень выше в папку css) -->
+    <!-- Наши стили -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <!-- ЛОГОТИП (путь из папки html на уровень выше в папку resources) -->
         <a href="#" class="logo-link" onclick="location.reload(); return false;">
             <img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
         </a>
@@ -54,6 +53,7 @@
         <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
         <button onclick="showAuthModal()" class="auth-header-btn register"><i class="fas fa-user-plus"></i> Регистрация</button>
     </div>
+    
     <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ -->
     <div id="userInfo" class="user-info" style="display: none;">
         <img id="userAvatar" class="user-avatar" src="" alt="avatar">
@@ -113,16 +113,14 @@
             
             <p>С новобранцами случаются обычные истории, присущие военной жизни: от «дедов» до самоволок. Иногда в расположении российских войск врываются неуставные романтические отношения. А чего стоит легендарный прапорщик Шматко (Алексей Маклаков) — гроза солдат и любимец зрителей!</p>
             
-            <p>«Солдаты» — это сага об армейской жизни. О том, сколь разительные перемены в жизни человека может произвести клочок казенной бумаги по имени повестка, равно, как и о важности обладания новобранцем хорошей дыхалкой, о роли спиртного и футбольных трансляций по телевизору в обустройстве армейской жизни.</p>
-            
             <div class="description-features">
                 <div class="feature">
                     <i class="fas fa-calendar-alt"></i>
-                    <span>17 сезонов + 6 спецвыпусков</span>
+                    <span>17 сезонов + спин-оффы</span>
                 </div>
                 <div class="feature">
                     <i class="fas fa-film"></i>
-                    <span>557 серий</span>
+                    <span>Более 550 серий</span>
                 </div>
                 <div class="feature">
                     <i class="fas fa-star"></i>
@@ -136,40 +134,69 @@
         </div>
     </div>
 
+    <!-- БЛОК ОПИСАНИЯ СЕЗОНА (появляется при выборе) -->
+    <div id="seasonDescriptionBlock" class="season-description-block" style="display: none;">
+        <div class="season-description-header">
+            <i class="fas fa-tv"></i>
+            <span id="seasonDescriptionTitle"></span>
+        </div>
+        <div class="season-description-content" id="seasonDescriptionContent"></div>
+    </div>
+
     <div class="player-section">
         <!-- КОНТЕЙНЕР ДЛЯ YOUTUBE ПЛЕЕРА -->
         <div id="youtubePlayer" style="width: 100%; aspect-ratio: 16 / 9; background: #000;">
             <div id="youtubePlayerContainer"></div>
-            <!-- Сюда будет вставлен iframe -->
         </div>
 
-        <div style="text-align: center;">
-           <p>Включите VPN для просмотра серий, если YouTube не работает</p>
+        <div style="text-align: center; padding: 5px; font-size: 0.75rem; color: #8aa07a;">
+            <i class="fas fa-shield-alt"></i> Включите VPN, если YouTube не работает в вашем регионе
         </div>
         
         <div class="series-info">
             <div class="series-title" id="currentSeriesTitle">Солдаты 1 сезон · 1 серия</div>
             <div class="series-desc" id="currentSeriesDesc">«Призывниками не рождаются, а становятся» — знакомство с героями</div>
 
-            <div class="series-actions">
+            <div class="series-actions-row">
+                <div class="series-nav-buttons">
+                    <button id="prevEpisodeBtn" class="episode-nav-btn" onclick="navigateToPrevEpisode()" title="Предыдущая серия">
+                        <i class="fas fa-chevron-left"></i> Пред.
+                    </button>
+                    <button id="nextEpisodeBtn" class="episode-nav-btn" onclick="navigateToNextEpisode()" title="Следующая серия">
+                        След. <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
                 <button id="favoriteBtn" class="favorite-btn" onclick="toggleFavorite()">
                     <i class="far fa-heart"></i> В избранное
                 </button>
-            </div>
 
-            <div class="autoplay-control">
-                <label class="autoplay-switch">
-                    <input type="checkbox" id="autoplayToggle" checked>
-                    <span class="autoplay-slider"></span>
-                </label>
-                <span class="autoplay-label">
-                    <i class="fas fa-forward"></i> Следующая серия через 10 сек
-                </span>
-                <span class="autoplay-timer" id="autoplayTimer"></span>
+                <div class="autoplay-control">
+                    <label class="autoplay-switch">
+                        <input type="checkbox" id="autoplayToggle" checked>
+                        <span class="autoplay-slider"></span>
+                    </label>
+                    <span class="autoplay-label">
+                        <i class="fas fa-forward"></i> Авто
+                    </span>
+                    <span class="autoplay-timer" id="autoplayTimer"></span>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Навигация по сезонам -->
+    <div class="season-nav-wrapper">
+        <div class="season-nav" id="seasonNav"></div>
+        <div class="season-nav-scroll-hint">
+            <i class="fas fa-arrows-alt-h"></i> Листайте вбок, чтобы увидеть все сезоны
+        </div>
+    </div>
+    
+    <!-- Сетка серий -->
+    <div class="episodes-grid" id="episodesGrid"></div>
+
+    <!-- БЛОК КОММЕНТАРИЕВ -->
     <div class="comments-section">
         <div class="comments-header">
             <i class="fas fa-comments"></i> Комментарии
@@ -179,14 +206,11 @@
         <div class="comment-form">
             <div class="comment-input-row">
                 <textarea id="commentText" rows="2" placeholder="Поделитесь впечатлением о серии..."></textarea>
-             </div>
-        
+            </div>
             
             <div class="form-rating">
-                <span class="form-rating-label">Ваша оценка:</span>
-                <div class="stars-container" id="formStarsContainer">
-                <!-- Звёзды будут добавлены через JS -->
-                </div>
+                <span class="form-rating-label">Ваша оценка серии:</span>
+                <div class="stars-container" id="formStarsContainer"></div>
                 <span class="form-rating-value" id="formRatingValue">Не выбрано</span>
             </div>
         
@@ -196,30 +220,29 @@
         </div>
 
         <div class="comments-list" id="commentsList">
-            <div class="comment-empty">Пока нет комментариев. Будьте первым!</div>
+            <div class="comment-empty">💬 Нет комментариев. Будьте первым!</div>
         </div>
-
     </div>
 
-
-    <div class="season-nav" id="seasonNav"></div>
-    <div class="episodes-grid" id="episodesGrid"></div>
-
-    <div class="footer"> Фан-сайт сериала «Солдаты» · Видео предоставлены YouTube-каналом "Дембельский альбом"</div>
+    <div class="footer">
+        <i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · Видео предоставлены YouTube · 2004-2013
+    </div>
 </div>
 
 <!-- Данные о сериях -->
-<script src="js/episodes-data.js"></script>
-<!-- 1. СНАЧАЛА Firebase SDK -->
+<script src="/js/episodes-data.js"></script>
+<!-- 1. Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<!-- 2. ПОТОМ ваш конфиг -->
-<script src="firebase-config.js"></script>
-<!-- 3. ПОТОМ авторизация -->
-<script src="js/firebase-auth.js"></script> 
-<!-- Логика сайта -->
-<script src="js/script.js"></script>
+<!-- 2. Конфиг -->
+<script src="/firebase-config.js"></script>
+<!-- 3. Авторизация -->
+<script src="/js/firebase-auth.js"></script> 
+<!-- 4. Описания сезонов -->
+<script src="/js/season-descriptions.js"></script>
+<!-- 5. Основная логика -->
+<script src="/js/script.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
