@@ -3518,33 +3518,49 @@ button,
 }
 
 /* ===== БЛОК ОПИСАНИЯ СЕЗОНА ===== */
+/* ===== БЛОК ОПИСАНИЯ СЕЗОНА ===== */
 .season-description-block {
     background: linear-gradient(135deg, #0f1a0f 0%, #0a120a 100%);
-    border-radius: 20px;
-    padding: 20px 25px;
-    margin-bottom: 25px;
-    border-left: 4px solid #bd8a3e;
+    border-radius: 24px;
+    padding: 25px 30px;
+    margin-bottom: 35px;
+    border: 1px solid #3e5a3e;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
 .season-description-header {
-    font-size: 1.2rem;
-    font-weight: bold;
+    font-size: 1.6rem;
     color: #ffd966;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #bd8a3e;
+    display: inline-block;
 }
 
 .season-description-header i {
+    margin-right: 12px;
     color: #bd8a3e;
-    font-size: 1.3rem;
 }
 
 .season-description-content {
-    color: #ccc;
+    color: #ddd;
     line-height: 1.6;
-    font-size: 0.9rem;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    text-align: justify;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 700px) {
+    .season-description-block {
+        padding: 15px 20px;
+    }
+    .season-description-header {
+        font-size: 1.3rem;
+    }
+    .season-description-content {
+        font-size: 0.9rem;
+    }
 }
 
 /* Ряд кнопок навигации по сериям */
