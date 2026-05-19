@@ -8,6 +8,51 @@ let autoplayTimer = null;
 let timerInterval = null;
 let secondsLeft = 10;
 
+// ========== НОВОЕ: МАППИНГ НАЗВАНИЙ ДЛЯ СПИН-ОФФОВ ==========
+const seasonTitles = {
+    // Основные сезоны 1-17 (можно оставить как есть или добавить названия)
+    1: "1 СЕЗОН",
+    2: "2 СЕЗОН",
+    3: "3 СЕЗОН",
+    4: "4 СЕЗОН",
+    5: "5 СЕЗОН",
+    6: "6 СЕЗОН",
+    7: "7 СЕЗОН",
+    8: "8 СЕЗОН",
+    9: "9 СЕЗОН",
+    10: "10 СЕЗОН",
+    11: "11 СЕЗОН",
+    12: "12 СЕЗОН",
+    13: "13 СЕЗОН",
+    14: "14 СЕЗОН",
+    15: "15 СЕЗОН",
+    16: "16 СЕЗОН",
+    17: "17 СЕЗОН",
+    
+    // Спин-оффы и спецвыпуски 18-30
+    18: "ПРАПОРЩИК ШМАТКО (Ё-моё)",
+    19: "КОЛОБКОВ. НАСТОЯЩИЙ ПОЛКОВНИК!",
+    20: "БОРОДИН. ВОЗВРАЩЕНИЕ ГЕНЕРАЛА",
+    21: "СМАЛЬКОВ. ДВОЙНОЙ ШАНТАЖ",
+    22: "ЗДРАВСТВУЙ, РОТА, НОВЫЙ ГОД! (2004)",
+    23: "23 ФЕВРАЛЯ (2005)",
+    24: "НОВЫЙ ГОД, ТВОЮ ДИВИЗИЮ! (2007)",
+    25: "СОЛДАТЫ. НАИЗНАНКУ (Документальный)",
+    26: "СОЛДАТЫ. ДЕМБЕЛЬСКИЙ АЛЬБОМ (Ремикс)",
+    27: "СОЛДАТЫ + МИСС ВСЕЛЕННАЯ",
+    28: "СОЛДАТЫ РУЛЯТ",
+    29: "КИНОИСТОРИИ. СОЛДАТЫ",
+    30: "СОЛДАТЫ. БОНУС"
+};
+
+// Функция для получения отображаемого названия сезона
+function getSeasonDisplayName(season) {
+    if (seasonTitles[season]) {
+        return seasonTitles[season];
+    }
+    return `${season} СЕЗОН`;
+}
+
 // ---------- ОЦЕНКИ СЕРИЙ ----------
 let ratings = {};
 
@@ -145,9 +190,17 @@ function loadEpisode(episode) {
     }
     
     currentEpisodeObj = episode;
+
+    const seasonDisplay = getSeasonDisplayName(episode.season);
+
+    if (episode.season >= 18) {
+        document.getElementById('currentSeriesTitle').innerHTML = 
+            `${seasonDisplay} · ${episode.episode} серия &nbsp;|&nbsp; ${episode.title}`;
+    } else {
+        document.getElementById('currentSeriesTitle').innerHTML = 
+            `Солдаты ${episode.season} сезон · ${episode.episode} серия &nbsp;|&nbsp; ${episode.title}`;
+    }
     
-    document.getElementById('currentSeriesTitle').innerHTML = 
-        `Солдаты ${episode.season} сезон · ${episode.episode} серия &nbsp;|&nbsp; ${episode.title}`;
     document.getElementById('currentSeriesDesc').innerHTML = episode.desc;
     
     if (currentPlayer && currentPlayer.loadVideoById) {
@@ -445,10 +498,16 @@ function renderSeasonNav() {
     const nav = document.getElementById('seasonNav');
     if (!nav) return;
     nav.innerHTML = '';
+    seasons.sort((a, b) => a - b);
     seasons.forEach(s => {
         const btn = document.createElement('button');
-        btn.innerText = `${s} СЕЗОН`;
+        btn.innerText = getSeasonDisplayName(s);
         btn.className = 'season-btn';
+        if (s >= 18) {
+            btn.classList.add('spinoff');
+            btn.setAttribute('data-spinoff', 'true');
+            btn.setAttribute('data-hint', getSeasonDisplayName(s));
+        }
         if (s === currentSeason) btn.classList.add('active');
         btn.onclick = () => {
             currentSeason = s;
