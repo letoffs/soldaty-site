@@ -117,7 +117,7 @@ body::before {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
-    margin: 35px 0 20px 0; 
+    margin: 35px 0 20px 0;
     padding-bottom: 15px;
     border-bottom: 1px solid #3e5a3e;
 }
@@ -125,25 +125,225 @@ body::before {
 .season-btn {
     background: #1e2a1e;
     border: none;
-    padding: 10px 24px;
+    padding: 10px 20px;
     color: #ddd;
     font-weight: bold;
-    font-size: 1rem;
+    font-size: 0.9rem;
     border-radius: 40px;
     cursor: pointer;
     transition: all 0.2s;
     font-family: inherit;
+    white-space: nowrap;
 }
 
+/* Для спин-оффов - другой оттенок */
+.season-btn.spinoff {
+    background: #2a1e2a;
+    border-left: 2px solid #bd8a3e;
+}
+
+.season-btn.spinoff.active {
+    background: #bd8a3e;
+    color: #0f1a0f;
+}
+
+.season-btn.spinoff:hover {
+    background: #7a5a2a;
+    color: white;
+}
+
+/* Для спин-оффов - меньший шрифт на десктопе */
+@media (min-width: 1025px) {
+    .season-btn {
+        font-size: 0.85rem;
+        padding: 8px 16px;
+    }
+}
+
+/* Адаптация для планшетов */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .season-nav {
+        gap: 8px;
+    }
+    .season-btn {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        white-space: normal;
+        text-align: center;
+        max-width: 140px;
+    }
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .season-nav {
+        overflow-x: auto;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding-bottom: 15px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .season-btn {
+        font-size: 0.7rem;
+        padding: 6px 14px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    /* Для спин-оффов на мобильных - более компактно */
+    .season-btn.spinoff {
+        font-size: 0.65rem;
+        padding: 5px 12px;
+    }
+}
+
+/* Для совсем маленьких экранов (320-480px) */
+@media (max-width: 480px) {
+    .season-btn {
+        font-size: 0.6rem;
+        padding: 5px 10px;
+    }
+    
+    .season-btn.spinoff {
+        font-size: 0.55rem;
+        padding: 4px 8px;
+    }
+}
+
+/* Стиль для заголовка текущей серии (в плеере) */
+.series-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #ffd966;
+}
+
+/* Для спин-оффов в заголовке плеера - чуть меньший шрифт */
+.series-title.spinoff-title {
+    font-size: 1.2rem;
+}
+
+/* Иконка спин-оффа рядом с названием */
+.spinoff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e2a1e;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    color: #bd8a3e;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+
+.spinoff-badge i {
+    font-size: 0.8rem;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 700px) {
+    .series-title {
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+    
+    .spinoff-badge {
+        display: inline-block;
+        margin-left: 8px;
+        font-size: 0.6rem;
+        padding: 2px 8px;
+    }
+}
+
+/* Стили для активной кнопки сезона (общие) */
 .season-btn.active {
     background: #bd8a3e;
     color: #0f1a0f;
     box-shadow: 0 0 8px #ffb347;
 }
 
-.season-btn:hover {
-    background: #7a5a2a;
-    color: white;
+/* Подсказка при наведении на спин-офф */
+.season-btn[data-spinoff="true"]:hover::after {
+    content: attr(data-hint);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0a120a;
+    color: #ffd966;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    margin-bottom: 5px;
+    border: 1px solid #bd8a3e;
+}
+
+/* Контейнер для навигации с прокруткой на мобильных */
+.season-nav-wrapper {
+    position: relative;
+}
+
+.season-nav-scroll-hint {
+    display: none;
+    text-align: right;
+    font-size: 0.65rem;
+    color: #8aa07a;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .season-nav-scroll-hint {
+        display: block;
+    }
+}
+
+/* Стиль для эмодзи в кнопках сезонов */
+.season-btn i {
+    margin-right: 4px;
+    font-size: 0.85rem;
+}
+
+/* Адаптация для экранов с высоким разрешением */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .season-btn {
+        font-weight: 500;
+    }
+}
+
+/* Улучшение читаемости для длинных названий */
+@media (min-width: 769px) and (max-width: 1200px) {
+    .season-btn {
+        font-size: 0.8rem;
+        padding: 8px 14px;
+    }
+}
+
+/* Стиль для выпадающего меню на очень маленьких экранах (опционально) */
+@media (max-width: 500px) {
+    .season-nav {
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+    
+    .season-nav::-webkit-scrollbar {
+        height: 3px;
+    }
+    
+    .season-nav::-webkit-scrollbar-track {
+        background: #1c2a1c;
+        border-radius: 10px;
+    }
+    
+    .season-nav::-webkit-scrollbar-thumb {
+        background: #bd8a3e;
+        border-radius: 10px;
+    }
 }
 
 /* ===== ОПИСАНИЕ СЕРИАЛА НА ГЛАВНОЙ ===== */
