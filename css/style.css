@@ -212,6 +212,56 @@ body::before {
     }
 }
 
+/* ===== СТИЛИ ДЛЯ НЕДОСТУПНЫХ СЕЗОНОВ ===== */
+.season-btn.unavailable {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #2a2a2a;
+    border-color: #5a5a5a;
+    position: relative;
+}
+
+.season-btn.unavailable:hover {
+    background: #2a2a2a;
+    transform: none;
+    box-shadow: none;
+}
+
+.season-btn.unavailable:active {
+    transform: none;
+}
+
+/* Всплывающая подсказка при наведении на недоступную кнопку */
+.season-btn.unavailable:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0a120a;
+    color: #ffd966;
+    font-size: 0.7rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    margin-bottom: 8px;
+    border: 1px solid #bd8a3e;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Для мобильных устройств - чтобы подсказка не обрезалась */
+@media (max-width: 768px) {
+    .season-btn.unavailable:hover::after {
+        white-space: normal;
+        max-width: 200px;
+        text-align: center;
+        font-size: 0.65rem;
+        padding: 5px 10px;
+    }
+}
+
 /* Стиль для заголовка текущей серии (в плеере) */
 .series-title {
     font-size: 1.4rem;
