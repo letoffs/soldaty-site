@@ -93,6 +93,11 @@ function startAutoplayTimer() {
     secondsLeft = 10;
     updateTimerDisplay();
     
+    const timerSpan = document.getElementById('autoplayTimer');
+    if (timerSpan) {
+        timerSpan.style.display = 'inline-block';
+    }
+    
     timerInterval = setInterval(() => {
         secondsLeft--;
         updateTimerDisplay();
@@ -127,8 +132,10 @@ function updateTimerDisplay() {
     const timerSpan = document.getElementById('autoplayTimer');
     if (timerSpan && autoplayEnabled && secondsLeft > 0 && timerInterval) {
         timerSpan.textContent = `↻ ${secondsLeft} сек`;
+        timerSpan.style.display = 'inline-block';
     } else if (timerSpan) {
         timerSpan.textContent = '';
+        timerSpan.style.display = 'none';
     }
 }
 
@@ -172,13 +179,26 @@ function createYouTubePlayer(videoId) {
 function onPlayerStateChange(event) {
     // event.data: -1 (не начато), 0 (завершено), 1 (играет), 2 (пауза), 3 (буферизация)
     if (event.data === 0) { // Видео закончилось
+        const timerSpan = document.getElementById('autoplayTimer');
+        if (timerSpan) {
+            timerSpan.style.display = 'inline-block';
+        }
         if (autoplayEnabled) {
             startAutoplayTimer();
         }
     } else if (event.data === 1) { // Видео играет
         stopAutoplayTimer();
+        const timerSpan = document.getElementById('autoplayTimer');
+        if (timerSpan) {
+            timerSpan.style.display = 'none';
+            timerSpan.textContent = '';
+        }
     } else if (event.data === 2) { // Пауза
         stopAutoplayTimer();
+        const timerSpan = document.getElementById('autoplayTimer');
+        if (timerSpan) {
+            timerSpan.style.display = 'none';
+        }
     }
 }
 
@@ -498,26 +518,93 @@ function renderSeasonNav() {
     const nav = document.getElementById('seasonNav');
     if (!nav) return;
     nav.innerHTML = '';
+    
     seasons.sort((a, b) => a - b);
+    
     seasons.forEach(s => {
         const btn = document.createElement('button');
         btn.innerText = getSeasonDisplayName(s);
         btn.className = 'season-btn';
+        
         if (s >= 18) {
             btn.classList.add('spinoff');
-            btn.setAttribute('data-spinoff', 'true');
-            btn.setAttribute('data-hint', getSeasonDisplayName(s));
         }
-        if (s === currentSeason) btn.classList.add('active');
+        
+        if (s === currentSeason) {
+            btn.classList.add('active');
+            // Показываем описание сезона
+            showSeasonDescription(s);
+        }
+        
         btn.onclick = () => {
             currentSeason = s;
             renderSeasonNav();
             renderEpisodesGrid(currentSeason);
             const episodesOfSeason = getEpisodesBySeason(currentSeason);
             if (episodesOfSeason.length) loadEpisode(episodesOfSeason[0]);
+            // Показываем описание выбранного сезона
+            showSeasonDescription(s);
         };
         nav.appendChild(btn);
     });
+}
+
+// Функция для отображения описания сезона
+function showSeasonDescription(season) {
+    const block = document.getElementById('seasonDescriptionBlock');
+    const titleSpan = document.getElementById('seasonDescriptionTitle');
+    const contentDiv = document.getElementById('seasonDescriptionContent');
+    
+    if (!block || !titleSpan || !contentDiv) return;
+    
+    const desc = getSeasonDescription(season);
+    titleSpan.innerHTML = `<i class="fas fa-info-circle"></i> ${desc.title}`;
+    contentDiv.innerHTML = desc.content;
+    block.style.display = 'block';
+}
+
+// Функция для перехода к предыдущей серии
+function navigateToPrevEpisode() {
+    const episodes = getEpisodesBySeason(currentSeason);
+    const currentIndex = episodes.findIndex(ep => 
+        ep.season === currentEpisodeObj.season && 
+        ep.episode === currentEpisodeObj.episode
+    );
+    
+    if (currentIndex > 0) {
+        loadEpisode(episodes[currentIndex - 1]);
+    } else {
+        // Если это первая серия сезона, переключаемся на предыдущий сезон
+        const allSeasons = getSeasons();
+        const currentSeasonIndex = allSeasons.findIndex(s => s === currentSeason);
+        if (currentSeasonIndex > 0) {
+            const prevSeason = allSeasons[currentSeasonIndex - 1];
+            const prevSeasonEpisodes = getEpisodesBySeason(prevSeason);
+            if (prevSeasonEpisodes.length > 0) {
+                currentSeason = prevSeason;
+                renderSeasonNav();
+                renderEpisodesGrid(currentSeason);
+                loadEpisode(prevSeasonEpisodes[prevSeasonEpisodes.length - 1]);
+            }
+        } else {
+            showToast("⏮️ Это первая серия сериала");
+        }
+    }
+}
+
+// Функция для перехода к следующей серии
+function navigateToNextEpisode() {
+    const nextEpisode = getNextEpisode();
+    if (nextEpisode) {
+        if (nextEpisode.season !== currentSeason) {
+            currentSeason = nextEpisode.season;
+            renderSeasonNav();
+            renderEpisodesGrid(currentSeason);
+        }
+        loadEpisode(nextEpisode);
+    } else {
+        showToast("🏁 Это последняя серия сериала");
+    }
 }
 
 // ---------- ЗАПУСК ----------
