@@ -513,7 +513,7 @@ function renderEpisodesGrid(season) {
     }
 }
 
-const unavailableSeasons = [26];
+const unavailableSeasons = [26, 30];
 
 function renderSeasonNav() {
     const seasons = getSeasons();
