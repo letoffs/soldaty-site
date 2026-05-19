@@ -513,6 +513,8 @@ function renderEpisodesGrid(season) {
     }
 }
 
+const unavailableSeasons = [26, 30];
+
 function renderSeasonNav() {
     const seasons = getSeasons();
     const nav = document.getElementById('seasonNav');
@@ -523,6 +525,8 @@ function renderSeasonNav() {
     
     seasons.forEach(s => {
         const btn = document.createElement('button');
+        const isUnavailable = unavailableSeasons.includes(s);
+        
         btn.innerText = getSeasonDisplayName(s);
         btn.className = 'season-btn';
         
@@ -530,19 +534,47 @@ function renderSeasonNav() {
             btn.classList.add('spinoff');
         }
         
-        if (s === currentSeason) {
+        // Если сезон недоступен
+        if (isUnavailable) {
+            btn.classList.add('unavailable');
+            btn.disabled = true;
+            btn.title = '⏳ Временно недоступно — видео ещё нет на YouTube';
+            
+            // Добавляем значок замка
+            const lockIcon = document.createElement('i');
+            lockIcon.className = 'fas fa-lock';
+            lockIcon.style.marginLeft = '8px';
+            lockIcon.style.fontSize = '0.7rem';
+            btn.appendChild(lockIcon);
+        }
+        
+        if (s === currentSeason && !isUnavailable) {
             btn.classList.add('active');
-            // Показываем описание сезона
             showSeasonDescription(s);
+        } else if (s === currentSeason && isUnavailable) {
+            // Если текущий сезон недоступен, переключаем на первый доступный
+            const firstAvailable = seasons.find(season => !unavailableSeasons.includes(season));
+            if (firstAvailable) {
+                currentSeason = firstAvailable;
+                renderSeasonNav();
+                renderEpisodesGrid(currentSeason);
+                const episodesOfSeason = getEpisodesBySeason(currentSeason);
+                if (episodesOfSeason.length) loadEpisode(episodesOfSeason[0]);
+                showSeasonDescription(currentSeason);
+            }
         }
         
         btn.onclick = () => {
+            if (isUnavailable) {
+                showToast('Этот сезон временно недоступен.');
+                return;
+            }
+            
             currentSeason = s;
             renderSeasonNav();
             renderEpisodesGrid(currentSeason);
             const episodesOfSeason = getEpisodesBySeason(currentSeason);
             if (episodesOfSeason.length) loadEpisode(episodesOfSeason[0]);
-            // Показываем описание выбранного сезона
             showSeasonDescription(s);
         };
         nav.appendChild(btn);
