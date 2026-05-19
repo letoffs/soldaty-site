@@ -42,7 +42,7 @@ const seasonTitles = {
     27: "СОЛДАТЫ + МИСС ВСЕЛЕННАЯ",
     28: "СОЛДАТЫ РУЛЯТ",
     29: "КИНОИСТОРИИ. СОЛДАТЫ",
-    30: "СОЛДАТЫ. БОНУС"
+    30: "СОЛДАТЫ-2006 (НОВОГОДНЕЕ ШОУ)"
 };
 
 // Функция для получения отображаемого названия сезона
@@ -513,7 +513,7 @@ function renderEpisodesGrid(season) {
     }
 }
 
-const unavailableSeasons = [26, 30];
+const unavailableSeasons = [26];
 
 function renderSeasonNav() {
     const seasons = getSeasons();
