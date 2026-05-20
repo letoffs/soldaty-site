@@ -1,3 +1,7 @@
+// ==============================================
+// ВИДЕО (Трейлеры, анонсы, клипы и нарезки)
+// ==============================================
+
 const videosData = [
     // ========== КАТЕГОРИЯ: ТРЕЙЛЕРЫ И АНОНСЫ ==========
     {
@@ -81,7 +85,8 @@ const videosData = [
         youtubeId: "HnPzAy8ylNg",
         duration: "23:38",
         year: "200?",
-        category: "clip"
+        category: "clip",
+        is18Plus: true 
     }
 ];
 
@@ -218,6 +223,166 @@ function renderVideos() {
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+}
+
+// ==============================================
+// ПРОВЕРКА ВОЗРАСТА ДЛЯ 18+ КОНТЕНТА
+// ==============================================
+
+// Ключ для хранения в localStorage
+const AGE_VERIFIED_KEY = 'soldaty_age_verified';
+
+// Проверить, подтверждён ли возраст
+function isAgeVerified() {
+    const verified = localStorage.getItem(AGE_VERIFIED_KEY);
+    return verified === 'true';
+}
+
+// Сохранить подтверждение возраста
+function setAgeVerified() {
+    localStorage.setItem(AGE_VERIFIED_KEY, 'true');
+}
+
+// Показать модальное окно проверки возраста
+function showAgeVerificationModal(video, callback) {
+    // Создаём модальное окно, если его нет
+    let ageModal = document.getElementById('ageVerificationModal');
+    
+    if (!ageModal) {
+        ageModal = document.createElement('div');
+        ageModal.id = 'ageVerificationModal';
+        ageModal.className = 'modal age-verification-modal';
+        ageModal.innerHTML = `
+            <div class="modal-content age-verification-content">
+                <div class="age-verification-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3>⚠️ Внимание! Контент 18+</h3>
+                <p>Это видео содержит сцены, которые могут быть неуместны для лиц младше 18 лет.</p>
+                <p>Курение, алкоголь, нецензурная лексика и армейский юмор.</p>
+                <div class="age-verification-buttons">
+                    <button id="ageConfirmBtn" class="age-confirm-btn">
+                        <i class="fas fa-check-circle"></i> Мне есть 18 лет
+                    </button>
+                    <button id="ageCancelBtn" class="age-cancel-btn">
+                        <i class="fas fa-times-circle"></i> Меньше 18 лет
+                    </button>
+                </div>
+                <p class="age-verification-note">Подтверждение сохраняется в вашем браузере.</p>
+            </div>
+        `;
+        document.body.appendChild(ageModal);
+    }
+    
+    // Показываем модальное окно
+    ageModal.style.display = 'flex';
+    
+    // Обработчик для кнопки подтверждения
+    const confirmBtn = document.getElementById('ageConfirmBtn');
+    const cancelBtn = document.getElementById('ageCancelBtn');
+    
+    const onConfirm = () => {
+        setAgeVerified();
+        ageModal.style.display = 'none';
+        if (callback) callback();
+        cleanup();
+    };
+    
+    const onCancel = () => {
+        ageModal.style.display = 'none';
+        showToastMessage('⛔ Доступ запрещён. Этот контент предназначен для зрителей 18+');
+        cleanup();
+    };
+    
+    const cleanup = () => {
+        confirmBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', onCancel);
+    };
+    
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    
+    // Закрытие по клику вне окна
+    ageModal.onclick = (e) => {
+        if (e.target === ageModal) {
+            ageModal.style.display = 'none';
+            cleanup();
+        }
+    };
+}
+
+// Обновлённая функция playVideo с проверкой возраста
+function playVideo(video) {
+    if (!video || !video.youtubeId) {
+        showToastMessage('❌ Видео временно недоступно');
+        return;
+    }
+    
+    // Проверка возраста для видео с id 9 (или для всех видео с пометкой 18+)
+    const requiresAgeCheck = video.id === 9 || video.is18Plus === true;
+    
+    if (requiresAgeCheck && !isAgeVerified()) {
+        showAgeVerificationModal(video, () => {
+            playVideoAfterCheck(video);
+        });
+        return;
+    }
+    
+    playVideoAfterCheck(video);
+}
+
+// Основная функция воспроизведения (без проверки возраста)
+function playVideoAfterCheck(video) {
+    const modal = document.getElementById('videoModal');
+    const container = document.getElementById('videoPlayer');
+    
+    if (!modal || !container) {
+        console.error("Модальное окно или контейнер не найдены!");
+        showToastMessage('❌ Ошибка: окно просмотра не найдено');
+        return;
+    }
+    
+    container.innerHTML = '';
+    const playerDiv = document.createElement('div');
+    playerDiv.id = 'videoPlayerDiv';
+    container.appendChild(playerDiv);
+    
+    const createPlayer = () => {
+        try {
+            currentVideoPlayer = new YT.Player('videoPlayerDiv', {
+                height: '100%',
+                width: '100%',
+                videoId: video.youtubeId,
+                playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
+                events: {
+                    'onReady': (event) => event.target.playVideo(),
+                    'onError': (event) => {
+                        let errorMsg = '❌ Ошибка загрузки видео';
+                        if (event.data === 5) errorMsg = '❌ Видео недоступно в этом регионе';
+                        if (event.data === 100) errorMsg = '❌ Видео не найдено';
+                        showToastMessage(errorMsg);
+                    }
+                }
+            });
+        } catch(e) {
+            console.error("Ошибка создания плеера:", e);
+            showToastMessage('❌ Не удалось создать плеер');
+        }
+    };
+    
+    if (typeof YT === 'undefined' || !YT.Player) {
+        const checkYT = setInterval(() => {
+            if (typeof YT !== 'undefined' && YT.Player) {
+                clearInterval(checkYT);
+                createPlayer();
+            }
+        }, 100);
+        setTimeout(() => clearInterval(checkYT), 5000);
+    } else {
+        createPlayer();
+    }
+    
+    modal.style.display = 'flex';
 }
 
 // Инициализация
