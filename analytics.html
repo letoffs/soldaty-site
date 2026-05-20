@@ -80,7 +80,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <!-- 2. ПОТОМ ваш конфиг -->
-<script src="firebase-config.js"></script>
+<script src="../firebase-config.js"></script>
 
 <!-- 3. ПОТОМ скрипт страницы -->
 <script>
@@ -139,8 +139,10 @@
             });
             
             // Подсчитываем статистику
-            const totalEvents = events.length;
+            const uniqueGuests = new Set(events.filter(e => !e.isAuth).map(e => e.userId)).size;
+            const uniqueRegistered = new Set(events.filter(e => e.isAuth).map(e => e.userId)).size;
             const uniqueUsers = new Set(events.map(e => e.userId)).size;
+            const totalEvents = events.length;
             
             content.innerHTML = `
                 <div class="stats-grid">
@@ -154,25 +156,33 @@
                         `).join('') || '<div>Нет данных за сегодня</div>'}
                     </div>
                     <div class="stat-card">
-                        <h3><i class="fas fa-chart-simple"></i> Общая статистика</h3>
-                        <div class="stat-number">${totalEvents}</div>
-                        <div>всего событий</div>
+                        <h3><i class="fas fa-users"></i> Пользователи</h3>
+                        <div class="stat-number" style="font-size: 1.5rem;">${uniqueRegistered}</div>
+                        <div>зарегистрированных</div>
+                        <div class="stat-number" style="font-size: 1.5rem;">${uniqueGuests}</div>
+                        <div>гостей (незарегистрированных)</div>
+                        <hr>
                         <div class="stat-number" style="font-size: 1.5rem;">${uniqueUsers}</div>
-                        <div>уникальных пользователей</div>
+                        <div>всего уникальных</div>
                     </div>
                 </div>
-                
+
                 <h3><i class="fas fa-history"></i> Последние события</h3>
                 <div class="events-list">
                     ${events.length === 0 ? '<div>Пока нет событий</div>' : events.map(e => `
                         <div class="event-item">
                             <div><strong>${e.type}</strong> — ${JSON.stringify(e.data).substring(0, 100)}</div>
-                            <div class="event-time">${new Date(e.timestamp).toLocaleString('ru-RU')} | ${e.userEmail || 'anon'} | ${e.page || 'unknown'}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } catch (error) {
+                            <div class="event-time">
+                                ${new Date(e.timestamp).toLocaleString('ru-RU')} | 
+                                <span style="color: ${e.isAuth ? '#4caf50' : '#ff9800'}">
+                                    ${e.isAuth ? '👤 ' + (e.userEmail || 'зарегистрированный') : '👻 гость'}
+                                </span> | 
+                                ${e.page || 'unknown'}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
             console.error("Ошибка загрузки:", error);
             content.innerHTML = `
                 <div class="admin-access-denied">
