@@ -1,9 +1,74 @@
 // ============================================================
-// АНАЛИТИКА (только для администратора)
+// АНАЛИТИКА (для всех пользователей — и гостей, и зарегистрированных)
 // ============================================================
 
-// ID администратора (ваш email)
 const ADMIN_EMAIL = "twinkjjjjkmnb@gmail.com";
+
+// Генерация ID для незарегистрированного пользователя (хранится в localStorage)
+function getAnonymousId() {
+    let anonymousId = localStorage.getItem('anonymous_id');
+    if (!anonymousId) {
+        anonymousId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('anonymous_id', anonymousId);
+    }
+    return anonymousId;
+}
+
+// Получить информацию о пользователе (регистрация или аноним)
+function getUserInfo() {
+    if (window.currentUser) {
+        return {
+            isAuth: true,
+            id: window.currentUser.uid,
+            email: window.currentUser.email,
+            name: window.currentUser.displayName || 'Без имени'
+        };
+    } else {
+        return {
+            isAuth: false,
+            id: getAnonymousId(),
+            email: 'anonymous@guest',
+            name: 'Гость'
+        };
+    }
+}
+
+// Записать событие
+async function logEvent(eventType, eventData) {
+    const userInfo = getUserInfo();
+    
+    const event = {
+        type: eventType,
+        data: eventData,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        userId: userInfo.id,
+        userEmail: userInfo.email,
+        userName: userInfo.name,
+        isAuth: userInfo.isAuth,
+        userAgent: navigator.userAgent,
+        page: window.location.pathname,
+        referrer: document.referrer || 'direct'
+    };
+    
+    try {
+        await firebase.database().ref('analytics/events').push().set(event);
+        await updateDailyStats(eventType, userInfo.isAuth);
+        console.log(`📊 Аналитика: ${eventType}`, eventData);
+    } catch (error) {
+        console.error("Ошибка записи аналитики:", error);
+    }
+}
+
+// Обновить дневную статистику (с разделением на авторизованных и гостей)
+async function updateDailyStats(eventType, isAuth) {
+    const today = new Date().toISOString().split('T')[0];
+    const userType = isAuth ? 'registered' : 'guest';
+    
+    const statsRef = firebase.database().ref(`analytics/daily_stats/${today}/${eventType}/${userType}`);
+    const snapshot = await statsRef.once('value');
+    const currentCount = snapshot.val() || 0;
+    await statsRef.set(currentCount + 1);
+}
 
 // Флаг, включена ли аналитика
 let analyticsEnabled = false;
@@ -13,7 +78,9 @@ function initAnalytics() {
     console.log("🔍 initAnalytics вызван");
     
     if (!window.currentUser) {
-        console.log("❌ Нет пользователя");
+        console.log("👤 Гость: аналитика включена (ограниченно)");
+        analyticsEnabled = true;
+        // Кнопку админ-панели НЕ показываем гостям
         return;
     }
     
@@ -27,8 +94,9 @@ function initAnalytics() {
         // Показываем кнопку для доступа к аналитике
         showAdminButton();
     } else {
-        console.log("👤 Обычный пользователь: аналитика выключена");
-        analyticsEnabled = false;
+        analyticsEnabled = true;
+        console.log("👤 Обычный пользователь: аналитика включена");
+        analyticsEnabled = true;
     }
 }
 
@@ -77,37 +145,6 @@ function showAdminButton() {
     
     document.body.appendChild(adminBtn);
     console.log("✅ Кнопка админ-панели добавлена");
-}
-
-// Записать событие
-async function logEvent(eventType, eventData) {
-    if (!analyticsEnabled) return;
-    
-    const event = {
-        type: eventType,
-        data: eventData,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        userId: window.currentUser?.uid || 'anonymous',
-        userEmail: window.currentUser?.email || 'anonymous',
-        userAgent: navigator.userAgent,
-        page: window.location.pathname
-    };
-    
-    try {
-        await firebase.database().ref('analytics/events').push().set(event);
-        await updateDailyStats(eventType);
-    } catch (error) {
-        console.error("Ошибка записи аналитики:", error);
-    }
-}
-
-// Обновить дневную статистику
-async function updateDailyStats(eventType) {
-    const today = new Date().toISOString().split('T')[0];
-    const statsRef = firebase.database().ref(`analytics/daily_stats/${today}/${eventType}`);
-    const snapshot = await statsRef.once('value');
-    const currentCount = snapshot.val() || 0;
-    await statsRef.set(currentCount + 1);
 }
 
 // Записать просмотр страницы
