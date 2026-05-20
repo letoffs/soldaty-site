@@ -537,57 +537,32 @@ function renderSeasonNav() {
     
     seasons.forEach(s => {
         const btn = document.createElement('button');
-        const isUnavailable = unavailableSeasons.includes(s);
-        
         btn.innerText = getSeasonDisplayName(s);
         btn.className = 'season-btn';
         
-        if (s >= 18) {
-            btn.classList.add('spinoff');
-        }
-        
-        // Если сезон недоступен
-        if (isUnavailable) {
+        if (s >= 18) btn.classList.add('spinoff');
+        if (unavailableSeasons.includes(s)) {
             btn.classList.add('unavailable');
             btn.disabled = true;
-            btn.title = '⏳ Временно недоступно — видео ещё нет на YouTube';
-            
-            // Добавляем значок замка
-            const lockIcon = document.createElement('i');
-            lockIcon.className = 'fas fa-lock';
-            lockIcon.style.marginLeft = '8px';
-            lockIcon.style.fontSize = '0.7rem';
-            btn.appendChild(lockIcon);
+            btn.title = '⏳ Временно недоступно';
         }
         
-        if (s === currentSeason && !isUnavailable) {
+        if (s === currentSeason && !unavailableSeasons.includes(s)) {
             btn.classList.add('active');
-            showSeasonDescription(s);
-        } else if (s === currentSeason && isUnavailable) {
-            // Если текущий сезон недоступен, переключаем на первый доступный
-            const firstAvailable = seasons.find(season => !unavailableSeasons.includes(season));
-            if (firstAvailable) {
-                currentSeason = firstAvailable;
-                renderSeasonNav();
-                renderEpisodesGrid(currentSeason);
-                const episodesOfSeason = getEpisodesBySeason(currentSeason);
-                if (episodesOfSeason.length) loadEpisode(episodesOfSeason[0]);
-                showSeasonDescription(currentSeason);
-            }
+            showSeasonDescription(s);  // ← ЭТО ДОЛЖНО БЫТЬ
         }
         
         btn.onclick = () => {
-            if (isUnavailable) {
-                showToast('Этот сезон временно недоступен.');
+            if (unavailableSeasons.includes(s)) {
+                showToast('⏳ Этот сезон временно недоступен');
                 return;
             }
-            
             currentSeason = s;
             renderSeasonNav();
             renderEpisodesGrid(currentSeason);
             const episodesOfSeason = getEpisodesBySeason(currentSeason);
             if (episodesOfSeason.length) loadEpisode(episodesOfSeason[0]);
-            showSeasonDescription(s);
+            showSeasonDescription(s);  // ← И ЭТО ДОЛЖНО БЫТЬ
         };
         nav.appendChild(btn);
     });
@@ -595,16 +570,36 @@ function renderSeasonNav() {
 
 // Функция для отображения описания сезона
 function showSeasonDescription(season) {
+    console.log("showSeasonDescription вызван для сезона:", season);  // Для отладки
+    
     const block = document.getElementById('seasonDescriptionBlock');
     const titleSpan = document.getElementById('seasonDescriptionTitle');
     const contentDiv = document.getElementById('seasonDescriptionContent');
     
-    if (!block || !titleSpan || !contentDiv) return;
+    if (!block) {
+        console.error("Блок #seasonDescriptionBlock не найден в HTML!");
+        return;
+    }
     
     const desc = getSeasonDescription(season);
+    
     titleSpan.innerHTML = `<i class="fas fa-info-circle"></i> ${desc.title}`;
-    contentDiv.innerHTML = desc.content;
+    
+    let metaHtml = '';
+    if (desc.year && desc.year !== '—') {
+        metaHtml = `
+            <div class="season-meta">
+                <span class="season-meta-item"><i class="fas fa-calendar-alt"></i> ${desc.year}</span>
+                <span class="season-meta-item"><i class="fas fa-clock"></i> ${desc.dateRange}</span>
+                <span class="season-meta-item"><i class="fas fa-tv"></i> ${desc.episodes} серий</span>
+            </div>
+        `;
+    }
+    
+    contentDiv.innerHTML = metaHtml + `<div class="season-description-text">${desc.content}</div>`;
     block.style.display = 'block';
+    
+    console.log("Блок описания показан для сезона", season);
 }
 
 // Функция для перехода к предыдущей серии
