@@ -80,11 +80,11 @@ const videosData = [
     },
     {
         id: 9,
-        title: "Солдаты — закулисья. 18+",
-        desc: "Представляем вашему вниманию подборку неформальных рабочих моментов со съемочной площадки популярного российского комедийного сериала о буднях военнослужащих. В кадр попали неудачные дубли, живое общение актеров и закулисная атмосфера, пропитанная специфическим юмором и нецензурной лексикой, которая обычно остается вне финальных версий эпизодов..",
+        title: "Солдаты — закулисье.",
+        desc: "Представляем вашему вниманию подборку неформальных рабочих моментов со съемочной площадки популярного российского комедийного сериала о буднях военнослужащих. В кадр попали неудачные дубли, живое общение актеров и закулисная атмосфера, пропитанная специфическим юмором и нецензурной лексикой, которая обычно остается вне финальных версий эпизодов.",
         youtubeId: "HnPzAy8ylNg",
         duration: "23:38",
-        year: "200?",
+        year: "2007",
         category: "clip",
         is18Plus: true 
     }
@@ -125,123 +125,11 @@ function closeVideoModal() {
     if (container) container.innerHTML = '';
 }
 
-function playVideo(video) {
-    if (!video || !video.youtubeId) {
-        showToastMessage('❌ Видео временно недоступно');
-        return;
-    }
-    
-    const modal = document.getElementById('videoModal');
-    const container = document.getElementById('videoPlayer');
-    
-    if (!modal || !container) {
-        console.error("Модальное окно или контейнер не найдены!");
-        showToastMessage('❌ Ошибка: окно просмотра не найдено');
-        return;
-    }
-    
-    container.innerHTML = '';
-    const playerDiv = document.createElement('div');
-    playerDiv.id = 'videoPlayerDiv';
-    container.appendChild(playerDiv);
-    
-    const createPlayer = () => {
-        try {
-            currentVideoPlayer = new YT.Player('videoPlayerDiv', {
-                height: '100%',
-                width: '100%',
-                videoId: video.youtubeId,
-                playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
-                events: {
-                    'onReady': (event) => event.target.playVideo(),
-                    'onError': (event) => {
-                        let errorMsg = '❌ Ошибка загрузки видео';
-                        if (event.data === 5) errorMsg = '❌ Видео недоступно в этом регионе';
-                        if (event.data === 100) errorMsg = '❌ Видео не найдено';
-                        showToastMessage(errorMsg);
-                    }
-                }
-            });
-        } catch(e) {
-            console.error("Ошибка создания плеера:", e);
-            showToastMessage('❌ Не удалось создать плеер');
-        }
-    };
-    
-    if (typeof YT === 'undefined' || !YT.Player) {
-        const checkYT = setInterval(() => {
-            if (typeof YT !== 'undefined' && YT.Player) {
-                clearInterval(checkYT);
-                createPlayer();
-            }
-        }, 100);
-        setTimeout(() => clearInterval(checkYT), 5000);
-    } else {
-        createPlayer();
-    }
-    
-    modal.style.display = 'flex';
-}
-
-function renderVideos() {
-    const container = document.getElementById('videosContainer');
-    if (!container) return;
-    
-    const categories = {
-        trailer: { title: "🎬 Трейлеры и анонсы", videos: videosData.filter(v => v.category === 'trailer') },
-        clip: { title: "🎵 Клипы и нарезки", videos: videosData.filter(v => v.category === 'clip') }
-    };
-    
-    let html = '';
-    for (const [key, cat] of Object.entries(categories)) {
-        if (cat.videos.length === 0) continue;
-        html += `<div class="video-category"><h3 class="category-title">${cat.title}</h3><div class="videos-grid">`;
-        cat.videos.forEach(video => {
-            html += `
-                <div class="video-card" data-id="${video.id}">
-                    <div class="video-thumb">
-                        <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" alt="${video.title}" loading="lazy">
-                        <div class="play-overlay"><i class="fas fa-play"></i></div>
-                    </div>
-                    <div class="video-info">
-                        <div class="video-title">${escapeHtml(video.title)}</div>
-                        <div class="video-desc">${escapeHtml(video.desc)}</div>
-                        <div class="video-meta"><span class="video-duration"><i class="far fa-clock"></i> ${video.duration}</span><span class="video-year"><i class="far fa-calendar-alt"></i> ${video.year}</span></div>
-                    </div>
-                </div>
-            `;
-        });
-        html += `</div></div>`;
-    }
-    container.innerHTML = html || '<div class="empty-videos">Видео временно недоступны</div>';
-    
-    document.querySelectorAll('.video-card').forEach(card => {
-        card.onclick = () => playVideo(videosData.find(v => v.id == card.dataset.id));
-    });
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-}
-
 // ==============================================
-// ПРОВЕРКА ВОЗРАСТА ДЛЯ 18+ КОНТЕНТА
+// ПРОВЕРКА ВОЗРАСТА ДЛЯ 18+ КОНТЕНТА (КАЖДЫЙ РАЗ)
 // ==============================================
 
-// Ключ для хранения в localStorage
-const AGE_VERIFIED_KEY = 'soldaty_age_verified';
-
-// Проверить, подтверждён ли возраст
-function isAgeVerified() {
-    const verified = localStorage.getItem(AGE_VERIFIED_KEY);
-    return verified === 'true';
-}
-
-// Сохранить подтверждение возраста
-function setAgeVerified() {
-    localStorage.setItem(AGE_VERIFIED_KEY, 'true');
-}
+let pendingVideo = null;
 
 // Показать модальное окно проверки возраста
 function showAgeVerificationModal(video, callback) {
@@ -268,70 +156,53 @@ function showAgeVerificationModal(video, callback) {
                         <i class="fas fa-times-circle"></i> Меньше 18 лет
                     </button>
                 </div>
-                <p class="age-verification-note">Подтверждение сохраняется в вашем браузере.</p>
             </div>
         `;
         document.body.appendChild(ageModal);
     }
     
+    // Сохраняем текущее видео
+    pendingVideo = video;
+    
     // Показываем модальное окно
     ageModal.style.display = 'flex';
     
-    // Обработчик для кнопки подтверждения
+    // Получаем кнопки
     const confirmBtn = document.getElementById('ageConfirmBtn');
     const cancelBtn = document.getElementById('ageCancelBtn');
     
+    // Удаляем старые обработчики (если были)
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    
     const onConfirm = () => {
-        setAgeVerified();
         ageModal.style.display = 'none';
         if (callback) callback();
-        cleanup();
+        pendingVideo = null;
     };
     
     const onCancel = () => {
         ageModal.style.display = 'none';
         showToastMessage('⛔ Доступ запрещён. Этот контент предназначен для зрителей 18+');
-        cleanup();
+        pendingVideo = null;
     };
     
-    const cleanup = () => {
-        confirmBtn.removeEventListener('click', onConfirm);
-        cancelBtn.removeEventListener('click', onCancel);
-    };
+    newConfirmBtn.addEventListener('click', onConfirm);
+    newCancelBtn.addEventListener('click', onCancel);
     
-    confirmBtn.addEventListener('click', onConfirm);
-    cancelBtn.addEventListener('click', onCancel);
-    
-    // Закрытие по клику вне окна
+    // Закрытие по клику вне окна (считается как отказ)
     ageModal.onclick = (e) => {
         if (e.target === ageModal) {
             ageModal.style.display = 'none';
-            cleanup();
+            showToastMessage('⛔ Доступ запрещён');
+            pendingVideo = null;
         }
     };
 }
 
-// Обновлённая функция playVideo с проверкой возраста
-function playVideo(video) {
-    if (!video || !video.youtubeId) {
-        showToastMessage('❌ Видео временно недоступно');
-        return;
-    }
-    
-    // Проверка возраста для видео с id 9 (или для всех видео с пометкой 18+)
-    const requiresAgeCheck = video.id === 9 || video.is18Plus === true;
-    
-    if (requiresAgeCheck && !isAgeVerified()) {
-        showAgeVerificationModal(video, () => {
-            playVideoAfterCheck(video);
-        });
-        return;
-    }
-    
-    playVideoAfterCheck(video);
-}
-
-// Основная функция воспроизведения (без проверки возраста)
+// Основная функция воспроизведения (после проверки возраста)
 function playVideoAfterCheck(video) {
     const modal = document.getElementById('videoModal');
     const container = document.getElementById('videoPlayer');
@@ -383,6 +254,74 @@ function playVideoAfterCheck(video) {
     }
     
     modal.style.display = 'flex';
+}
+
+// Функция playVideo с проверкой возраста
+function playVideo(video) {
+    if (!video || !video.youtubeId) {
+        showToastMessage('❌ Видео временно недоступно');
+        return;
+    }
+    
+    // Проверка возраста для видео с пометкой 18+ (каждый раз)
+    if (video.is18Plus === true) {
+        showAgeVerificationModal(video, () => {
+            playVideoAfterCheck(video);
+        });
+        return;
+    }
+    
+    playVideoAfterCheck(video);
+}
+
+function renderVideos() {
+    const container = document.getElementById('videosContainer');
+    if (!container) return;
+    
+    const categories = {
+        trailer: { title: "🎬 Трейлеры и анонсы", videos: videosData.filter(v => v.category === 'trailer') },
+        clip: { title: "🎵 Клипы и нарезки", videos: videosData.filter(v => v.category === 'clip') }
+    };
+    
+    let html = '';
+    for (const [key, cat] of Object.entries(categories)) {
+        if (cat.videos.length === 0) continue;
+        html += `<div class="video-category"><h3 class="category-title">${cat.title}</h3><div class="videos-grid">`;
+        cat.videos.forEach(video => {
+            // Добавляем бейдж 18+ и класс для размытия если нужно
+            const ageBadge = video.is18Plus ? '<span class="age-badge-18">18+</span>' : '';
+            const blurClass = video.is18Plus ? 'blurred-thumb' : '';
+            html += `
+                <div class="video-card" data-id="${video.id}">
+                    <div class="video-thumb ${blurClass}">
+                        <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" alt="${video.title}" loading="lazy">
+                        <div class="play-overlay"><i class="fas fa-play"></i></div>
+                        ${ageBadge}
+                        ${video.is18Plus ? '<div class="blur-overlay"><i class="fas fa-lock"></i> Подтвердите возраст</div>' : ''}
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${escapeHtml(video.title)}</div>
+                        <div class="video-desc">${escapeHtml(video.desc)}</div>
+                        <div class="video-meta"><span class="video-duration"><i class="far fa-clock"></i> ${video.duration}</span><span class="video-year"><i class="far fa-calendar-alt"></i> ${video.year}</span></div>
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div></div>`;
+    }
+    container.innerHTML = html || '<div class="empty-videos">Видео временно недоступны</div>';
+    
+    document.querySelectorAll('.video-card').forEach(card => {
+        card.onclick = () => {
+            const video = videosData.find(v => v.id == card.dataset.id);
+            if (video) playVideo(video);
+        };
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
 // Инициализация
