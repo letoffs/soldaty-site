@@ -208,6 +208,10 @@ function loadEpisode(episode) {
         console.warn("Нет YouTube ID для этой серии");
         return;
     }
+
+    if (typeof logEpisodeView === 'function') {
+        logEpisodeView(episode.season, episode.episode, episode.title);
+    }
     
     currentEpisodeObj = episode;
 
@@ -266,6 +270,10 @@ function setRating(value) {
     ratings[key] = value;
     saveRatings();
     updateRatingDisplay();
+
+    if (typeof logRating === 'function') {
+        logRating(currentEpisodeObj.season, currentEpisodeObj.episode, value);
+    }
 }
 
 function getCurrentRating() {
@@ -335,6 +343,10 @@ function addComment(text) {
     if (!text.trim()) {
         alert("Пожалуйста, введите текст комментария");
         return false;
+    }
+
+    if (typeof logComment === 'function') {
+        logComment(currentEpisodeObj.season, currentEpisodeObj.episode, text);
     }
     
     // Берём имя из профиля Firebase
