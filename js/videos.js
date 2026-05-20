@@ -145,7 +145,7 @@ function showAgeVerificationModal(video, callback) {
                 <div class="age-verification-icon">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                <h3>⚠️ Внимание! Контент 18+</h3>
+                <h3>Внимание! Контент 18+</h3>
                 <p>Это видео содержит сцены, которые могут быть неуместны для лиц младше 18 лет.</p>
                 <p>Курение, алкоголь, нецензурная лексика и армейский юмор.</p>
                 <div class="age-verification-buttons">
