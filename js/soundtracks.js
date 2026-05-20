@@ -59,6 +59,14 @@ const songsData = [
         audioUrl: baseAudioPath + "YUta_-_KHorosho_iz_ser_Soldaty_67370349.mp3",
         duration: "3:15",
     },
+    {
+        id: 7,
+        title: "Юность в сапогах (remix)",
+        artist: "Oxxxymiron feat. Конец фильма",
+        description: "Юность в сапогах, но поет оксимирон",
+        audioUrl: baseAudioPath + "/Oksimiron_YUnost_v_sapogah.mp3",
+        duration: "1:05",
+    },
 ];
 
 // Глобальные переменные
