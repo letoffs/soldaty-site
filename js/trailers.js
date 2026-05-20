@@ -35,6 +35,14 @@ const trailersData = [
         youtubeId: "6IVCCODVfCM",
         duration: "0:33",
         year: "2005"
+    },
+    {
+        id: 5,
+        title: "Солдаты — Анонс / Трейлер",
+        desc: "Ещё один анонс сериала «Солдаты». Атмосферный ролик с главными героями и лучшими моментами.",
+        youtubeId: "1mM2rcffCCs",
+        duration: "0:49",
+        year: "~2005"
     }
 ];
 
