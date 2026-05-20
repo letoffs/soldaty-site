@@ -122,6 +122,7 @@ body::before {
     border-bottom: 1px solid #3e5a3e;
 }
 
+
 .season-btn {
     background: #1e2a1e;
     border: none;
@@ -3605,6 +3606,13 @@ button,
     text-align: justify;
 }
 
+.season-description-text {
+    color: #ddd;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    text-align: justify;
+}
+
 /* Адаптация для мобильных устройств */
 @media (max-width: 700px) {
     .season-description-block {
@@ -3616,6 +3624,32 @@ button,
     .season-description-content {
         font-size: 0.9rem;
     }
+}
+
+/* Мета-информация сезона */
+.season-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #3e5a3e;
+}
+
+.season-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e2a1e;
+    padding: 6px 15px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    color: #ffd966;
+}
+
+.season-meta-item i {
+    color: #bd8a3e;
+    font-size: 0.9rem;
 }
 
 /* Ряд кнопок навигации по сериям */
