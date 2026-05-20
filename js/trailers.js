@@ -27,7 +27,7 @@ const trailersData = [
         youtubeId: "A7yf8ozRfog",
         duration: "0:43",
         year: "2005"
-    }
+    },
     {
         id: 4,
         title: "Анонс сериала Солдаты-5",
