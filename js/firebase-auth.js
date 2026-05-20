@@ -160,6 +160,10 @@ async function loginWithGoogle() {
     }
 }
 
+if (typeof logAuthEvent === 'function') {
+    logAuthEvent('login', 'google');
+}
+
 // Выход
 async function logout() {
     try {
@@ -263,6 +267,7 @@ function showRegisterForm() {
     if (tabs[0]) tabs[0].classList.remove('active');
     if (tabs[1]) tabs[1].classList.add('active');
 }
+
 
 // Сохранить комментарий в БД
 async function saveCommentToDB(season, episode, seriesTitle, text, rating) {
