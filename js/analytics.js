@@ -10,14 +10,21 @@ let analyticsEnabled = false;
 
 // Инициализация
 function initAnalytics() {
-    if (!window.currentUser) return;
+    console.log("🔍 initAnalytics вызван");
+    
+    if (!window.currentUser) {
+        console.log("❌ Нет пользователя");
+        return;
+    }
+    
+    console.log("👤 Пользователь:", window.currentUser.email);
     
     // Проверяем, администратор ли пользователь
     if (window.currentUser.email === ADMIN_EMAIL) {
         analyticsEnabled = true;
         console.log("🔐 Администратор: аналитика включена");
         
-        // Показываем кнопку для доступа к аналитике (только админу)
+        // Показываем кнопку для доступа к аналитике
         showAdminButton();
     } else {
         console.log("👤 Обычный пользователь: аналитика выключена");
@@ -27,16 +34,49 @@ function initAnalytics() {
 
 // Показать кнопку для входа в админ-панель
 function showAdminButton() {
-    let adminBtn = document.getElementById('adminAnalyticsBtn');
-    if (!adminBtn) {
-        adminBtn = document.createElement('button');
-        adminBtn.id = 'adminAnalyticsBtn';
-        adminBtn.innerHTML = '<i class="fas fa-chart-line"></i>';
-        adminBtn.title = 'Админ-панель аналитики';
-        adminBtn.className = 'admin-analytics-btn';
-        adminBtn.onclick = () => window.location.href = 'analytics.html';
-        document.body.appendChild(adminBtn);
-    }
+    // Удаляем старую кнопку, если есть
+    const oldBtn = document.getElementById('adminAnalyticsBtn');
+    if (oldBtn) oldBtn.remove();
+    
+    // Создаём новую кнопку
+    const adminBtn = document.createElement('button');
+    adminBtn.id = 'adminAnalyticsBtn';
+    adminBtn.innerHTML = '<i class="fas fa-chart-line"></i>';
+    adminBtn.title = 'Админ-панель аналитики';
+    adminBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #1e2a1e;
+        border: 2px solid #bd8a3e;
+        color: #bd8a3e;
+        cursor: pointer;
+        z-index: 9999;
+        transition: all 0.2s;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    adminBtn.onmouseenter = () => {
+        adminBtn.style.background = '#bd8a3e';
+        adminBtn.style.color = '#0f1a0f';
+        adminBtn.style.transform = 'scale(1.1)';
+    };
+    adminBtn.onmouseleave = () => {
+        adminBtn.style.background = '#1e2a1e';
+        adminBtn.style.color = '#bd8a3e';
+        adminBtn.style.transform = 'scale(1)';
+    };
+    adminBtn.onclick = () => {
+        window.location.href = 'analytics.html';
+    };
+    
+    document.body.appendChild(adminBtn);
+    console.log("✅ Кнопка админ-панели добавлена");
 }
 
 // Записать событие
@@ -54,10 +94,7 @@ async function logEvent(eventType, eventData) {
     };
     
     try {
-        const eventRef = db.ref(`analytics/events`).push();
-        await eventRef.set(event);
-        
-        // Обновляем дневную статистику
+        await firebase.database().ref('analytics/events').push().set(event);
         await updateDailyStats(eventType);
     } catch (error) {
         console.error("Ошибка записи аналитики:", error);
@@ -67,8 +104,7 @@ async function logEvent(eventType, eventData) {
 // Обновить дневную статистику
 async function updateDailyStats(eventType) {
     const today = new Date().toISOString().split('T')[0];
-    const statsRef = db.ref(`analytics/daily_stats/${today}/${eventType}`);
-    
+    const statsRef = firebase.database().ref(`analytics/daily_stats/${today}/${eventType}`);
     const snapshot = await statsRef.once('value');
     const currentCount = snapshot.val() || 0;
     await statsRef.set(currentCount + 1);
@@ -86,11 +122,7 @@ function logEpisodeView(season, episode, title) {
 
 // Записать комментарий
 function logComment(season, episode, text) {
-    logEvent('comment', { 
-        season, 
-        episode, 
-        text: text.substring(0, 100) // только начало
-    });
+    logEvent('comment', { season, episode, text: text.substring(0, 100) });
 }
 
 // Записать оценку
