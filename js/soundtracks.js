@@ -65,7 +65,7 @@ const songsData = [
         artist: "Oxxxymiron feat. Конец фильма",
         description: "Юность в сапогах, но поет оксимирон",
         audioUrl: baseAudioPath + "/Oksimiron_YUnost_v_sapogah.mp3",
-        duration: "1:05",
+        duration: "1:02",
     },
 ];
 
