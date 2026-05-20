@@ -80,7 +80,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <!-- 2. ПОТОМ ваш конфиг -->
-<script src="../firebase-config.js"></script>
+<script src="firebase-config.js"></script>
 
 <!-- 3. ПОТОМ скрипт страницы -->
 <script>
@@ -119,80 +119,100 @@
     });
     
     async function loadAnalytics() {
-        const content = document.getElementById('analyticsContent');
+    const content = document.getElementById('analyticsContent');
+    
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const statsSnapshot = await firebase.database().ref(`analytics/daily_stats/${today}`).once('value');
+        const stats = statsSnapshot.val() || {};
         
-        try {
-            // Получаем дневную статистику
-            const today = new Date().toISOString().split('T')[0];
-            const statsSnapshot = await firebase.database().ref(`analytics/daily_stats/${today}`).once('value');
-            const stats = statsSnapshot.val() || {};
-            
-            // Получаем последние события
-            const eventsSnapshot = await firebase.database().ref('analytics/events')
-                .orderByChild('timestamp')
-                .limitToLast(50)
-                .once('value');
-            
-            const events = [];
-            eventsSnapshot.forEach(child => {
-                events.unshift({ id: child.key, ...child.val() });
-            });
-            
-            // Подсчитываем статистику
-            const uniqueGuests = new Set(events.filter(e => !e.isAuth).map(e => e.userId)).size;
-            const uniqueRegistered = new Set(events.filter(e => e.isAuth).map(e => e.userId)).size;
-            const uniqueUsers = new Set(events.map(e => e.userId)).size;
-            const totalEvents = events.length;
-            
-            content.innerHTML = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3><i class="fas fa-calendar-day"></i> Статистика за сегодня</h3>
-                        <div class="stat-number">${Object.values(stats).reduce((a,b) => a + b, 0) || 0}</div>
-                        <div>событий</div>
-                        <hr>
-                        ${Object.entries(stats).map(([type, count]) => `
-                            <div>${type}: ${count}</div>
-                        `).join('') || '<div>Нет данных за сегодня</div>'}
-                    </div>
-                    <div class="stat-card">
-                        <h3><i class="fas fa-users"></i> Пользователи</h3>
-                        <div class="stat-number" style="font-size: 1.5rem;">${uniqueRegistered}</div>
-                        <div>зарегистрированных</div>
-                        <div class="stat-number" style="font-size: 1.5rem;">${uniqueGuests}</div>
-                        <div>гостей (незарегистрированных)</div>
-                        <hr>
-                        <div class="stat-number" style="font-size: 1.5rem;">${uniqueUsers}</div>
-                        <div>всего уникальных</div>
-                    </div>
+        const eventsSnapshot = await firebase.database().ref('analytics/events')
+            .orderByChild('timestamp')
+            .limitToLast(100)
+            .once('value');
+        
+        const events = [];
+        eventsSnapshot.forEach(child => {
+            events.unshift({ id: child.key, ...child.val() });
+        });
+        
+        const uniqueGuests = new Set(events.filter(e => !e.isAuth).map(e => e.userId)).size;
+        const uniqueRegistered = new Set(events.filter(e => e.isAuth).map(e => e.userId)).size;
+        const uniqueUsers = new Set(events.map(e => e.userId)).size;
+        const totalEvents = events.length;
+        
+        content.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3><i class="fas fa-calendar-day"></i> Статистика за сегодня</h3>
+                    <div class="stat-number">${Object.values(stats).reduce((a,b) => a + b, 0) || 0}</div>
+                    <div>событий</div>
+                    <hr>
+                    ${Object.entries(stats).map(([type, count]) => `
+                        <div><strong>${type}</strong>: ${count}</div>
+                    `).join('') || '<div>Нет данных за сегодня</div>'}
                 </div>
-
-                <h3><i class="fas fa-history"></i> Последние события</h3>
-                <div class="events-list">
-                    ${events.length === 0 ? '<div>Пока нет событий</div>' : events.map(e => `
+                
+                <div class="stat-card">
+                    <h3><i class="fas fa-users"></i> Пользователи</h3>
+                    <div class="stat-number" style="font-size: 1.5rem;">${uniqueRegistered}</div>
+                    <div>зарегистрированных</div>
+                    <div class="stat-number" style="font-size: 1.5rem;">${uniqueGuests}</div>
+                    <div>гостей</div>
+                    <hr>
+                    <div class="stat-number" style="font-size: 1.5rem;">${uniqueUsers}</div>
+                    <div>всего уникальных</div>
+                </div>
+            </div>
+            
+            <h3><i class="fas fa-history"></i> Последние события</h3>
+            <div class="events-list">
+                ${events.length === 0 ? '<div>Пока нет событий</div>' : events.slice(0, 50).map(e => {
+                    let dataHtml = '';
+                    if (e.type === 'episode_view') {
+                        dataHtml = `${e.data.season} сезон, ${e.data.episode} серия — ${e.data.title || 'без названия'}`;
+                    } else if (e.type === 'page_view') {
+                        dataHtml = `${e.data.page || 'страница'}`;
+                    } else if (e.type === 'comment') {
+                        dataHtml = `"${e.data.text?.substring(0, 50)}"${e.data.text?.length > 50 ? '...' : ''}`;
+                    } else if (e.type === 'rating') {
+                        dataHtml = `Оценка ${e.data.rating}/5 (${e.data.season} сезон, ${e.data.episode} серия)`;
+                    } else if (e.type === 'quiz_result') {
+                        dataHtml = `Викторина: ${e.data.score}/${e.data.total} (${e.data.passed ? '✅ пройден' : '❌ не пройден'})`;
+                    } else if (e.type === 'auth') {
+                        dataHtml = `${e.data.action === 'login' ? 'Вход' : 'Выход'}${e.data.method ? ' через ' + e.data.method : ''}`;
+                    } else {
+                        dataHtml = JSON.stringify(e.data).substring(0, 100);
+                    }
+                    
+                    return `
                         <div class="event-item">
-                            <div><strong>${e.type}</strong> — ${JSON.stringify(e.data).substring(0, 100)}</div>
+                            <div>
+                                <strong>${e.type}</strong> — ${dataHtml}
+                            </div>
                             <div class="event-time">
                                 ${new Date(e.timestamp).toLocaleString('ru-RU')} | 
                                 <span style="color: ${e.isAuth ? '#4caf50' : '#ff9800'}">
-                                    ${e.isAuth ? '👤 ' + (e.userEmail || 'зарегистрированный') : '👻 гость'}
+                                    ${e.isAuth ? '👤 ' + (e.userEmail?.split('@')[0] || 'user') : '👻 гость'}
                                 </span> | 
                                 ${e.page || 'unknown'}
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-            } catch (error) {
-            console.error("Ошибка загрузки:", error);
-            content.innerHTML = `
-                <div class="admin-access-denied">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h2>Ошибка загрузки</h2>
-                    <p>${error.message}</p>
-                </div>
-            `;
-        }
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error("Ошибка загрузки:", error);
+        content.innerHTML = `
+            <div class="admin-access-denied">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2>Ошибка загрузки</h2>
+                <p>${error.message}</p>
+            </div>
+        `;
     }
+}
 </script>
 </body>
 </html>
