@@ -65,6 +65,10 @@ function updateAuthUI() {
         console.error("❌ Элемент authButtons не найден!");
         return;
     }
+
+    if (typeof initAnalytics === 'function') {
+        initAnalytics();
+    }
     
     if (window.currentUser) {
         // Пользователь ВОШЁЛ — показываем информацию
