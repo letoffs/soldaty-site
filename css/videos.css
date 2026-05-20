@@ -20,3 +20,81 @@
 .video-modal-desc { color: #aaa; font-size: 0.85rem; line-height: 1.4; }
 .empty-videos { text-align: center; padding: 40px; color: #8aa07a; background: #0f1a0f; border-radius: 24px; }
 @media (max-width: 700px) { .videos-grid { grid-template-columns: 1fr; gap: 15px; } .play-overlay { width: 45px; height: 45px; } .play-overlay i { font-size: 1.3rem; } .video-card:hover .play-overlay { width: 55px; height: 55px; } }
+
+/* ===== МОДАЛЬНОЕ ОКНО ПРОВЕРКИ ВОЗРАСТА ===== */
+.age-verification-modal .modal-content {
+    max-width: 450px;
+    text-align: center;
+    padding: 30px;
+}
+
+.age-verification-icon {
+    font-size: 4rem;
+    color: #f44336;
+    margin-bottom: 20px;
+}
+
+.age-verification-content h3 {
+    color: #ffd966;
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+}
+
+.age-verification-content p {
+    color: #ccc;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.age-verification-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 25px 0 15px;
+    flex-wrap: wrap;
+}
+
+.age-confirm-btn {
+    background: #2e7d32;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 40px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.age-confirm-btn:hover {
+    background: #3e9142;
+    transform: scale(1.02);
+}
+
+.age-cancel-btn {
+    background: #1e2a1e;
+    border: 1px solid #f44336;
+    padding: 12px 24px;
+    border-radius: 40px;
+    color: #f44336;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.age-cancel-btn:hover {
+    background: #f44336;
+    color: white;
+    transform: scale(1.02);
+}
+
+.age-verification-note {
+    font-size: 0.7rem;
+    color: #8aa07a;
+    margin-top: 15px;
+}
