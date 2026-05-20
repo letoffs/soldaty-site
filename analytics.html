@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель — Аналитика</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #0f1a0f;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #bd8a3e;
+            color: #ffd966;
+        }
+        .stat-card h3 {
+            color: #ffd966;
+            margin-bottom: 15px;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #bd8a3e;
+        }
+        .events-list {
+            background: #0f1a0f;
+            border-radius: 16px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            color: #ffd966;
+        }
+        .event-item {
+            padding: 10px;
+            border-bottom: 1px solid #3e5a3e;
+            font-size: 0.85rem;
+        }
+        .event-time {
+            color: #8aa07a;
+            font-size: 0.7rem;
+        }
+        .admin-access-denied {
+            text-align: center;
+            padding: 50px;
+        }
+        .admin-access-denied i {
+            font-size: 3rem;
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <h1><i class="fas fa-chart-line"></i> Админ-панель аналитики</h1>
+    <div id="analyticsContent">
+        <div class="admin-access-denied">
+            <i class="fas fa-spinner fa-pulse"></i>
+            <h2>Загрузка...</h2>
+            <p>Проверка доступа</p>
+        </div>
+    </div>
+</div>
+
+<!-- 1. СНАЧАЛА Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<!-- 2. ПОТОМ ваш конфиг -->
+<script src="../firebase-config.js"></script>
+
+<!-- 3. ПОТОМ скрипт страницы -->
+<script>
+    const ADMIN_EMAIL = "twinkjjjjkmnb@gmail.com";
+    
+    // Ждём загрузки Firebase
+    firebase.auth().onAuthStateChanged(async (user) => {
+        const content = document.getElementById('analyticsContent');
+        
+        if (!user) {
+            content.innerHTML = `
+                <div class="admin-access-denied">
+                    <i class="fas fa-lock"></i>
+                    <h2>Вы не авторизованы</h2>
+                    <p>Пожалуйста, <a href="index.html">войдите в аккаунт</a></p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (user.email !== ADMIN_EMAIL) {
+            content.innerHTML = `
+                <div class="admin-access-denied">
+                    <i class="fas fa-lock"></i>
+                    <h2>Доступ запрещён</h2>
+                    <p>Эта страница только для администратора</p>
+                    <button onclick="window.location.href='index.html'" class="submit-comment-btn">Вернуться на сайт</button>
+                </div>
+            `;
+            return;
+        }
+        
+        // Администратор — загружаем аналитику
+        content.innerHTML = '<div class="admin-access-denied"><i class="fas fa-spinner fa-pulse"></i> Загрузка данных...</div>';
+        await loadAnalytics();
+    });
+    
+    async function loadAnalytics() {
+        const content = document.getElementById('analyticsContent');
+        
+        try {
+            // Получаем дневную статистику
+            const today = new Date().toISOString().split('T')[0];
+            const statsSnapshot = await firebase.database().ref(`analytics/daily_stats/${today}`).once('value');
+            const stats = statsSnapshot.val() || {};
+            
+            // Получаем последние события
+            const eventsSnapshot = await firebase.database().ref('analytics/events')
+                .orderByChild('timestamp')
+                .limitToLast(50)
+                .once('value');
+            
+            const events = [];
+            eventsSnapshot.forEach(child => {
+                events.unshift({ id: child.key, ...child.val() });
+            });
+            
+            // Подсчитываем статистику
+            const totalEvents = events.length;
+            const uniqueUsers = new Set(events.map(e => e.userId)).size;
+            
+            content.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3><i class="fas fa-calendar-day"></i> Статистика за сегодня</h3>
+                        <div class="stat-number">${Object.values(stats).reduce((a,b) => a + b, 0) || 0}</div>
+                        <div>событий</div>
+                        <hr>
+                        ${Object.entries(stats).map(([type, count]) => `
+                            <div>${type}: ${count}</div>
+                        `).join('') || '<div>Нет данных за сегодня</div>'}
+                    </div>
+                    <div class="stat-card">
+                        <h3><i class="fas fa-chart-simple"></i> Общая статистика</h3>
+                        <div class="stat-number">${totalEvents}</div>
+                        <div>всего событий</div>
+                        <div class="stat-number" style="font-size: 1.5rem;">${uniqueUsers}</div>
+                        <div>уникальных пользователей</div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-history"></i> Последние события</h3>
+                <div class="events-list">
+                    ${events.length === 0 ? '<div>Пока нет событий</div>' : events.map(e => `
+                        <div class="event-item">
+                            <div><strong>${e.type}</strong> — ${JSON.stringify(e.data).substring(0, 100)}</div>
+                            <div class="event-time">${new Date(e.timestamp).toLocaleString('ru-RU')} | ${e.userEmail || 'anon'} | ${e.page || 'unknown'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error("Ошибка загрузки:", error);
+            content.innerHTML = `
+                <div class="admin-access-denied">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Ошибка загрузки</h2>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    }
+</script>
+</body>
+</html>
