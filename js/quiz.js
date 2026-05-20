@@ -332,6 +332,10 @@ function submitQuiz() {
         alert('Ответьте на все вопросы!');
         return;
     }
+
+    if (typeof logQuizResult === 'function') {
+        logQuizResult(level.name, correctCount, total, passed);
+    }
     
     const level = quizLevels[currentLevel];
     let correctCount = 0;
