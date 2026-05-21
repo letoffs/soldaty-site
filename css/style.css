@@ -3975,3 +3975,44 @@ button,
         grid-template-columns: 1fr;
     }
 }
+
+.offer-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: #0f1a0f;
+    border-radius: 24px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+.offer-container h1 {
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.offer-container h2 {
+    color: #bd8a3e;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+.offer-container p, .offer-container li {
+    color: #ccc;
+    line-height: 1.6;
+}
+.offer-container ul {
+    margin-left: 20px;
+}
+.offer-container hr {
+    border-color: #3e5a3e;
+    margin: 20px 0;
+}
+.back-link {
+    display: inline-block;
+    margin-top: 30px;
+    color: #bd8a3e;
+    text-decoration: none;
+}
+.back-link:hover {
+    color: #ffd700;
+}
