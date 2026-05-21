@@ -139,6 +139,34 @@
         <!-- Вопросы будут загружены через JS -->
     </div>
 
+    <!-- КНОПКА ТАБЛИЦЫ РЕКОРДОВ -->
+    <button class="leaderboard-btn" onclick="openLeaderboardModal()">
+        <i class="fas fa-trophy"></i> Таблица рекордов
+    </button>
+
+    <!-- МОДАЛЬНОЕ ОКНО ТАБЛИЦЫ РЕКОРДОВ -->
+    <div id="leaderboardModal" class="leaderboard-modal">
+        <div class="leaderboard-modal-content">
+            <div class="leaderboard-modal-header">
+                <h2><i class="fas fa-trophy"></i> Таблица рекордов</h2>
+                <button class="leaderboard-close" onclick="closeLeaderboardModal()">&times;</button>
+            </div>
+            <div class="leaderboard-modal-body">
+                <div class="leaderboard-tabs">
+                    <button class="leaderboard-tab active" onclick="switchLeaderboardTab('tokens')">🏆 По жетонам</button>
+                    <button class="leaderboard-tab" onclick="switchLeaderboardTab('levels')">⭐ По уровням</button>
+                    <button class="leaderboard-tab" onclick="switchLeaderboardTab('perfect')">🎯 По идеальным</button>
+                </div>
+                <div id="leaderboardContent" class="leaderboard-content">
+                <!-- Содержимое будет загружено через JS -->
+                </div>
+                <div class="leaderboard-info">
+                    <p><i class="fas fa-chart-line"></i> Рекорды обновляются каждую минуту</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="footer">
         Викторина на тему сериала «Солдаты»
         <!-- Ссылки на оферту и контакты УДАЛЕНЫ -->
