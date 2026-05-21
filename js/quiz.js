@@ -374,7 +374,7 @@ function renderWelcomeScreen() {
     let html = `
         <div class="welcome-screen">
             <div class="welcome-icon">
-                <img src="../Resources/soldaty_quiz_preview.jpg" alt="Викторина Солдаты" class="welcome-image">
+                <img src="Resources/soldaty_quiz_preview.jpg" alt="Викторина Солдаты" class="welcome-image">
             </div>
             <h2 class="welcome-title">Викторина «Солдаты»</h2>
             <div class="welcome-text">
