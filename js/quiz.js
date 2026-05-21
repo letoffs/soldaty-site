@@ -1,7 +1,7 @@
 // ========== ВИКТОРИНА «СОЛДАТЫ» - ПОЛНАЯ ВЕРСИЯ ==========
 // Логика: жетоны начисляются ТОЛЬКО в конце уровня!
-// Если ответ правильный - всё показывается бесплатно
-// Если ответ неправильный - правильный ответ и пояснение скрыты, нужно купить за 5 жетонов
+// Правильные ответы НЕ дают жетонов!
+// Неправильные ответы: -1 жетон
 
 // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
 let currentLevel = 0;
@@ -17,14 +17,15 @@ let originalQuestions = [];
 let userTokens = 10;
 let hintUsedForCurrentQuestion = false;
 
+// НОВЫЕ НАСТРОЙКИ: правильные ответы НЕ дают жетонов!
 const TOKEN_CONFIG = {
     startBonus: 10,
-    correctAnswer: 1,
-    wrongAnswer: -1,
-    hintCost: 3,
-    revealAnswerCost: 5,      // Показ правильного ответа и пояснения
-    levelCompleteBonus: 2,
-    perfectLevelBonus: 5,
+    correctAnswer: 0,        // ПРАВИЛЬНЫЙ ОТВЕТ НЕ ДАЁТ ЖЕТОНОВ
+    wrongAnswer: -1,         // Штраф за неправильный ответ
+    hintCost: 3,             // Подсказка: 3 жетона
+    revealAnswerCost: 5,     // Показ ответа: 5 жетонов
+    levelCompleteBonus: 2,   // Бонус за прохождение уровня
+    perfectLevelBonus: 5,    // Бонус за идеальное прохождение
     maxDebt: -10
 };
 
@@ -95,7 +96,6 @@ function loadTokenBalance() {
         showFloatingMessage(`🎁 Стартовый бонус: +${TOKEN_CONFIG.startBonus} жетонов!`, 'success');
     }
     
-    // Загружаем разблокированные ответы
     const savedUnlocked = localStorage.getItem('soldaty_unlocked_answers');
     if (savedUnlocked) {
         try {
@@ -115,6 +115,7 @@ function updateTokenUI() {
     let tokenDisplay = document.getElementById('tokenDisplay');
     if (!tokenDisplay && document.querySelector('.header')) {
         const header = document.querySelector('.header');
+        // МАГАЗИН ЗАБЛОКИРОВАН - кнопка магазина НЕ добавляется
         const tokenHTML = `
             <div id="tokenDisplay" class="token-display ${userTokens < 0 ? 'negative' : ''}">
                 <i class="fas fa-coins"></i>
@@ -383,7 +384,6 @@ function renderWelcomeScreen() {
                     <h4><i class="fas fa-coins"></i> Правила игры:</h4>
                     <ul>
                         <li>🎁 Стартовый бонус: <strong>+10 жетонов</strong></li>
-                        <li>✅ Правильный ответ: <strong>+1 жетон</strong></li>
                         <li>❌ Неправильный ответ: <strong>-1 жетон</strong></li>
                         <li>💡 Подсказка: <strong>-3 жетона</strong> (удаляет 2 неверных варианта)</li>
                         <li>🏆 Прохождение уровня: <strong>+2 жетона</strong></li>
@@ -562,7 +562,6 @@ function submitQuiz() {
     const totalQuestions = shuffledQuestions.length;
     let correctCount = 0;
     
-    // Считаем правильные ответы
     for (let i = 0; i < shuffledQuestions.length; i++) {
         const q = shuffledQuestions[i];
         if (userAnswers[i] === q.correct) correctCount++;
@@ -576,18 +575,18 @@ function submitQuiz() {
     let tokenChange = 0;
     let tokenDetails = [];
     
-    // Жетоны за правильные ответы
-    if (correctCount > 0) {
-        const correctTokens = correctCount * TOKEN_CONFIG.correctAnswer;
-        addTokens(correctTokens, `${correctCount} правильных ответов`, true);
-        tokenChange += correctTokens;
-        tokenDetails.push(`✅ +${correctTokens}`);
-    }
+    // ПРАВИЛЬНЫЕ ОТВЕТЫ НЕ ДАЮТ ЖЕТОНОВ (закомментировано)
+    // if (correctCount > 0) {
+    //     const correctTokens = correctCount * TOKEN_CONFIG.correctAnswer;
+    //     addTokens(correctTokens, `${correctCount} правильных ответов`, true);
+    //     tokenChange += correctTokens;
+    //     tokenDetails.push(`✅ +${correctTokens}`);
+    // }
     
     // Штраф за неправильные ответы
     if (wrongCount > 0) {
         const wrongTokens = wrongCount * Math.abs(TOKEN_CONFIG.wrongAnswer);
-        addTokens(-wrongTokens, `${wrongCount} неправильных ответов`, true);
+        addTokens(-wrongTokens, `${wrongCount} неправильных ответов (-${wrongTokens})`, true);
         tokenChange -= wrongTokens;
         tokenDetails.push(`❌ -${wrongTokens}`);
     }
@@ -595,24 +594,27 @@ function submitQuiz() {
     // Бонус за прохождение уровня
     if (passed) {
         if (allCorrect) {
-            addTokens(TOKEN_CONFIG.perfectLevelBonus, `Идеальное прохождение!`, true);
+            addTokens(TOKEN_CONFIG.perfectLevelBonus, `⭐ Идеальное прохождение! +${TOKEN_CONFIG.perfectLevelBonus} жетонов`, true);
             tokenChange += TOKEN_CONFIG.perfectLevelBonus;
             tokenDetails.push(`⭐ +${TOKEN_CONFIG.perfectLevelBonus}`);
         } else {
-            addTokens(TOKEN_CONFIG.levelCompleteBonus, `Прохождение уровня`, true);
+            addTokens(TOKEN_CONFIG.levelCompleteBonus, `🏆 Прохождение уровня +${TOKEN_CONFIG.levelCompleteBonus} жетонов`, true);
             tokenChange += TOKEN_CONFIG.levelCompleteBonus;
             tokenDetails.push(`🏆 +${TOKEN_CONFIG.levelCompleteBonus}`);
         }
     }
     
     // Показываем итоговое сообщение
-    const sign = tokenChange >= 0 ? '+' : '';
-    showFloatingMessage(`💰 Итого: ${sign}${tokenChange} жетонов! ${tokenDetails.join(' ')}`, tokenChange >= 0 ? 'success' : 'error');
+    if (tokenChange !== 0) {
+        const sign = tokenChange >= 0 ? '+' : '';
+        showFloatingMessage(`💰 Итого: ${sign}${tokenChange} жетонов! ${tokenDetails.join(' ')}`, tokenChange >= 0 ? 'success' : 'error');
+    } else {
+        showFloatingMessage(`💰 Итого: 0 жетонов. Ни штрафов, ни бонусов.`, 'info');
+    }
     
-    // Сохраняем прогресс
     saveLevelResult(currentLevel, correctCount, passed, allCorrect);
     
-    // Собираем детальные результаты для отчёта
+    // Собираем детальные результаты
     const detailedResults = [];
     for (let i = 0; i < shuffledQuestions.length; i++) {
         const q = shuffledQuestions[i];
@@ -629,7 +631,7 @@ function submitQuiz() {
             isCorrect: isCorrect,
             explanation: q.explanation,
             answerKey: answerKey,
-            isUnlocked: isUnlocked || isCorrect // Правильные ответы всегда разблокированы
+            isUnlocked: isUnlocked || isCorrect
         });
     }
     
@@ -637,15 +639,13 @@ function submitQuiz() {
     renderResultsScreen(correctCount, totalQuestions, passed, detailedResults, level, allCorrect, tokenChange);
 }
 
-// ========== ФУНКЦИЯ ДЛЯ РАЗБЛОКИРОВКИ ПРАВИЛЬНОГО ОТВЕТА И ПОЯСНЕНИЯ ==========
+// ========== ФУНКЦИЯ ДЛЯ РАЗБЛОКИРОВКИ ОТВЕТА ==========
 function unlockAnswer(questionIndex, answerKey, correctAnswerText, explanationText) {
-    // Проверяем, не разблокировано ли уже
     if (unlockedAnswers[answerKey]) {
         showFloatingMessage('Правильный ответ уже разблокирован!', 'info');
         return;
     }
     
-    // Проверяем достаточно ли жетонов
     if (userTokens < TOKEN_CONFIG.revealAnswerCost) {
         showFloatingMessage(`❌ Недостаточно жетонов! Нужно ${TOKEN_CONFIG.revealAnswerCost}. У вас ${userTokens}`, 'error');
         return;
@@ -655,25 +655,20 @@ function unlockAnswer(questionIndex, answerKey, correctAnswerText, explanationTe
         return;
     }
     
-    // Списываем жетоны
     addTokens(-TOKEN_CONFIG.revealAnswerCost, `Открытие правильного ответа к вопросу ${questionIndex + 1}`);
-    
-    // Разблокируем
     unlockedAnswers[answerKey] = true;
     saveTokenBalance();
     
-    // Обновляем интерфейс
     const hiddenContentDiv = document.getElementById(`hidden-content-${questionIndex}`);
     if (hiddenContentDiv) {
         hiddenContentDiv.innerHTML = `
             <div class="correct-answer">✓ Правильный ответ: ${escapeHtml(correctAnswerText)}</div>
             <div class="explanation-text"><i class="fas fa-info-circle"></i> ${escapeHtml(explanationText)}</div>
         `;
-        hiddenContentDiv.classList.remove('hidden-content');
-        hiddenContentDiv.classList.add('unlocked-content');
+        hiddenContentDiv.classList.remove('locked');
+        hiddenContentDiv.classList.add('unlocked');
     }
     
-    // Скрываем кнопку разблокировки
     const unlockBtn = document.getElementById(`unlock-btn-${questionIndex}`);
     if (unlockBtn) unlockBtn.style.display = 'none';
     
@@ -691,7 +686,6 @@ function renderResultsScreen(correctCount, total, passed, detailedResults, level
         const isUnlocked = r.isUnlocked;
         
         if (r.isCorrect) {
-            // Правильный ответ - всё показываем бесплатно
             detailsHtml += `
                 <div class="result-detail-card correct">
                     <div class="result-detail-header">
@@ -707,7 +701,6 @@ function renderResultsScreen(correctCount, total, passed, detailedResults, level
                 </div>
             `;
         } else {
-            // Неправильный ответ - правильный ответ и пояснение скрыты
             detailsHtml += `
                 <div class="result-detail-card incorrect">
                     <div class="result-detail-header">
@@ -772,7 +765,6 @@ function renderResultsScreen(correctCount, total, passed, detailedResults, level
     
     quizContainer.innerHTML = html;
     
-    // Навешиваем обработчики на кнопки разблокировки
     document.querySelectorAll('.unlock-answer-btn').forEach(btn => {
         btn.onclick = (e) => {
             e.stopPropagation();
@@ -804,8 +796,13 @@ function renderResultsScreen(correctCount, total, passed, detailedResults, level
     };
 }
 
-// ========== СТИЛИ ==========
+// ========== СТИЛИ (добавляются один раз) ==========
+let stylesAdded = false;
+
 function addTokenStyles() {
+    if (stylesAdded) return;
+    stylesAdded = true;
+    
     const styles = `
         <style>
             .token-display { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #1a2a1a 0%, #0e1a0e 100%); border: 2px solid #ffd700; border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; gap: 10px; z-index: 1000; font-weight: bold; }
@@ -825,7 +822,6 @@ function addTokenStyles() {
             .floating-message.show { transform: translateX(-50%) translateY(0); }
             .floating-message.error { border-color: #f44336; color: #ff6b6b; }
             .floating-message.success { border-color: #4caf50; color: #81c784; }
-            .floating-message.warning { border-color: #ff9800; color: #ffb74d; }
             .quiz-option.hidden-option { display: none !important; }
             .quiz-header { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px; }
             .quiz-navigation { display: flex; justify-content: space-between; margin-top: 25px; }
@@ -858,7 +854,6 @@ function addTokenStyles() {
             .transaction-amount { font-weight: bold; }
             .transaction-amount.positive { color: #4caf50; }
             .transaction-amount.negative { color: #f44336; }
-            .empty-history { text-align: center; color: #8aa07a; padding: 20px; }
             .results-details-list { max-height: 500px; overflow-y: auto; margin: 20px 0; }
             .result-detail-card { background: #0a120a; border-radius: 16px; padding: 15px; margin-bottom: 12px; border-left: 4px solid; }
             .result-detail-card.correct { border-left-color: #4caf50; }
@@ -869,7 +864,6 @@ function addTokenStyles() {
             .your-answer { color: #ddd; }
             .correct-answer { color: #4caf50; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #3e5a3e; }
             .correct-answer.hidden .blur-text { filter: blur(4px); user-select: none; }
-            .explanation-text { font-size: 0.85rem; color: #8aa07a; margin-top: 8px; padding: 8px; background: #0f1a0f; border-radius: 8px; }
             .locked-badge { background: #e74c3c; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; color: white; }
             .locked-placeholder { text-align: center; padding: 15px; background: #1e2a1e; border-radius: 12px; }
             .unlock-answer-btn { background: #3498db; border: none; padding: 10px 20px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.85rem; margin-top: 10px; transition: all 0.2s; }
@@ -880,103 +874,10 @@ function addTokenStyles() {
                 .floating-message { white-space: normal; max-width: 90%; text-align: center; }
                 .quiz-navigation { flex-direction: column; gap: 10px; }
                 .nav-left, .nav-right { justify-content: center; }
-                .result-detail-header { flex-direction: column; align-items: flex-start; }
             }
         </style>
     `;
     document.head.insertAdjacentHTML('beforeend', styles);
-}
-
-// ========== СИСТЕМА ПОКУПКИ ЖЕТОНОВ ==========
-
-// Открытие магазина
-function openShopModal() {
-    const modal = document.getElementById('shopModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-}
-
-function closeShopModal() {
-    const modal = document.getElementById('shopModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// Функция покупки токенов (интеграция с платежной системой)
-async function buyTokens(tokens, price) {
-    if (!confirm(`Купить ${tokens} жетонов за ${price} ₽?`)) {
-        return;
-    }
-    
-    // Показываем загрузку
-    showFloatingMessage('🔄 Перенаправление на оплату...', 'info');
-    
-    // Вариант 1: Через Telegram Mini App (если бот)
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.openInvoice({
-            title: `${tokens} жетонов`,
-            description: `Покупка ${tokens} жетонов для викторины "Солдаты"`,
-            payload: JSON.stringify({ tokens: tokens, price: price }),
-            provider_token: "", // Ваш токен от провайдера
-            currency: "RUB",
-            prices: [{ label: `${tokens} жетонов`, amount: price * 100 }]
-        });
-        return;
-    }
-    
-    // Вариант 2: Через Stripe Checkout
-    try {
-        const response = await fetch('/api/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tokens: tokens,
-                price: price,
-                userId: getCurrentUserId() // Функция получения ID пользователя
-            })
-        });
-        
-        const session = await response.json();
-        
-        // Перенаправление на Stripe Checkout
-        if (session.url) {
-            window.location.href = session.url;
-        }
-    } catch (error) {
-        console.error('Ошибка платежа:', error);
-        showFloatingMessage('❌ Ошибка оплаты. Попробуйте позже.', 'error');
-    }
-}
-
-// Функция добавления купленных жетонов (вызывается после успешной оплаты)
-function addPurchasedTokens(tokens, transactionId) {
-    addTokens(tokens, `Покупка ${tokens} жетонов (транзакция: ${transactionId})`);
-    showFloatingMessage(`✅ ${tokens} жетонов добавлены на счёт! Спасибо за покупку!`, 'success');
-    
-    // Сохраняем историю покупок
-    savePurchaseHistory(tokens, transactionId);
-}
-
-// Сохранение истории покупок
-function savePurchaseHistory(tokens, transactionId) {
-    const purchases = JSON.parse(localStorage.getItem('soldaty_purchases') || '[]');
-    purchases.unshift({
-        tokens: tokens,
-        transactionId: transactionId,
-        date: new Date().toISOString()
-    });
-    if (purchases.length > 20) purchases.pop();
-    localStorage.setItem('soldaty_purchases', JSON.stringify(purchases));
-}
-
-// Функция для тестового режима (без реальной оплаты)
-function testBuyTokens(tokens) {
-    if (confirm(`🧪 ТЕСТОВЫЙ РЕЖИМ: Добавить ${tokens} тестовых жетонов?`)) {
-        addTokens(tokens, `Тестовый режим: +${tokens} жетонов`);
-        showFloatingMessage(`🧪 Тестовый режим: +${tokens} жетонов добавлено!`, 'success');
-    }
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -986,7 +887,7 @@ window.onload = () => {
     loadTokenBalance();
     renderWelcomeScreen();
     console.log("✅ Викторина «Солдаты» загружена!");
-    console.log("💰 Жетоны начисляются ТОЛЬКО после завершения уровня!");
-    console.log("📖 Если ответили ПРАВИЛЬНО — всё показывается бесплатно!");
-    console.log("🔐 Если ответили НЕПРАВИЛЬНО — правильный ответ и пояснение скрыты, нужно купить за 5 жетонов!");
+    console.log("💰 Новые правила: правильный ответ = 0 жетонов, неправильный = -1 жетон");
+    console.log("🎁 Бонусы: +2 за прохождение, +5 за идеальное прохождение");
+    console.log("🔒 Магазин жетонов временно заблокирован");
 };
