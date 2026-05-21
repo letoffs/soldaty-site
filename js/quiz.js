@@ -605,13 +605,10 @@ function renderWelcomeScreen() {
                     <ul>
                         <li>🎁 Стартовый бонус: <strong>+10 жетонов</strong></li>
                         <li>❤️ Стартовые жизни: <strong>3</strong> (максимум 5)</li>
-                        <li>✅ Правильный ответ: <strong>0 жетонов</strong></li>
                         <li>❌ Неправильный ответ: <strong>-1 жетон</strong></li>
                         <li>💡 Подсказка: <strong>-3 жетона</strong> (удаляет 2 неверных варианта)</li>
                         <li>🏆 Прохождение уровня: <strong>+2 жетона</strong> и <strong>+1 жизнь</strong></li>
                         <li>⭐ Идеальное прохождение: <strong>+5 жетонов</strong> и <strong>+1 жизнь</strong></li>
-                        <li style="color: #ff4757;">⚠️ Если не прошли уровень: <strong>-1 жизнь</strong></li>
-                        <li style="color: #ff9800;">⏱️ Восстановление жизней: <strong>+1 каждые 5 минут</strong></li>
                     </ul>
                 </div>
             </div>
