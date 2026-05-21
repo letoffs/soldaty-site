@@ -803,6 +803,12 @@ function submitQuiz() {
     const level = quizLevels[currentLevel];
     const totalQuestions = shuffledQuestions.length;
     let correctCount = 0;
+
+    const userName = localStorage.getItem('soldaty_user_name');
+    if (userName && userName !== 'Игрок') {
+        const stats = getPlayerStats();
+        updateLeaderboard(userName, userTokens, stats.levelsCompleted, stats.perfectCount);
+    }
     
     for (let i = 0; i < shuffledQuestions.length; i++) {
         const q = shuffledQuestions[i];
@@ -1265,15 +1271,318 @@ function addTokenStyles() {
     document.head.insertAdjacentHTML('beforeend', styles);
 }
 
+// ========== ТАБЛИЦА РЕКОРДОВ ==========
+
+// Структура данных
+let leaderboardData = {
+    tokens: [],      // [{ name, tokens, levels, perfect, date }]
+    levels: [],      // [{ name, levels, tokens, perfect, date }]
+    perfect: []      // [{ name, perfect, tokens, levels, date }]
+};
+
+// Загрузка рекордов из localStorage
+function loadLeaderboard() {
+    const saved = localStorage.getItem('soldaty_leaderboard');
+    if (saved) {
+        try {
+            leaderboardData = JSON.parse(saved);
+        } catch(e) {}
+    }
+    
+    // Если пусто, создаём тестовые данные
+    if (leaderboardData.tokens.length === 0) {
+        addTestLeaderboardData();
+    }
+}
+
+// Сохранение рекордов
+function saveLeaderboard() {
+    localStorage.setItem('soldaty_leaderboard', JSON.stringify(leaderboardData));
+}
+
+// Добавление тестовых данных (для красоты)
+function addTestLeaderboardData() {
+    const testPlayers = [
+        { name: "Генерал", tokens: 1250, levels: 10, perfect: 8 },
+        { name: "Полковник", tokens: 980, levels: 9, perfect: 6 },
+        { name: "Майор", tokens: 750, levels: 8, perfect: 5 },
+        { name: "Капитан", tokens: 620, levels: 7, perfect: 4 },
+        { name: "Лейтенант", tokens: 500, levels: 6, perfect: 3 },
+        { name: "Прапорщик Шматко", tokens: 450, levels: 5, perfect: 3 },
+        { name: "Старшина", tokens: 380, levels: 5, perfect: 2 },
+        { name: "Сержант", tokens: 300, levels: 4, perfect: 2 },
+        { name: "Ефрейтор", tokens: 200, levels: 3, perfect: 1 },
+        { name: "Рядовой", tokens: 100, levels: 2, perfect: 0 }
+    ];
+    
+    leaderboardData.tokens = testPlayers.map((p, i) => ({
+        name: p.name,
+        value: p.tokens,
+        levels: p.levels,
+        perfect: p.perfect,
+        date: new Date().toISOString()
+    })).sort((a, b) => b.value - a.value);
+    
+    leaderboardData.levels = testPlayers.map((p, i) => ({
+        name: p.name,
+        value: p.levels,
+        tokens: p.tokens,
+        perfect: p.perfect,
+        date: new Date().toISOString()
+    })).sort((a, b) => b.value - a.value);
+    
+    leaderboardData.perfect = testPlayers.map((p, i) => ({
+        name: p.name,
+        value: p.perfect,
+        tokens: p.tokens,
+        levels: p.levels,
+        date: new Date().toISOString()
+    })).sort((a, b) => b.value - a.value);
+    
+    saveLeaderboard();
+}
+
+// Обновление рекордов текущего игрока
+function updateLeaderboard(playerName, tokens, levelsCompleted, perfectCount) {
+    if (!playerName || playerName === 'guest') return;
+    
+    // Обновляем рекорды по жетонам
+    const tokenIndex = leaderboardData.tokens.findIndex(p => p.name === playerName);
+    if (tokenIndex !== -1) {
+        if (tokens > leaderboardData.tokens[tokenIndex].value) {
+            leaderboardData.tokens[tokenIndex].value = tokens;
+            leaderboardData.tokens[tokenIndex].levels = levelsCompleted;
+            leaderboardData.tokens[tokenIndex].perfect = perfectCount;
+            leaderboardData.tokens[tokenIndex].date = new Date().toISOString();
+        }
+    } else {
+        leaderboardData.tokens.push({
+            name: playerName,
+            value: tokens,
+            levels: levelsCompleted,
+            perfect: perfectCount,
+            date: new Date().toISOString()
+        });
+    }
+    leaderboardData.tokens.sort((a, b) => b.value - a.value);
+    leaderboardData.tokens = leaderboardData.tokens.slice(0, 50);
+    
+    // Обновляем рекорды по уровням
+    const levelIndex = leaderboardData.levels.findIndex(p => p.name === playerName);
+    if (levelIndex !== -1) {
+        if (levelsCompleted > leaderboardData.levels[levelIndex].value) {
+            leaderboardData.levels[levelIndex].value = levelsCompleted;
+            leaderboardData.levels[levelIndex].tokens = tokens;
+            leaderboardData.levels[levelIndex].perfect = perfectCount;
+            leaderboardData.levels[levelIndex].date = new Date().toISOString();
+        }
+    } else {
+        leaderboardData.levels.push({
+            name: playerName,
+            value: levelsCompleted,
+            tokens: tokens,
+            perfect: perfectCount,
+            date: new Date().toISOString()
+        });
+    }
+    leaderboardData.levels.sort((a, b) => b.value - a.value);
+    leaderboardData.levels = leaderboardData.levels.slice(0, 50);
+    
+    // Обновляем рекорды по идеальным прохождениям
+    const perfectIndex = leaderboardData.perfect.findIndex(p => p.name === playerName);
+    if (perfectIndex !== -1) {
+        if (perfectCount > leaderboardData.perfect[perfectIndex].value) {
+            leaderboardData.perfect[perfectIndex].value = perfectCount;
+            leaderboardData.perfect[perfectIndex].tokens = tokens;
+            leaderboardData.perfect[perfectIndex].levels = levelsCompleted;
+            leaderboardData.perfect[perfectIndex].date = new Date().toISOString();
+        }
+    } else {
+        leaderboardData.perfect.push({
+            name: playerName,
+            value: perfectCount,
+            tokens: tokens,
+            levels: levelsCompleted,
+            date: new Date().toISOString()
+        });
+    }
+    leaderboardData.perfect.sort((a, b) => b.value - a.value);
+    leaderboardData.perfect = leaderboardData.perfect.slice(0, 50);
+    
+    saveLeaderboard();
+}
+
+// Получение статистики игрока
+function getPlayerStats() {
+    const totalLevels = quizLevels ? quizLevels.length : 10;
+    let levelsCompleted = 0;
+    let perfectCount = 0;
+    
+    for (let i = 1; i <= totalLevels; i++) {
+        if (progress[`level${i}Passed`] === true) {
+            levelsCompleted++;
+            const score = progress[`level${i}Score`] || 0;
+            const levelTotal = quizLevels[i-1]?.questions.length || 10;
+            if (score === levelTotal) {
+                perfectCount++;
+            }
+        }
+    }
+    
+    return { levelsCompleted, perfectCount };
+}
+
+// Открытие модального окна
+function openLeaderboardModal() {
+    const modal = document.getElementById('leaderboardModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        renderLeaderboard('tokens');
+    }
+}
+
+function closeLeaderboardModal() {
+    const modal = document.getElementById('leaderboardModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function switchLeaderboardTab(tab) {
+    document.querySelectorAll('.leaderboard-tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    renderLeaderboard(tab);
+}
+
+function renderLeaderboard(type) {
+    const container = document.getElementById('leaderboardContent');
+    if (!container) return;
+    
+    let data = [];
+    let title = '';
+    let valueLabel = '';
+    
+    switch(type) {
+        case 'tokens':
+            data = leaderboardData.tokens;
+            title = 'По количеству жетонов';
+            valueLabel = 'жетонов';
+            break;
+        case 'levels':
+            data = leaderboardData.levels;
+            title = 'По количеству пройденных уровней';
+            valueLabel = 'уровней';
+            break;
+        case 'perfect':
+            data = leaderboardData.perfect;
+            title = 'По количеству идеальных прохождений';
+            valueLabel = 'идеальных';
+            break;
+    }
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="leaderboard-empty"><i class="fas fa-chart-line"></i> Пока нет рекордов. Будьте первым!</div>`;
+        return;
+    }
+    
+    let currentUserName = localStorage.getItem('soldaty_user_name') || 'Игрок';
+    
+    let html = `
+        <table class="leaderboard-table">
+            <thead>
+                <tr><th>#</th><th>Игрок</th><th>${valueLabel}</th><th>Уровни</th><th>⭐</th></tr>
+            </thead>
+            <tbody>
+    `;
+    
+    data.forEach((record, index) => {
+        const rank = index + 1;
+        let rankClass = '';
+        if (rank === 1) rankClass = 'leaderboard-rank-1';
+        else if (rank === 2) rankClass = 'leaderboard-rank-2';
+        else if (rank === 3) rankClass = 'leaderboard-rank-3';
+        
+        const isCurrentUser = record.name === currentUserName;
+        
+        html += `
+            <tr ${isCurrentUser ? 'class="leaderboard-user-row"' : ''}>
+                <td class="leaderboard-rank ${rankClass}">${rank}</td>
+                <td class="leaderboard-name">${escapeHtml(record.name)} ${isCurrentUser ? '👑' : ''}</td>
+                <td class="leaderboard-value">${record.value}</td>
+                <td>${record.levels || 0}</td>
+                <td>${record.perfect || 0}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+            </tbody>
+        </table>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Сохранение имени пользователя
+function saveUserName() {
+    let name = prompt('Введите ваше имя для таблицы рекордов:', localStorage.getItem('soldaty_user_name') || 'Игрок');
+    if (name && name.trim()) {
+        localStorage.setItem('soldaty_user_name', name.trim().substring(0, 20));
+        showFloatingMessage(`✅ Имя сохранено: ${localStorage.getItem('soldaty_user_name')}`, 'success');
+        
+        // Обновляем рекорды с новым именем
+        const stats = getPlayerStats();
+        updateLeaderboard(
+            localStorage.getItem('soldaty_user_name'),
+            userTokens,
+            stats.levelsCompleted,
+            stats.perfectCount
+        );
+    }
+}
+
+// Вызов обновления рекордов после прохождения уровня
+function updatePlayerLeaderboard() {
+    const userName = localStorage.getItem('soldaty_user_name');
+    if (userName && userName !== 'Игрок') {
+        const stats = getPlayerStats();
+        updateLeaderboard(userName, userTokens, stats.levelsCompleted, stats.perfectCount);
+    }
+}
+
+// Добавляем кнопку смены имени
+function addChangeNameButton() {
+    const header = document.querySelector('.header');
+    if (header && !document.getElementById('changeNameBtn')) {
+        const nameBtn = document.createElement('button');
+        nameBtn.id = 'changeNameBtn';
+        nameBtn.className = 'change-name-btn';
+        nameBtn.innerHTML = '<i class="fas fa-user-edit"></i>';
+        nameBtn.title = 'Изменить имя в таблице рекордов';
+        nameBtn.onclick = () => saveUserName();
+        header.appendChild(nameBtn);
+    }
+}
+
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 window.onload = () => {
     addTokenStyles();
     loadProgress();
     loadTokenBalance();
     loadLives();
+    loadLeaderboard();
     renderWelcomeScreen();
+    addChangeNameButton();
+    
+    // Обновляем рекорды при загрузке
+    const userName = localStorage.getItem('soldaty_user_name');
+    if (userName && userName !== 'Игрок') {
+        const stats = getPlayerStats();
+        updateLeaderboard(userName, userTokens, stats.levelsCompleted, stats.perfectCount);
+    }
+    
     console.log("✅ Викторина «Солдаты» загружена!");
-    console.log("💰 Новые правила: правильный ответ = 0 жетонов, неправильный = -1 жетон");
-    console.log("❤️ Жизни теряются ТОЛЬКО при непрохождении уровня!");
-    console.log("⏱️ Восстановление жизней: +1 каждые 5 минут");
+    console.log("🏆 Таблица рекордов активна!");
 };
