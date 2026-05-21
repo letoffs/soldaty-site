@@ -4016,3 +4016,21 @@ button,
 .back-link:hover {
     color: #ffd700;
 }
+
+.recovery-timer {
+    font-size: 0.7rem;
+    color: #ff9800;
+    margin-left: 10px;
+    padding-left: 10px;
+    border-left: 1px solid #3e5a3e;
+}
+
+.lives-display.critical .recovery-timer {
+    color: #ff6b6b;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
