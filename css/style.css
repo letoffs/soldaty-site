@@ -4034,3 +4034,259 @@ button,
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
+
+/* ===== ТАБЛИЦА РЕКОРДОВ ===== */
+.leaderboard-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    border: none;
+    color: #1a2a1a;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.leaderboard-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.leaderboard-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.leaderboard-modal-content {
+    background: linear-gradient(135deg, #0f1a0f 0%, #0a120a 100%);
+    border-radius: 24px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow: hidden;
+    border: 2px solid #ffd700;
+    animation: modalSlideIn 0.3s ease;
+}
+
+.leaderboard-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #3e5a3e;
+    background: rgba(0,0,0,0.3);
+}
+
+.leaderboard-modal-header h2 {
+    color: #ffd700;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.leaderboard-modal-header h2 i {
+    margin-right: 10px;
+}
+
+.leaderboard-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    cursor: pointer;
+    color: #aaa;
+    transition: all 0.2s;
+}
+
+.leaderboard-close:hover {
+    color: #ffd700;
+    transform: scale(1.1);
+}
+
+.leaderboard-modal-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.leaderboard-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #3e5a3e;
+    padding-bottom: 10px;
+}
+
+.leaderboard-tab {
+    background: none;
+    border: none;
+    padding: 8px 20px;
+    cursor: pointer;
+    color: #aaa;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    border-radius: 30px;
+}
+
+.leaderboard-tab:hover {
+    color: #ffd700;
+}
+
+.leaderboard-tab.active {
+    background: #bd8a3e;
+    color: #0f1a0f;
+}
+
+.leaderboard-content {
+    min-height: 300px;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 12px 8px;
+    text-align: center;
+    border-bottom: 1px solid #3e5a3e;
+}
+
+.leaderboard-table th {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.leaderboard-table td {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.leaderboard-table tr:hover td {
+    background: #1e2a1e;
+}
+
+.leaderboard-rank {
+    font-weight: bold;
+    width: 50px;
+}
+
+.leaderboard-rank-1 { color: #ffd700; font-size: 1.2rem; }
+.leaderboard-rank-2 { color: #c0c0c0; font-size: 1.1rem; }
+.leaderboard-rank-3 { color: #cd7f32; font-size: 1rem; }
+
+.leaderboard-name {
+    text-align: left;
+}
+
+.leaderboard-value {
+    font-weight: bold;
+    color: #4caf50;
+}
+
+.leaderboard-empty {
+    text-align: center;
+    color: #8aa07a;
+    padding: 40px;
+}
+
+.leaderboard-info {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #3e5a3e;
+    color: #8aa07a;
+    font-size: 0.7rem;
+}
+
+.leaderboard-info i {
+    margin-right: 5px;
+}
+
+.leaderboard-user-row {
+    background: #1e3a1e;
+    border: 1px solid #ffd700;
+}
+
+.leaderboard-user-row td {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 700px) {
+    .leaderboard-btn {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 15px;
+        font-size: 0.8rem;
+    }
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 8px 4px;
+        font-size: 0.75rem;
+    }
+    .leaderboard-tab {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+}
+
+.change-name-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 120px;
+    background: #2c3e2c;
+    border: 1px solid #bd8a3e;
+    color: #ffd700;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+
+.change-name-btn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: scale(1.05);
+}
+
+@media (max-width: 700px) {
+    .change-name-btn {
+        bottom: 10px;
+        right: 100px;
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+}
