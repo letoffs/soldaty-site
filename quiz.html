@@ -15,12 +15,12 @@
     <meta property="og:title" content="Викторина «Солдаты» — проверь свои знания!">
     <meta property="og:description" content="100 вопросов о культовом сериале «Солдаты». Пройди путь от рядового до генерала!">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="Resources/soldaty_icon.png">
+    <meta property="og:image" content="resources/soldaty_icon.png">
     
     <!-- Технические метатеги -->
     <meta name="theme-color" content="#1a2a1a">
-    <link rel="icon" type="image/png" href="Resources/soldaty_icon.png">
-    <link rel="shortcut icon" href="Resources/soldaty_icon.png">
+    <link rel="icon" type="image/png" href="resources/soldaty_icon.png">
+    <link rel="shortcut icon" href="resources/soldaty_icon.png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -41,7 +41,7 @@
 <div class="container">
     <div class="header heroes-header">
         <a href="index.html" class="logo-link">
-            <img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
+            <img src="../resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
         </a>
 
         <p>Проверь свои знания о культовом сериале!</p>
@@ -140,133 +140,14 @@
     </div>
 
     <div class="footer">
-    <div class="footer-links" style="margin-bottom: 10px;">
-        <a href="#offer.html" style="color: #bd8a3e; text-decoration: none; margin: 0 10px;">Пользовательское соглашение</a>
-        <a href="#contacts.html" style="color: #bd8a3e; text-decoration: none; margin: 0 10px;">Контакты и реквизиты</a>
-    </div>
-    Викторина на тему сериала «Солдаты»
-</div>
-
-<!-- КНОПКА МАГАЗИНА -->
-<button class="shop-open-btn" onclick="openShopModal()">
-    <i class="fas fa-store"></i> Купить жетоны
-</button>
-
-<!-- МОДАЛЬНОЕ ОКНО МАГАЗИНА ЖЕТОНОВ -->
-<div id="shopModal" class="shop-modal">
-    <div class="shop-modal-content">
-        <div class="shop-modal-header">
-            <h2><i class="fas fa-store"></i> Магазин жетонов</h2>
-            <button class="shop-close" onclick="closeShopModal()">&times;</button>
-        </div>
-        <div class="shop-modal-body">
-            <div class="shop-packages">
-                <div class="package-card" data-price="99" data-tokens="50">
-                    <div class="package-icon">🪙</div>
-                    <div class="package-tokens">50 жетонов</div>
-                    <div class="package-price">99 ₽</div>
-                    <div class="package-bonus">+0 бонусом</div>
-                    <button class="buy-btn" onclick="buyTokens(50, 99)">Купить</button>
-                </div>
-                
-                <div class="package-card popular" data-price="199" data-tokens="120">
-                    <div class="popular-badge">🔥 Популярный</div>
-                    <div class="package-icon">🪙🪙</div>
-                    <div class="package-tokens">120 жетонов</div>
-                    <div class="package-price">199 ₽</div>
-                    <div class="package-bonus">+20 бонусом</div>
-                    <button class="buy-btn" onclick="buyTokens(120, 199)">Купить</button>
-                </div>
-                
-                <div class="package-card" data-price="499" data-tokens="350">
-                    <div class="package-icon">🪙🪙🪙</div>
-                    <div class="package-tokens">350 жетонов</div>
-                    <div class="package-price">499 ₽</div>
-                    <div class="package-bonus">+50 бонусом</div>
-                    <button class="buy-btn" onclick="buyTokens(350, 499)">Купить</button>
-                </div>
-                
-                <div class="package-card" data-price="999" data-tokens="800">
-                    <div class="package-icon">🪙🪙🪙🪙</div>
-                    <div class="package-tokens">800 жетонов</div>
-                    <div class="package-price">999 ₽</div>
-                    <div class="package-bonus">+150 бонусом</div>
-                    <button class="buy-btn" onclick="buyTokens(800, 999)">Купить</button>
-                </div>
-                
-                <div class="package-card vip" data-price="1999" data-tokens="2000">
-                    <div class="popular-badge">👑 VIP</div>
-                    <div class="package-icon">🪙🪙🪙🪙🪙</div>
-                    <div class="package-tokens">2000 жетонов</div>
-                    <div class="package-price">1 999 ₽</div>
-                    <div class="package-bonus">+500 бонусом</div>
-                    <button class="buy-btn" onclick="buyTokens(2000, 1999)">Купить</button>
-                </div>
-            </div>
-            <div class="shop-info">
-                <p><i class="fas fa-shield-alt"></i> Безопасная оплата через Stripe</p>
-            </div>
-        </div>
+        Викторина на тему сериала «Солдаты»
+        <!-- Ссылки на оферту и контакты УДАЛЕНЫ -->
     </div>
 </div>
 
 <!-- СКРИПТЫ -->
 <script src="js/quiz-levels.js"></script>
 <script src="js/quiz.js"></script>
-
-<script>
-    // ========== ФУНКЦИИ МАГАЗИНА ==========
-    
-    function openShopModal() {
-        const modal = document.getElementById('shopModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-
-    function closeShopModal() {
-        const modal = document.getElementById('shopModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
-
-    // Функция покупки токенов (демо-режим)
-    async function buyTokens(tokens, price) {
-        if (!confirm(`💰 Купить ${tokens} жетонов за ${price} ₽?\n\nЖетоны будут добавлены на ваш счёт после оплаты.`)) {
-            return;
-        }
-        
-        if (typeof showFloatingMessage === 'function') {
-            showFloatingMessage(`🔄 Перенаправление на оплату...`, 'info');
-        }
-        
-        // ДЕМО-РЕЖИМ: добавляем жетоны сразу (для тестирования)
-        setTimeout(() => {
-            if (confirm(`🧪 ТЕСТОВЫЙ РЕЖИМ!\n\nДобавить ${tokens} тестовых жетонов?\n\n(В реальном проекте здесь будет оплата через Stripe/Telegram)`)) {
-                if (typeof addTokens === 'function') {
-                    addTokens(tokens, `Покупка ${tokens} жетонов (тестовый режим)`);
-                    if (typeof showFloatingMessage === 'function') {
-                        showFloatingMessage(`✅ ${tokens} жетонов добавлены на счёт! Спасибо за покупку!`, 'success');
-                    } else {
-                        alert(`✅ Добавлено ${tokens} жетонов!`);
-                    }
-                } else {
-                    alert(`✅ [ТЕСТ] Добавлено ${tokens} жетонов!`);
-                }
-                closeShopModal();
-            }
-        }, 500);
-    }
-    
-    // Закрытие модалки по клику вне области
-    window.onclick = function(event) {
-        const modal = document.getElementById('shopModal');
-        if (event.target === modal) {
-            closeShopModal();
-        }
-    }
-</script>
 
 </body>
 </html>
