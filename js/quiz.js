@@ -158,7 +158,7 @@ function updateLivesUI() {
             <div id="livesDisplay" class="lives-display ${userLives <= 1 ? 'critical' : ''} ${userLives === 0 ? 'dead' : ''}">
                 <span class="lives-label"><i class="fas fa-shield-alt"></i> Жизни:</span>
                 <span class="lives-hearts">${heartsHtml}</span>
-                <span id="recoveryTimer" class="recovery-timer">${userLives === 0 ? '💀 ВСЕ ЖИЗНИ ПОТЕРЯНЫ 💀' : recoveryTimer}</span>
+                <span id="recoveryTimer" class="recovery-timer">${userLives === 0 ? 'У вас нет жизней' : recoveryTimer}</span>
             </div>
         `;
         header.insertAdjacentHTML('beforeend', livesHTML);
@@ -187,7 +187,7 @@ function updateLivesUI() {
         
         const timerSpan = document.getElementById('recoveryTimer');
         if (timerSpan) {
-            timerSpan.textContent = userLives === 0 ? '💀 ВСЕ ЖИЗНИ ПОТЕРЯНЫ 💀' : getRecoveryTimerText();
+            timerSpan.textContent = userLives === 0 ? 'У вас нет жизней' : getRecoveryTimerText();
         }
     }
     
