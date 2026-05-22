@@ -25,7 +25,7 @@ const TOKEN_CONFIG = {
     revealAnswerCost: 5,
     levelCompleteBonus: 2,
     perfectLevelBonus: 5,
-    maxDebt: -10
+    minTokens: 0
 };
 
 // ========== СИСТЕМА ЖИЗНЕЙ ==========
@@ -155,10 +155,10 @@ function updateLivesUI() {
         const recoveryTimer = getRecoveryTimerText();
         
         const livesHTML = `
-            <div id="livesDisplay" class="lives-display ${userLives <= 1 ? 'critical' : ''}">
+            <div id="livesDisplay" class="lives-display ${userLives <= 1 ? 'critical' : ''} ${userLives === 0 ? 'dead' : ''}">
                 <span class="lives-label"><i class="fas fa-shield-alt"></i> Жизни:</span>
                 <span class="lives-hearts">${heartsHtml}</span>
-                <span id="recoveryTimer" class="recovery-timer">${recoveryTimer}</span>
+                <span id="recoveryTimer" class="recovery-timer">${userLives === 0 ? '💀 ВСЕ ЖИЗНИ ПОТЕРЯНЫ 💀' : recoveryTimer}</span>
             </div>
         `;
         header.insertAdjacentHTML('beforeend', livesHTML);
@@ -179,11 +179,46 @@ function updateLivesUI() {
             livesDisplay.classList.remove('critical');
         }
         
+        if (userLives === 0) {
+            livesDisplay.classList.add('dead');
+        } else {
+            livesDisplay.classList.remove('dead');
+        }
+        
         const timerSpan = document.getElementById('recoveryTimer');
         if (timerSpan) {
-            timerSpan.textContent = getRecoveryTimerText();
+            timerSpan.textContent = userLives === 0 ? '💀 ВСЕ ЖИЗНИ ПОТЕРЯНЫ 💀' : getRecoveryTimerText();
         }
     }
+    
+    // Обновляем доступность уровней на экране приветствия
+    updateLevelsAvailability();
+}
+
+function updateLevelsAvailability() {
+    const levelCards = document.querySelectorAll('.level-card');
+    if (!levelCards.length) return;
+    
+    levelCards.forEach(card => {
+        const levelIdx = parseInt(card.dataset.level);
+        const levelUnlocked = isLevelUnlocked(levelIdx);
+        
+        if (userLives <= 0) {
+            card.style.cursor = 'not-allowed';
+            card.style.opacity = '0.5';
+            card.onclick = () => {
+                showFloatingMessage('💀 У вас закончились жизни! Подождите восстановления (5 минут за жизнь)', 'error');
+            };
+        } else if (levelUnlocked) {
+            card.style.cursor = 'pointer';
+            card.style.opacity = '1';
+            card.onclick = () => startQuiz(levelIdx);
+        } else {
+            card.style.cursor = 'not-allowed';
+            card.style.opacity = '0.5';
+            card.onclick = () => showFloatingMessage(`Уровень "${quizLevels[levelIdx].name}" недоступен!`, 'warning');
+        }
+    });
 }
 
 function getRecoveryTimerText() {
@@ -223,6 +258,7 @@ function startLifeRecoveryCheck() {
                 if (recoveredLives > 0) {
                     const newLives = Math.min(userLives + recoveredLives, LIVES_CONFIG.maxLives);
                     if (newLives > userLives) {
+                        const wasDead = userLives === 0;
                         userLives = newLives;
                         saveLives(userLives);
                         
@@ -237,7 +273,14 @@ function startLifeRecoveryCheck() {
                         }
                         
                         updateLivesUI();
-                        showFloatingMessage(`💚 Восстановлена жизнь! Теперь у вас ${userLives} жизней`, 'success');
+                        
+                        // Если были мертвы и получили жизнь - разблокируем уровни
+                        if (wasDead && userLives > 0) {
+                            showFloatingMessage(`💚 Восстановлена жизнь! Уровни снова доступны! У вас ${userLives} жизней`, 'success');
+                            updateLevelsAvailability();
+                        } else {
+                            showFloatingMessage(`💚 Восстановлена жизнь! Теперь у вас ${userLives} жизней`, 'success');
+                        }
                     }
                 }
             }
@@ -269,7 +312,7 @@ function loseLifeForLevelFail() {
         showFloatingMessage(`💔 Уровень не пройден! Потеряна жизнь. Осталось: ${userLives}`, 'error');
         
         if (userLives === 0) {
-            showFloatingMessage('💀 ВЫ ПОТЕРЯЛИ ВСЕ ЖИЗНИ! Ждите восстановления (5 минут за жизнь)! 💀', 'error');
+            showFloatingMessage('У вас нет жизней! Доступ к уровням заблокирован', 'error');
             return true;
         }
     }
@@ -360,15 +403,20 @@ function updateTokenUI() {
         if (statsBtn) statsBtn.onclick = () => showTokenStatsModal();
     } else if (tokenDisplay) {
         document.getElementById('tokenAmount').innerText = userTokens;
-        if (userTokens < 0) {
-            tokenDisplay.classList.add('negative');
-        } else {
-            tokenDisplay.classList.remove('negative');
-        }
+        tokenDisplay.classList.remove('negative');
     }
 }
 
 function addTokens(amount, reason, silent = false) {
+    let newAmount = userTokens + amount;
+    
+    if (newAmount < TOKEN_CONFIG.minTokens) {
+        if (!silent) {
+            showFloatingMessage(`⚠️ Недостаточно жетонов! Осталось: ${userTokens}`, 'warning');
+        }
+        return userTokens;
+    }
+
     userTokens += amount;
     saveTokenBalance();
     updateTokenUI();
@@ -378,11 +426,6 @@ function addTokens(amount, reason, silent = false) {
     }
     
     logTokenTransaction(amount, reason);
-    
-    if (userTokens <= TOKEN_CONFIG.maxDebt && !window.bankruptcyShown) {
-        window.bankruptcyShown = true;
-        showFloatingMessage(`⚠️ Вы в долгу (${userTokens} жетонов)! Отвечайте правильно!`, 'warning');
-    }
     
     return userTokens;
 }
@@ -446,7 +489,7 @@ function useHint() {
     }
     
     if (userTokens < TOKEN_CONFIG.hintCost) {
-        showFloatingMessage(`❌ Нужно ${TOKEN_CONFIG.hintCost} жетона. У вас ${userTokens}`, 'error');
+        showFloatingMessage(`❌ Недостаточно жетонов! Нужно ${TOKEN_CONFIG.hintCost}. У вас ${userTokens}`, 'error');
         return false;
     }
     
@@ -637,7 +680,14 @@ function renderWelcomeScreen() {
     
     document.querySelectorAll('.level-card').forEach(card => {
         const levelIdx = parseInt(card.dataset.level);
-        if (isLevelUnlocked(levelIdx)) {
+        const levelUnlocked = isLevelUnlocked(levelIdx);
+        if (userLives <= 0) {
+            card.style.cursor = 'not-allowed';
+            card.style.opacity = '0.5';
+            card.onclick = () => {
+                showFloatingMessage('У вас закончились жизни! Подождите восстановления (5 минут за жизнь)', 'error');
+            };
+        } else if (levelUnlocked) {
             card.style.cursor = 'pointer';
             card.onclick = () => startQuiz(levelIdx);
         } else {
@@ -665,6 +715,16 @@ function renderWelcomeScreen() {
 function startQuiz(levelIndex) {
     if (!isQuizDataLoaded() || !isLevelUnlocked(levelIndex)) return;
     
+    if (userLives <= 0) {
+        showFloatingMessage('💀 У вас закончились жизни! Подождите восстановления (5 минут за жизнь)', 'error');
+        return;
+    }
+    
+    if (!isLevelUnlocked(levelIndex)) {
+        showFloatingMessage(`Уровень "${quizLevels[levelIndex].name}" недоступен!`, 'warning');
+        return;
+    }
+
     selectedLevel = levelIndex;
     currentLevel = levelIndex;
     currentQuestionIndex = 0;
@@ -826,9 +886,19 @@ function submitQuiz() {
     // Штраф за неправильные ответы (только жетоны)
     if (wrongCount > 0) {
         const wrongTokens = wrongCount * Math.abs(TOKEN_CONFIG.wrongAnswer);
-        addTokens(-wrongTokens, `${wrongCount} неправильных ответов (-${wrongTokens})`, true);
-        tokenChange -= wrongTokens;
-        tokenDetails.push(`❌ -${wrongTokens}`);
+        // Проверяем, хватит ли жетонов для списания
+        const availableTokens = userTokens;
+        const actualPenalty = Math.min(wrongTokens, availableTokens);
+        
+        if (actualPenalty > 0) {
+            addTokens(-actualPenalty, `${wrongCount} неправильных ответов (-${actualPenalty})`, true);
+            tokenChange -= actualPenalty;
+            tokenDetails.push(`❌ -${actualPenalty}`);
+            
+            if (actualPenalty < wrongTokens) {
+                showFloatingMessage(`⚠️ Жетонов не хватило на полный штраф. Списано ${actualPenalty} из ${wrongTokens}`, 'warning');
+            }
+        }
     }
     
     // ========== ОБРАБОТКА ЖИЗНЕЙ ПОСЛЕ ОПРЕДЕЛЕНИЯ РЕЗУЛЬТАТА ==========
@@ -1266,6 +1336,11 @@ function addTokenStyles() {
                 .failed-message { font-size: 1rem; }
                 .recovery-timer { display: none; }
             }
+
+            .lives-display.dead { border-color: #6b6b6b; background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%); animation: deadPulse 2s infinite; }
+            .lives-display.dead .lives-hearts i { color: #555 !important; }
+            .lives-display.dead .recovery-timer { color: #ff6b6b; animation: blink 1s infinite; }
+            @keyframes deadPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; background: #2a1a1a; } }
         </style>
     `;
     document.head.insertAdjacentHTML('beforeend', styles);
