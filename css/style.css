@@ -4290,3 +4290,370 @@ button,
         font-size: 0.8rem;
     }
 }
+
+/* Модальное окно */
+.hero-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.hero-modal-content {
+    background: linear-gradient(135deg, #1a2a1a 0%, #0d1a0d 100%);
+    border: 2px solid #d4af37;
+    border-radius: 20px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    color: #e8e8e8;
+    animation: heroModalSlideIn 0.3s ease;
+}
+
+@keyframes heroModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-modal-close {
+    position: sticky;
+    top: 15px;
+    right: 25px;
+    float: right;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #d4af37;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.hero-modal-close:hover {
+    color: #ff4444;
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.hero-modal-header {
+    display: flex;
+    gap: 25px;
+    padding: 30px 30px 20px;
+    border-bottom: 1px solid #d4af37;
+    margin-top: -15px;
+}
+
+.hero-modal-image {
+    flex-shrink: 0;
+}
+
+.hero-modal-image img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #d4af37;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.hero-modal-title h1 {
+    font-size: 28px;
+    margin: 0 0 8px 0;
+    color: #d4af37;
+}
+
+.hero-modal-actor {
+    font-size: 18px;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.hero-modal-role {
+    display: inline-block;
+    background: rgba(212, 175, 55, 0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #d4af37;
+}
+
+/* Табы */
+.hero-modal-tabs {
+    display: flex;
+    gap: 10px;
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #2a3a2a;
+}
+
+.hero-tab {
+    background: transparent;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #aaa;
+    border-radius: 25px;
+    transition: all 0.3s;
+    font-family: inherit;
+}
+
+.hero-tab.active {
+    background: #d4af37;
+    color: #0d1a0d;
+}
+
+.hero-tab:hover:not(.active) {
+    background: rgba(212, 175, 55, 0.2);
+    color: #d4af37;
+}
+
+/* Контент табов */
+.hero-tab-content {
+    display: none;
+    padding: 25px 30px;
+}
+
+.hero-tab-content.active {
+    display: block;
+    animation: heroFadeIn 0.3s ease;
+}
+
+.hero-tab-content p {
+    line-height: 1.6;
+    font-size: 15px;
+    white-space: pre-wrap;
+    text-indent: 20px;
+    margin: 0 0 12px 0;
+}
+
+@keyframes heroFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Стиль для биографии с переносами */
+.bio-text {
+    line-height: 1.6;
+    font-size: 15px;
+    white-space: pre-wrap;
+}
+
+.bio-text br {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Древо связей */
+.relationships-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.relation-group {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 15px;
+}
+
+.relation-group-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #2a3a2a;
+}
+
+.relation-group-title i {
+    margin-right: 8px;
+    color: #d4af37;
+}
+
+.relation-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.relation-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid transparent;
+}
+
+.relation-item:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
+    transform: translateX(5px);
+}
+
+.relation-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.relation-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.relation-info {
+    flex: 1;
+}
+
+.relation-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.relation-type {
+    font-size: 11px;
+    color: #d4af37;
+    opacity: 0.8;
+}
+
+.no-relationships {
+    text-align: center;
+    padding: 40px;
+    color: #aaa;
+    font-size: 16px;
+}
+
+/* Адаптив для модального окна */
+@media (max-width: 600px) {
+    .hero-modal-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .hero-modal-image img {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .hero-modal-title h1 {
+        font-size: 22px;
+    }
+    
+    .hero-tab {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    
+    .hero-tab-content {
+        padding: 20px;
+    }
+    
+    .relation-item {
+        width: 100%;
+    }
+}
+
+/* ===== ВКЛАДКА С ДЕТАЛЬНОЙ ИНФОРМАЦИЕЙ ===== */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.detail-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px 15px;
+}
+
+.detail-item.full-width {
+    grid-column: span 2;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: #8aa07a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.detail-label i {
+    color: #bd8a3e;
+    width: 16px;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    color: #ddd;
+    line-height: 1.4;
+}
+
+.nicknames-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.nickname-tag {
+    background: #1e2a1e;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #ffd966;
+}
+
+.detail-list {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.detail-list li {
+    margin: 4px 0;
+    color: #ddd;
+}
+
+.no-details {
+    text-align: center;
+    padding: 40px;
+    color: #8aa07a;
+}
+
+@media (max-width: 600px) {
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .detail-item.full-width {
+        grid-column: span 1;
+    }
+}
