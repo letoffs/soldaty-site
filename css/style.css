@@ -4657,3 +4657,93 @@ button,
         grid-column: span 1;
     }
 }
+
+.copyright {
+    font-size: 0.7rem;
+    color: #6a8a6a;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #3a5a3a;
+}
+
+.copyright-bar {
+    text-align: center;
+    padding: 15px;
+    background: #1a2a1a;
+    font-size: 0.7rem;
+    color: #6a8a6a;
+    border-top: 1px solid #3a5a3a;
+}
+
+.copyright-bar p {
+    margin: 5px 0;
+}
+
+/* ===== ПЕРЕКЛЮЧАТЕЛЬ ПЛЕЕРОВ ===== */
+.player-switch {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.player-switch-btn {
+    background: #2a3a2a;
+    border: 1px solid #4a6a4a;
+    padding: 8px 20px;
+    border-radius: 30px;
+    color: #c0d0c0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.player-switch-btn i {
+    font-size: 16px;
+}
+
+.player-switch-btn:hover {
+    background: #3a5a3a;
+    border-color: #6a9a6a;
+    color: white;
+}
+
+.player-switch-btn.active {
+    background: #4a8a4a;
+    border-color: #6aaa6a;
+    color: white;
+}
+
+/* Контейнеры плееров */
+.player-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#youtubePlayerContainer, 
+#rutubePlayerContainer,
+#rentvPlayerContainer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* Убедитесь, что YouTube плеер правильно отображается */
+#youtubePlayerContainer iframe,
+#rutubePlayerContainer iframe,
+#rentvPlayerContainer iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
