@@ -2,15 +2,21 @@
 let currentSeason = 1;
 let currentEpisodeObj = episodesData[0];
 let currentPlayer = null;  // YouTube плеер
+let currentRutubePlayer = null; // Rutube плеер
+let currentRentvPlayer = null;     // РЕН ТВ плеер (iframe)
+let currentPlatform = 'youtube'; // 'youtube', 'rutube' или 'rentv'
 let currentFormRating = 0;
 let autoplayEnabled = true;
 let autoplayTimer = null;
 let timerInterval = null;
 let secondsLeft = 10;
+let videoEndCheckInterval = null;
+let currentVideoDuration = 0; // Длительность видео в секундах (если известна)
+let videoStartTime = null;
 
-// ========== НОВОЕ: МАППИНГ НАЗВАНИЙ ДЛЯ СПИН-ОФФОВ ==========
+// ========== МАППИНГ НАЗВАНИЙ ДЛЯ СПИН-ОФФОВ ==========
 const seasonTitles = {
-    // Основные сезоны 1-17 (можно оставить как есть или добавить названия)
+    // Основные сезоны 1-17
     1: "1 СЕЗОН",
     2: "2 СЕЗОН",
     3: "3 СЕЗОН",
@@ -77,14 +83,12 @@ function getNextEpisode() {
             return nextSeasonEpisodes[0];
         }
     }
-    
     return null;
 }
 
 // Запустить таймер автовоспроизведения
 function startAutoplayTimer() {
     stopAutoplayTimer();
-    
     if (!autoplayEnabled) return;
     
     const nextEpisode = getNextEpisode();
@@ -104,6 +108,8 @@ function startAutoplayTimer() {
         
         if (secondsLeft <= 0) {
             stopAutoplayTimer();
+            stopVideoEndChecker();
+
             const next = getNextEpisode();
             if (next) {
                 if (next.season !== currentSeason) {
@@ -144,24 +150,78 @@ function toggleAutoplay() {
     autoplayEnabled = !autoplayEnabled;
     if (!autoplayEnabled) {
         stopAutoplayTimer();
+        stopVideoEndChecker();
+    } else if (currentPlatform !== 'youtube') {
+        startVideoEndChecker();
     }
+}
+
+// ========== ПРОВЕРКА ОКОНЧАНИЯ ВИДЕО ДЛЯ IFrame ПЛЕЕРОВ ==========
+
+function startVideoEndChecker() {
+    stopVideoEndChecker();
+    if (!autoplayEnabled) return;
+    if (currentPlatform === 'youtube') return;
+    
+    // Запоминаем время начала видео
+    videoStartTime = Date.now();
+    
+    // Получаем примерную длительность из данных серии (если есть)
+    if (currentEpisodeObj && currentEpisodeObj.duration) {
+        currentVideoDuration = currentEpisodeObj.duration;
+    } else {
+        // Дефолтная длительность для серии (примерно 25-30 минут)
+        currentVideoDuration = 25 * 60; // 25 минут по умолчанию
+    }
+    
+    videoEndCheckInterval = setInterval(() => {
+        if (!autoplayEnabled) return;
+        
+        const elapsedSeconds = (Date.now() - videoStartTime) / 1000;
+        
+        // Если прошло времени больше или равно длительности видео
+        if (elapsedSeconds >= currentVideoDuration - 2) { // -2 секунды для точности
+            console.log(`Видео на ${currentPlatform} закончилось (прошло ${Math.floor(elapsedSeconds)} сек)`);
+            onVideoEnded();
+        }
+    }, 1000);
+}
+
+function stopVideoEndChecker() {
+    if (videoEndCheckInterval) {
+        clearInterval(videoEndCheckInterval);
+        videoEndCheckInterval = null;
+    }
+    videoStartTime = null;
+}
+
+function onVideoEnded() {
+    if (!autoplayEnabled) return;
+    if (currentPlatform === 'youtube') return;
+    
+    console.log("Видео закончилось, запускаем таймер автовоспроизведения");
+    stopVideoEndChecker();
+    startAutoplayTimer();
 }
 
 // ---------- YouTube API ----------
 function onYouTubeIframeAPIReady() {
+    initPlayerSwitch();
     loadFirstEpisode();
 }
 
 function createYouTubePlayer(videoId) {
-    const container = document.getElementById('youtubePlayer');
-    if (!container) return;
+    const playerDiv = document.getElementById('youtubePlayerContainer');
+    if (!playerDiv) return;
     
-    container.innerHTML = '';
-    const playerDiv = document.createElement('div');
-    playerDiv.id = 'youtubePlayerDiv';
-    container.appendChild(playerDiv);
+    playerDiv.innerHTML = '';
     
-    currentPlayer = new YT.Player('youtubePlayerDiv', {
+    if (currentPlayer && currentPlayer.destroy) {
+        currentPlayer.destroy();
+        currentPlayer = null;
+    }
+    
+    currentPlayer = new YT.Player('youtubePlayerContainer', {
         height: '100%',
         width: '100%',
         videoId: videoId,
@@ -177,17 +237,14 @@ function createYouTubePlayer(videoId) {
 }
 
 function onPlayerStateChange(event) {
-    // event.data: -1 (не начато), 0 (завершено), 1 (играет), 2 (пауза), 3 (буферизация)
     if (event.data === 0) { // Видео закончилось
-        const timerSpan = document.getElementById('autoplayTimer');
-        if (timerSpan) {
-            timerSpan.style.display = 'inline-block';
-        }
+        console.log("YouTube видео закончилось");
         if (autoplayEnabled) {
             startAutoplayTimer();
         }
     } else if (event.data === 1) { // Видео играет
         stopAutoplayTimer();
+        stopVideoEndChecker();
         const timerSpan = document.getElementById('autoplayTimer');
         if (timerSpan) {
             timerSpan.style.display = 'none';
@@ -196,27 +253,271 @@ function onPlayerStateChange(event) {
     } else if (event.data === 2) { // Пауза
         stopAutoplayTimer();
         const timerSpan = document.getElementById('autoplayTimer');
-        if (timerSpan) {
-            timerSpan.style.display = 'none';
+        if (timerSpan) timerSpan.style.display = 'none';
+    }
+}
+
+// ---------- RUTUBE ПЛЕЕР ----------
+function loadRutubePlayer(videoId) {
+    const container = document.getElementById('rutubePlayerContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    currentRutubePlayer = null;
+    
+    const iframe = document.createElement('iframe');
+    iframe.width = '100%';
+    iframe.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.position = 'absolute';
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+    iframe.allowFullscreen = true;
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.referrerPolicy = 'unsafe-url';
+    iframe.src = `https://rutube.ru/play/embed/${videoId}?autoplay=1`;
+    
+    // Добавляем обработчик загрузки
+    iframe.onload = () => {
+        console.log("Rutube плеер загружен, запускаем проверку окончания видео");
+        startVideoEndChecker();
+    };
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.width = '100%';
+    wrapper.style.height = '100%';
+    wrapper.appendChild(iframe);
+    
+    container.appendChild(wrapper);
+    currentRutubePlayer = iframe;
+}
+
+// ---------- РЕН ТВ ПЛЕЕР ----------
+function loadRentvPlayer(videoId) {
+    const container = document.getElementById('rentvPlayerContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    currentRentvPlayer = null;
+    
+    const iframe = document.createElement('iframe');
+    iframe.width = '100%';
+    iframe.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.position = 'absolute';
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+    iframe.allowFullscreen = true;
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.referrerPolicy = 'unsafe-url';
+    iframe.src = `https://ren.tv/player/edition/embed/${videoId}`;
+    
+    iframe.onload = () => {
+        console.log("РЕН ТВ плеер загружен, запускаем проверку окончания видео");
+        startVideoEndChecker();
+    };
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.width = '100%';
+    wrapper.style.height = '100%';
+    wrapper.appendChild(iframe);
+    
+    container.appendChild(wrapper);
+    currentRentvPlayer = iframe;
+}
+
+// ---------- УПРАВЛЕНИЕ ПЛЕЕРАМИ ----------
+function loadVideoOnPlatform(episode) {
+    console.log("loadVideoOnPlatform, платформа:", currentPlatform);
+    stopAllPlayers();
+    
+    if (currentPlatform === 'youtube') {
+        if (episode.youtubeId) {
+            if (currentPlayer && currentPlayer.loadVideoById) {
+                currentPlayer.loadVideoById(episode.youtubeId);
+                currentPlayer.playVideo();
+            } else {
+                createYouTubePlayer(episode.youtubeId);
+            }
         }
+    } else if (currentPlatform === 'rutube') {
+        if (episode.rutubeId) {
+            loadRutubePlayer(episode.rutubeId);
+        } else {
+            showToast("❌ Эта серия недоступна на Rutube");
+        }
+    } else if (currentPlatform === 'rentv') {
+        if (episode.rentvId) {
+            loadRentvPlayer(episode.rentvId);
+        } else {
+            showToast("❌ Эта серия недоступна на РЕН ТВ");
+            const container = document.getElementById('rentvPlayerContainer');
+            if (container) {
+                container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;background:#1a1a2a;">📺 Видео временно недоступно</div>';
+            }
+        }
+    }
+}
+
+function stopYouTubePlayer() {
+    if (currentPlayer) {
+        try {
+            currentPlayer.stopVideo();
+            console.log("YouTube плеер остановлен");
+        } catch(e) {
+            console.warn("Ошибка при остановке YouTube:", e);
+        }
+    }
+}
+
+function stopRutubePlayer() {
+    const container = document.getElementById('rutubePlayerContainer');
+    if (container) {
+        container.innerHTML = '';
+        currentRutubePlayer = null;
+        console.log("Rutube плеер остановлен");
+    }
+}
+
+function stopRentvPlayer() {
+    const container = document.getElementById('rentvPlayerContainer');
+    if (container) {
+        container.innerHTML = '';
+        currentRentvPlayer = null;
+        console.log("РЕН ТВ плеер остановлен");
+    }
+}
+
+function stopAllPlayers() {
+    console.log("Останавливаем все плееры...");
+    stopYouTubePlayer();
+    stopRutubePlayer();
+    stopRentvPlayer();
+    stopVideoEndChecker();
+    stopAutoplayTimer();
+}
+
+function switchToYouTube() {
+    console.log("switchToYouTube вызван");
+    stopRutubePlayer();
+    stopRentvPlayer();
+    stopVideoEndChecker();
+    
+    currentPlatform = 'youtube';
+    
+    document.getElementById('youtubePlayer').style.display = 'block';
+    document.getElementById('rutubePlayer').style.display = 'none';
+    document.getElementById('rentvPlayer').style.display = 'none';
+    
+    updateActiveButton('youtube');
+    
+    if (currentEpisodeObj && currentEpisodeObj.youtubeId) {
+        if (currentPlayer && currentPlayer.loadVideoById) {
+            currentPlayer.loadVideoById(currentEpisodeObj.youtubeId);
+            currentPlayer.playVideo();
+        } else {
+            createYouTubePlayer(currentEpisodeObj.youtubeId);
+        }
+    }
+}
+
+function switchToRutube() {
+    console.log("switchToRutube вызван");
+    stopYouTubePlayer();
+    stopRentvPlayer();
+    stopVideoEndChecker();
+    
+    currentPlatform = 'rutube';
+    
+    document.getElementById('youtubePlayer').style.display = 'none';
+    document.getElementById('rutubePlayer').style.display = 'block';
+    document.getElementById('rentvPlayer').style.display = 'none';
+    
+    updateActiveButton('rutube');
+    
+    if (currentEpisodeObj && currentEpisodeObj.rutubeId) {
+        loadRutubePlayer(currentEpisodeObj.rutubeId);
+    } else {
+        showToast("⚠️ Эта серия временно недоступна на Rutube");
+    }
+}
+
+function switchToRentv() {
+    console.log("switchToRentv вызван");
+    stopYouTubePlayer();
+    stopRutubePlayer();
+    stopVideoEndChecker();
+    
+    currentPlatform = 'rentv';
+    
+    document.getElementById('youtubePlayer').style.display = 'none';
+    document.getElementById('rutubePlayer').style.display = 'none';
+    document.getElementById('rentvPlayer').style.display = 'block';
+    
+    updateActiveButton('rentv');
+    
+    if (currentEpisodeObj && currentEpisodeObj.rentvId) {
+        loadRentvPlayer(currentEpisodeObj.rentvId);
+    } else {
+        showToast("⚠️ Эта серия временно недоступна на РЕН ТВ");
+        const container = document.getElementById('rentvPlayerContainer');
+        if (container) {
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;background:#1a1a2a;">📺 Видео временно недоступно</div>';
+        }
+    }
+}
+
+function updateActiveButton(activePlatform) {
+    const btns = document.querySelectorAll('.player-switch-btn');
+    btns.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.player === activePlatform) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+function initPlayerSwitch() {
+    const switchBtns = document.querySelectorAll('.player-switch-btn');
+    console.log("Найдено кнопок переключателя:", switchBtns.length);
+    
+    switchBtns.forEach(btn => {
+        btn.removeEventListener('click', handleSwitchClick);
+        btn.addEventListener('click', handleSwitchClick);
+    });
+}
+
+function handleSwitchClick(e) {
+    const platform = e.currentTarget.dataset.player;
+    console.log("Клик по кнопке:", platform);
+    stopAllPlayers();
+    
+    if (platform === 'youtube') {
+        switchToYouTube();
+    } else if (platform === 'rutube') {
+        switchToRutube();
+    } else if (platform === 'rentv') {
+        switchToRentv();
     }
 }
 
 // Загрузить эпизод
 function loadEpisode(episode) {
-    if (!episode || !episode.youtubeId) {
-        console.warn("Нет YouTube ID для этой серии");
+    if (!episode) {
+        console.warn("Нет данных о серии");
         return;
     }
-
+    
     if (typeof logEpisodeView === 'function') {
         logEpisodeView(episode.season, episode.episode, episode.title);
     }
     
     currentEpisodeObj = episode;
-
+    
     const seasonDisplay = getSeasonDisplayName(episode.season);
-
+    
     if (episode.season >= 18) {
         document.getElementById('currentSeriesTitle').innerHTML = 
             `${seasonDisplay} · ${episode.episode} серия &nbsp;|&nbsp; ${episode.title}`;
@@ -227,12 +528,8 @@ function loadEpisode(episode) {
     
     document.getElementById('currentSeriesDesc').innerHTML = episode.desc;
     
-    if (currentPlayer && currentPlayer.loadVideoById) {
-        currentPlayer.loadVideoById(episode.youtubeId);
-        currentPlayer.playVideo();
-    } else {
-        createYouTubePlayer(episode.youtubeId);
-    }
+    stopAllPlayers();
+    loadVideoOnPlatform(episode);
     
     renderComments();
     renderEpisodesGrid(currentSeason);
@@ -241,9 +538,7 @@ function loadEpisode(episode) {
     secondsLeft = 10;
     updateTimerDisplay();
 
-    if (typeof checkFavoriteStatus === 'function') {
-        checkFavoriteStatus();
-    }
+    updateFavoriteButton();
 }
 
 function loadFirstEpisode() {
@@ -253,8 +548,7 @@ function loadFirstEpisode() {
     }
 }
 
-
-// ---------- КОММЕНТАРИИ И ОЦЕНКИ ----------
+// ---------- КОММЕНТАРИИ И ОЦЕНКИ (остаются без изменений) ----------
 function loadRatings() {
     const saved = localStorage.getItem('soldaty_ratings');
     ratings = saved ? JSON.parse(saved) : {};
@@ -270,7 +564,6 @@ function setRating(value) {
     ratings[key] = value;
     saveRatings();
     updateRatingDisplay();
-
     if (typeof logRating === 'function') {
         logRating(currentEpisodeObj.season, currentEpisodeObj.episode, value);
     }
@@ -349,12 +642,11 @@ function addComment(text) {
         logComment(currentEpisodeObj.season, currentEpisodeObj.episode, text);
     }
     
-    // Берём имя из профиля Firebase
     const userName = currentUser.displayName || currentUser.email.split('@')[0];
     
     const newComment = {
         id: Date.now(),
-        name: userName,  // ← автоматически из профиля
+        name: userName,
         text: text.trim().substring(0, 500),
         date: new Date().toLocaleString('ru-RU'),
         season: currentEpisodeObj.season,
@@ -368,7 +660,6 @@ function addComment(text) {
     comments.unshift(newComment);
     saveComments();
     
-    // Сохраняем в Firebase
     if (window.saveCommentToDB) {
         window.saveCommentToDB(
             currentEpisodeObj.season, 
@@ -390,8 +681,6 @@ function deleteComment(commentId) {
 }
 
 function checkAuthAndSubmit() {
-    console.log("currentUser:", window.currentUser);
-    
     if (!window.currentUser) {
         alert('Войдите, чтобы оставить комментарий');
         if (typeof showAuthModal === 'function') showAuthModal();
@@ -549,7 +838,7 @@ function renderSeasonNav() {
         
         if (s === currentSeason && !unavailableSeasons.includes(s)) {
             btn.classList.add('active');
-            showSeasonDescription(s);  // ← ЭТО ДОЛЖНО БЫТЬ
+            showSeasonDescription(s);
         }
         
         btn.onclick = () => {
@@ -562,27 +851,20 @@ function renderSeasonNav() {
             renderEpisodesGrid(currentSeason);
             const episodesOfSeason = getEpisodesBySeason(currentSeason);
             if (episodesOfSeason.length) loadEpisode(episodesOfSeason[0]);
-            showSeasonDescription(s);  // ← И ЭТО ДОЛЖНО БЫТЬ
+            showSeasonDescription(s);
         };
         nav.appendChild(btn);
     });
 }
 
-// Функция для отображения описания сезона
 function showSeasonDescription(season) {
-    console.log("showSeasonDescription вызван для сезона:", season);  // Для отладки
-    
     const block = document.getElementById('seasonDescriptionBlock');
     const titleSpan = document.getElementById('seasonDescriptionTitle');
     const contentDiv = document.getElementById('seasonDescriptionContent');
     
-    if (!block) {
-        console.error("Блок #seasonDescriptionBlock не найден в HTML!");
-        return;
-    }
+    if (!block) return;
     
     const desc = getSeasonDescription(season);
-    
     titleSpan.innerHTML = `<i class="fas fa-info-circle"></i> ${desc.title}`;
     
     let metaHtml = '';
@@ -598,11 +880,8 @@ function showSeasonDescription(season) {
     
     contentDiv.innerHTML = metaHtml + `<div class="season-description-text">${desc.content}</div>`;
     block.style.display = 'block';
-    
-    console.log("Блок описания показан для сезона", season);
 }
 
-// Функция для перехода к предыдущей серии
 function navigateToPrevEpisode() {
     const episodes = getEpisodesBySeason(currentSeason);
     const currentIndex = episodes.findIndex(ep => 
@@ -613,7 +892,6 @@ function navigateToPrevEpisode() {
     if (currentIndex > 0) {
         loadEpisode(episodes[currentIndex - 1]);
     } else {
-        // Если это первая серия сезона, переключаемся на предыдущий сезон
         const allSeasons = getSeasons();
         const currentSeasonIndex = allSeasons.findIndex(s => s === currentSeason);
         if (currentSeasonIndex > 0) {
@@ -631,7 +909,6 @@ function navigateToPrevEpisode() {
     }
 }
 
-// Функция для перехода к следующей серии
 function navigateToNextEpisode() {
     const nextEpisode = getNextEpisode();
     if (nextEpisode) {
@@ -662,25 +939,17 @@ window.onload = () => {
                 if (typeof showAuthModal === 'function') showAuthModal();
                 return;
             }
-
             const textInput = document.getElementById('commentText');
-            if (!textInput) {
-                console.error("Поле commentText не найдено");
-                return;
-            }
-            
+            if (!textInput) return;
             const commentText = textInput.value;
             if (!commentText || !commentText.trim()) {
                 alert("Введите текст комментария");
                 return;
             }
-            
             if (addComment(commentText)) {
                 textInput.value = '';
-                if (typeof currentFormRating !== 'undefined') {
-                    currentFormRating = 0;
-                    if (typeof updateFormStarsDisplay === 'function') updateFormStarsDisplay();
-                }
+                currentFormRating = 0;
+                updateFormStarsDisplay();
             }
         };
     }
@@ -696,66 +965,60 @@ window.onload = () => {
         favoriteBtn.onclick = toggleFavorite;
     }
     
-    console.log("✅ Сайт «Солдаты» готов! Автовоспроизведение работает с YouTube API.");
+    console.log("✅ Сайт «Солдаты» готов!");
 };
 
-// После загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
-    // Обработчик клика на аватарку (если она существует)
     const userAvatar = document.getElementById('userAvatar');
     if (userAvatar) {
         userAvatar.style.cursor = 'pointer';
         userAvatar.onclick = () => {
-            if (window.currentUser) {
-                window.location.href = 'profile.html';
-            }
+            if (window.currentUser) window.location.href = 'profile.html';
         };
     }
-    
-    // Обработчик клика на имя пользователя
     const userName = document.getElementById('userName');
     if (userName) {
         userName.style.cursor = 'pointer';
         userName.onclick = () => {
-            if (window.currentUser) {
-                window.location.href = 'profile.html';
-            }
+            if (window.currentUser) window.location.href = 'profile.html';
         };
     }
 });
 
-// Глобальная функция для YouTube API
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
 // ========== ИЗБРАННОЕ ==========
 let isFavorite = false;
 
-// Проверить, добавлена ли серия в избранное
-async function checkFavoriteStatus() {
+async function checkFavoriteStatus(season, episode) {
     if (!window.currentUser) {
-        isFavorite = false;
-        updateFavoriteButton();
         return;
     }
-    
-    const key = `${currentEpisodeObj.season}_${currentEpisodeObj.episode}`;
+    const key = `${season}_${episode}`;
     try {
         const snapshot = await db.ref(`favorites/${window.currentUser.uid}/${key}`).once('value');
-        isFavorite = snapshot.val() === true;
-        updateFavoriteButton();
+        return snapshot.val() === true;
     } catch (error) {
         console.error("Ошибка проверки избранного:", error);
-        isFavorite = false;
-        updateFavoriteButton();
+        return false;
     }
 }
 
-// Обновить внешний вид кнопки
-function updateFavoriteButton() {
+// Обновить кнопку для текущей серии
+async function updateFavoriteButton() {
     const btn = document.getElementById('favoriteBtn');
     if (!btn) return;
     
-    if (isFavorite) {
+    if (!window.currentUser) {
+        btn.innerHTML = '<i class="far fa-heart"></i> В избранное';
+        btn.classList.remove('active');
+        return;
+    }
+    
+    // Проверяем статус ТЕКУЩЕЙ серии
+    const isFav = await checkFavoriteStatus(currentEpisodeObj.season, currentEpisodeObj.episode);
+    
+    if (isFav) {
         btn.innerHTML = '<i class="fas fa-heart"></i> В избранном';
         btn.classList.add('active');
     } else {
@@ -768,7 +1031,7 @@ function updateFavoriteButton() {
 async function toggleFavorite() {
     if (!window.currentUser) {
         alert('Войдите в аккаунт, чтобы добавлять серии в избранное!');
-        showAuthModal();
+        if (typeof showAuthModal === 'function') showAuthModal();
         return;
     }
     
@@ -776,23 +1039,25 @@ async function toggleFavorite() {
     const favRef = db.ref(`favorites/${window.currentUser.uid}/${key}`);
     
     try {
-        if (isFavorite) {
+        const isFav = await checkFavoriteStatus(currentEpisodeObj.season, currentEpisodeObj.episode);
+        
+        if (isFav) {
             await favRef.remove();
-            isFavorite = false;
             showToast('❌ Серия удалена из избранного');
         } else {
             await favRef.set(true);
-            isFavorite = true;
             showToast('✅ Серия добавлена в избранное');
         }
-        updateFavoriteButton();
+        
+        // Обновляем кнопку
+        await updateFavoriteButton();
     } catch (error) {
         console.error("Ошибка:", error);
         alert('Ошибка при сохранении. Попробуйте позже.');
     }
 }
 
-// Всплывающее уведомление
+
 function showToast(message) {
     let toast = document.getElementById('toast');
     if (!toast) {
@@ -801,10 +1066,8 @@ function showToast(message) {
         toast.className = 'toast-message';
         document.body.appendChild(toast);
     }
-    
     toast.textContent = message;
     toast.classList.add('show');
-    
     setTimeout(() => {
         toast.classList.remove('show');
     }, 2000);
