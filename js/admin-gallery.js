@@ -77,7 +77,6 @@ async function loadAdminPanel() {
             </div>
             
             <div class="upload-methods">
-                <!-- Загрузка из компьютера -->
                 <div class="upload-method">
                     <h3><i class="fas fa-upload"></i> Загрузить с компьютера</h3>
                     <div class="file-input-wrapper">
@@ -89,7 +88,6 @@ async function loadAdminPanel() {
                     <div id="filePreview" class="image-preview"></div>
                 </div>
                 
-                <!-- Ссылка на фото -->
                 <div class="upload-method">
                     <h3><i class="fas fa-link"></i> Ссылка на фото</h3>
                     <input type="url" id="urlInput" class="url-input" placeholder="https://example.com/photo.jpg">
@@ -97,7 +95,6 @@ async function loadAdminPanel() {
                 </div>
             </div>
             
-            <!-- Опциональные поля (свёрнуты по умолчанию) -->
             <div class="optional-fields">
                 <button class="toggle-optional" onclick="toggleOptional()">
                     <i class="fas fa-chevron-down" id="toggleIcon"></i> 
@@ -117,12 +114,12 @@ async function loadAdminPanel() {
                     <div class="form-group">
                         <label><i class="fas fa-folder"></i> Категория</label>
                         <select id="photoCategory" class="form-select">
+                            <option value="">Без категории</option>
                             <option value="behind">Со съёмок</option>
                             <option value="actors">Актёры вне ролей</option>
                             <option value="spinoff">Спин-оффы</option>
                             <option value="iconic">Культовые моменты</option>
                             <option value="rare">Раритеты</option>
-                            <option value="other">Другое</option>
                         </select>
                     </div>
                     
@@ -143,14 +140,12 @@ async function loadAdminPanel() {
             </button>
         </div>
 
-        <!-- Список фото -->
         <h3 style="color: #ffd966; margin: 30px 0 15px 0;"><i class="fas fa-images"></i> Все фото</h3>
         <div id="photosList" class="photos-grid">
             <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
         </div>
     `;
     
-    // Инициализация обработчиков
     initFileUpload();
     initUrlPreview();
     loadPhotos();
@@ -190,7 +185,6 @@ function initFileUpload() {
                 
                 window.currentImageUrl = imageUrl;
                 
-                // Очищаем URL поле
                 const urlInput = document.getElementById('urlInput');
                 if (urlInput) urlInput.value = '';
                 document.getElementById('urlPreview').style.display = 'none';
@@ -218,7 +212,6 @@ function initUrlPreview() {
             preview.style.display = 'block';
             window.currentImageUrl = url;
             
-            // Очищаем файловое поле
             const fileInput = document.getElementById('fileInput');
             if (fileInput) fileInput.value = '';
             document.getElementById('filePreview').style.display = 'none';
@@ -246,7 +239,7 @@ function toggleOptional() {
     }
 }
 
-// Сохранение фото
+// Сохранение фото (добавление или обновление)
 async function savePhoto() {
     const imageUrl = window.currentImageUrl;
     
@@ -255,14 +248,13 @@ async function savePhoto() {
         return;
     }
     
-    // Только обязательное поле — изображение
+    // Собираем только заполненные поля
     const photoData = {
         image: imageUrl,
         updatedAt: Date.now(),
         updatedBy: currentUserEmail
     };
     
-    // Добавляем опциональные поля, ТОЛЬКО если они заполнены
     const title = document.getElementById('photoTitle')?.value.trim();
     if (title && title !== '') photoData.title = title;
     
@@ -270,7 +262,7 @@ async function savePhoto() {
     if (desc && desc !== '') photoData.desc = desc;
     
     const category = document.getElementById('photoCategory')?.value;
-    if (category && category !== 'other' && category !== '') photoData.category = category;
+    if (category && category !== '' && category !== 'other') photoData.category = category;
     
     const year = document.getElementById('photoYear')?.value;
     if (year && year !== '' && year >= 2004 && year <= 2013) photoData.year = parseInt(year);
@@ -280,11 +272,11 @@ async function savePhoto() {
     
     try {
         if (currentEditId) {
-            // Обновление существующего фото
+            // ОБНОВЛЕНИЕ существующего фото
             await db.ref(`gallery/${currentEditId}`).update(photoData);
             showToast('✅ Фото обновлено');
         } else {
-            // Добавление нового фото
+            // ДОБАВЛЕНИЕ нового фото
             const newRef = db.ref('gallery').push();
             photoData.id = newRef.key;
             photoData.createdAt = Date.now();
@@ -293,8 +285,16 @@ async function savePhoto() {
             showToast('✅ Фото добавлено');
         }
         
+        // ОБНОВЛЯЕМ список фото на странице
+        await loadPhotos();
+        
+        // ОБНОВЛЯЕМ данные в localStorage для галереи (если нужно)
+        const gallerySnapshot = await db.ref('gallery').once('value');
+        const allPhotos = gallerySnapshot.val() || {};
+        localStorage.setItem('galleryCache', JSON.stringify(allPhotos));
+        
+        // Сбрасываем форму
         resetForm();
-        loadPhotos();
         
     } catch (error) {
         console.error('Ошибка:', error);
@@ -330,11 +330,11 @@ async function editPhoto(id) {
         if (urlInput) urlInput.value = photo.image;
         
         // Заполняем опциональные поля, если они есть
-        if (photo.title) document.getElementById('photoTitle').value = photo.title;
-        if (photo.desc) document.getElementById('photoDesc').value = photo.desc;
-        if (photo.category) document.getElementById('photoCategory').value = photo.category;
-        if (photo.year) document.getElementById('photoYear').value = photo.year;
-        if (photo.location) document.getElementById('photoLocation').value = photo.location;
+        document.getElementById('photoTitle').value = photo.title || '';
+        document.getElementById('photoDesc').value = photo.desc || '';
+        document.getElementById('photoCategory').value = photo.category || '';
+        document.getElementById('photoYear').value = photo.year || '';
+        document.getElementById('photoLocation').value = photo.location || '';
         
         // Разворачиваем опциональные поля, если есть хоть какие-то данные
         if (photo.title || photo.desc || photo.category || photo.year || photo.location) {
@@ -359,7 +359,14 @@ async function deletePhoto(id) {
     try {
         await db.ref(`gallery/${id}`).remove();
         showToast('✅ Фото удалено');
-        loadPhotos();
+        
+        // ОБНОВЛЯЕМ список после удаления
+        await loadPhotos();
+        
+        // ОБНОВЛЯЕМ кэш
+        const gallerySnapshot = await db.ref('gallery').once('value');
+        const allPhotos = gallerySnapshot.val() || {};
+        localStorage.setItem('galleryCache', JSON.stringify(allPhotos));
         
         if (currentEditId === id) resetForm();
         
@@ -393,7 +400,7 @@ async function loadPhotos() {
         let html = '';
         photosArray.forEach(photo => {
             html += `
-                <div class="admin-photo-card">
+                <div class="admin-photo-card" data-photo-id="${photo.id}">
                     <img src="${photo.image}" alt="Фото" onerror="this.src='https://via.placeholder.com/200x200?text=Error'">
                     <div class="admin-photo-actions">
                         <button class="edit-btn" onclick="editPhoto('${photo.id}')" title="Редактировать">
@@ -438,9 +445,15 @@ function resetForm() {
     // Очищаем все опциональные поля
     document.getElementById('photoTitle').value = '';
     document.getElementById('photoDesc').value = '';
-    document.getElementById('photoCategory').value = 'behind';
+    document.getElementById('photoCategory').value = '';
     document.getElementById('photoYear').value = '';
     document.getElementById('photoLocation').value = '';
+    
+    // Сворачиваем опциональные поля
+    const content = document.getElementById('optionalContent');
+    if (content.classList.contains('show')) {
+        toggleOptional();
+    }
 }
 
 // Выход
