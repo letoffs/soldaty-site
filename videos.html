@@ -26,11 +26,12 @@
         <a href="videos.html" class="nav-link active">Видеотека</a>
     </div>
 
-        <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
+    <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
     <div id="authButtons" class="auth-buttons">
         <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
         <button onclick="showAuthModal()" class="auth-header-btn register"><i class="fas fa-user-plus"></i> Регистрация</button>
     </div>
+
     <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ -->
     <div id="userInfo" class="user-info" style="display: none;">
         <img id="userAvatar" class="user-avatar" src="" alt="avatar">
@@ -45,12 +46,10 @@
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeAuthModal()">&times;</span>
-        
             <div class="modal-tabs">
                 <button class="modal-tab active" onclick="showLoginForm()">Вход</button>
                 <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
             </div>
-        
             <div id="loginForm" class="auth-form">
                 <h3>Вход в аккаунт</h3>
                 <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
@@ -63,7 +62,6 @@
                     <i class="fab fa-google"></i> Войти через Google
                 </button>
             </div>
-            
             <div id="registerForm" class="auth-form" style="display: none;">
                 <h3>Регистрация</h3>
                 <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
@@ -79,11 +77,11 @@
             </div>
         </div>
     </div>
-    
-    <!-- Модальное окно -->
+
+    <!-- МОДАЛЬНОЕ ОКНО ПРОСМОТРА ВИДЕО -->
     <div id="videoModal" class="modal video-modal">
         <div class="modal-content">
-            <span class="modal-close">&times;</span>
+            <span class="modal-close" onclick="closeVideoModal()">&times;</span>
             <div id="videoPlayer" class="video-player-container"></div>
             <div id="videoTitle" class="video-modal-title"></div>
             <div id="videoDesc" class="video-modal-desc"></div>
@@ -95,7 +93,28 @@
         <div class="description-content"><p>Трейлеры, анонсы и лучшие клипы по мотивам сериала «Солдаты».</p></div>
     </div>
 
-    <div id="videosContainer"></div>
+    <!-- ОСНОВНАЯ ЧАСТЬ С БОКОВОЙ ПАНЕЛЬЮ -->
+    <div class="videos-page-layout">
+        <!-- Боковая панель с категориями -->
+        <aside class="videos-sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-folder-tree"></i> Категории</h3>
+            </div>
+            <div class="category-list" id="categoryList"></div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="videos-main">
+            <div class="current-category-header">
+                <div class="current-category-title" id="currentCategoryTitle">
+                    <i class="fas fa-video"></i>
+                    <span>Все видео</span>
+                </div>
+                <div class="videos-count" id="videosCount"></div>
+            </div>
+            <div id="videosContainer"></div>
+        </main>
+    </div>
 
     <div class="footer"><i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · 2004-2013</div>
 </div>
