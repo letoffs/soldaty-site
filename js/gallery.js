@@ -103,6 +103,10 @@ function renderGallery() {
     
     let html = '<div class="gallery-grid">';
     filtered.forEach(photo => {
+        // Обрезаем длинное название
+        let shortTitle = photo.title || '';
+        if (shortTitle.length > 25) shortTitle = shortTitle.substring(0, 22) + '...';
+        
         html += `
             <div class="gallery-card" onclick="openPhoto('${photo.id}')">
                 <div class="gallery-image">
@@ -112,11 +116,11 @@ function renderGallery() {
                     </div>
                 </div>
                 <div class="gallery-info">
-                    ${photo.title ? `<div class="gallery-title">${escapeHtml(photo.title)}</div>` : ''}
-                    ${photo.desc ? `<div class="gallery-desc">${escapeHtml(photo.desc.substring(0, 80))}${photo.desc.length > 80 ? '...' : ''}</div>` : ''}
+                    ${photo.title ? `<div class="gallery-title" title="${escapeHtml(photo.title)}">${escapeHtml(shortTitle)}</div>` : ''}
+                    ${photo.desc ? `<div class="gallery-desc">${escapeHtml(photo.desc.substring(0, 60))}${photo.desc.length > 60 ? '...' : ''}</div>` : ''}
                     <div class="gallery-meta">
                         ${photo.year ? `<span><i class="far fa-calendar-alt"></i> ${photo.year}</span>` : ''}
-                        ${photo.location ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(photo.location)}</span>` : ''}
+                        ${photo.location ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(photo.location.substring(0, 20))}</span>` : ''}
                     </div>
                 </div>
             </div>
