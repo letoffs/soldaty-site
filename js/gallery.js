@@ -1,41 +1,97 @@
 // ==============================================
-// ГАЛЕРЕЯ — ПРОСМОТР ФОТО ИЗ FIREBASE
+// ГАЛЕРЕЯ — ПРОСМОТР ФОТО С ОБНОВЛЕНИЕМ В РЕАЛЬНОМ ВРЕМЕНИ
 // ==============================================
 
 let galleryData = [];
-let currentFilter = "all";
+let currentFilter = 'all';
 
-// Загрузка фото
-async function loadGallery() {
-    const container = document.getElementById('galleryGrid');
-    if (!container) return;
+// Подписка на изменения в Firebase (реальное время)
+function subscribeToGalleryUpdates() {
+    const galleryRef = db.ref('gallery');
     
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>';
-    
-    try {
-        const snapshot = await firebase.database().ref('gallery').once('value');
+    // Слушаем изменения в реальном времени
+    galleryRef.on('value', (snapshot) => {
         const photos = snapshot.val() || {};
+        galleryData = Object.entries(photos).map(([id, data]) => ({
+            id,
+            ...data
+        })).reverse();
         
-        galleryData = Object.entries(photos).map(([id, data]) => ({ id, ...data })).reverse();
-        renderGallery();
-        
-    } catch (error) {
-        console.error('Ошибка:', error);
-        container.innerHTML = '<div class="empty-gallery"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки</p></div>';
-    }
+        // Обновляем отображение
+        renderAll();
+    });
 }
 
+// Рендер всего
+function renderAll() {
+    renderStats();
+    renderFilters();
+    renderGallery();
+}
+
+// Рендер статистики
+function renderStats() {
+    const container = document.getElementById('galleryStats');
+    if (!container) return;
+    
+    const total = galleryData.length;
+    container.innerHTML = `
+        <div class="stat-badge"><i class="fas fa-images"></i> Всего фото: ${total}</div>
+        <div class="stat-badge"><i class="fas fa-camera"></i> Эксклюзивные кадры</div>
+        <div class="stat-badge"><i class="fas fa-calendar-alt"></i> 2004-2013</div>
+    `;
+}
+
+// Рендер фильтров
+function renderFilters() {
+    const container = document.getElementById('galleryFilters');
+    if (!container) return;
+    
+    const categories = [
+        { id: 'all', name: 'Все' },
+        { id: 'behind', name: 'Со съёмок' },
+        { id: 'actors', name: 'Актёры' },
+        { id: 'spinoff', name: 'Спин-оффы' },
+        { id: 'iconic', name: 'Моменты' },
+        { id: 'rare', name: 'Раритеты' }
+    ];
+    
+    let html = '';
+    categories.forEach(cat => {
+        html += `
+            <button class="filter-btn ${currentFilter === cat.id ? 'active' : ''}" data-filter="${cat.id}">
+                ${cat.name}
+            </button>
+        `;
+    });
+    container.innerHTML = html;
+    
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentFilter = btn.dataset.filter;
+            renderFilters();
+            renderGallery();
+        });
+    });
+}
+
+// Рендер галереи
 function renderGallery() {
     const container = document.getElementById('galleryGrid');
     if (!container) return;
     
-    if (galleryData.length === 0) {
-        container.innerHTML = '<div class="empty-gallery"><i class="fas fa-camera"></i><p>Фотографий пока нет</p></div>';
+    let filtered = galleryData;
+    if (currentFilter !== 'all') {
+        filtered = galleryData.filter(photo => photo.category === currentFilter);
+    }
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-gallery"><i class="fas fa-camera"></i><p>Фотографий в этой категории пока нет</p></div>';
         return;
     }
     
     let html = '<div class="gallery-grid">';
-    galleryData.forEach(photo => {
+    filtered.forEach(photo => {
         html += `
             <div class="gallery-card" onclick="openPhoto('${photo.id}')">
                 <div class="gallery-image">
@@ -59,6 +115,7 @@ function renderGallery() {
     container.innerHTML = html;
 }
 
+// Открыть фото в модальном окне
 function openPhoto(id) {
     const photo = galleryData.find(p => p.id === id);
     if (!photo) return;
@@ -84,4 +141,14 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
-document.addEventListener('DOMContentLoaded', loadGallery);
+// Инициализация
+document.addEventListener('DOMContentLoaded', () => {
+    subscribeToGalleryUpdates();
+    
+    const modal = document.getElementById('photoModal');
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closePhotoModal();
+        };
+    }
+});
