@@ -113,6 +113,8 @@ async function loadAdminPanel() {
                             <option value="spinoff">Спин-оффы</option>
                             <option value="iconic">Культовые моменты</option>
                             <option value="rare">Раритеты</option>
+                            <option value="memes">Приколы</option>
+                            <option value="adult">18+</option>
                         </select>
                     </div>
                     <div class="form-group">
