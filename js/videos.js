@@ -1,98 +1,39 @@
 // ==============================================
-// ВИДЕО (Трейлеры, анонсы, клипы и нарезки)
+// ДАННЫЕ ВИДЕО
 // ==============================================
-
 const videosData = [
-    // ========== КАТЕГОРИЯ: ТРЕЙЛЕРЫ И АНОНСЫ ==========
-    {
-        id: 1,
-        title: "Солдаты — Русский трейлер",
-        desc: "Официальный трейлер культового российского сериала об армейской жизни. Знакомство с главными героями: прапорщиком Шматко, Михаилом Медведевым, Кузьмой Соколовым и другими.",
-        youtubeId: "y53QOl2YIIs",
-        duration: "1:01",
-        year: "2004",
-        category: "trailer"
-    },
-    {
-        id: 2,
-        title: "Солдаты — Эксклюзивный трейлер",
-        desc: "Эксклюзивный трейлер с лучшими моментами и цитатами из сериала. «Ё-моё!», «Настоящий полковник!» и другие легендарные фразы.",
-        youtubeId: "jDPoJQTZCsA",
-        duration: "0:40",
-        year: "2004",
-        category: "trailer"
-    },
-    {
-        id: 3,
-        title: "Анонс сериала Солдаты-3",
-        desc: "Анонс третьего сезона сериала «Солдаты». Промо-ролик с кадрами из сериала и легендарными персонажами.",
-        youtubeId: "l8ieplmmp8I",
-        duration: "0:36",
-        year: "2005",
-        category: "trailer"
-    },
-    {
-        id: 4,
-        title: "Анонс сериала Солдаты-4",
-        desc: "Ещё один анонс сериала «Солдаты». Атмосферный ролик с главными героями и лучшими моментами.",
-        youtubeId: "1mM2rcffCCs",
-        duration: "0:49",
-        year: "2005",
-        category: "trailer"
-    },
-    {
-        id: 5,
-        title: "Анонс сериала Солдаты-5",
-        desc: "Анонс пятого сезона сериала «Солдаты» с телеканала Рен ТВ. Декабрь 2005 года. Уникальный промо-ролик середины нулевых.",
-        youtubeId: "A7yf8ozRfog",
-        duration: "0:43",
-        year: "2005",
-        category: "trailer"
-    },
-    {
-        id: 6,
-        title: "Анонс сериала Солдаты-5",
-        desc: "Анонс пятого сезона сериала «Солдаты» с телеканала Рен ТВ. 2005 год. Атмосферный промо-ролик с кадрами из сериала.",
-        youtubeId: "6IVCCODVfCM",
-        duration: "0:33",
-        year: "2005",
-        category: "trailer"
-    },
-    {
-        id: 7,
-        title: "Анонс сериала Солдаты-9 (Рен ТВ, 2006)",
-        desc: "Анонс девятого сезона сериала «Солдаты» с телеканала Рен ТВ. 2006 год. Промо-ролик к выходу новых серий легендарного армейского сериала.",
-        youtubeId: "G8FVtub3wVQ",
-        duration: "0:24",
-        year: "2006",
-        category: "trailer"
-    },
-
-    // ========== КАТЕГОРИЯ: КЛИПЫ И НАРЕЗКИ ==========
-    {
-        id: 8,
-        title: "Солдаты (2 рота) — Юность в сапогах",
-        desc: "Клип на песню «Юность в сапогах» с кадрами из сериала про 2-ю роту. Легендарный армейский настрой!",
-        youtubeId: "zSGuZo0TXKU",
-        duration: "2:01",
-        year: "2004",
-        category: "clip"
-    },
-    {
-        id: 9,
-        title: "Солдаты — закулисье.",
-        desc: "Представляем вашему вниманию подборку неформальных рабочих моментов со съемочной площадки популярного российского комедийного сериала о буднях военнослужащих. В кадр попали неудачные дубли, живое общение актеров и закулисная атмосфера, пропитанная специфическим юмором и нецензурной лексикой, которая обычно остается вне финальных версий эпизодов.",
-        youtubeId: "HnPzAy8ylNg",
-        duration: "23:38",
-        year: "2007",
-        category: "clip",
-        is18Plus: true 
-    }
+    // Трейлеры и анонсы
+    { id: 1, title: "Солдаты — Русский трейлер", desc: "Официальный трейлер культового российского сериала об армейской жизни. Знакомство с главными героями.", youtubeId: "y53QOl2YIIs", duration: "1:01", year: "2004", category: "trailer" },
+    { id: 2, title: "Солдаты — Эксклюзивный трейлер", desc: "Эксклюзивный трейлер с лучшими моментами и цитатами из сериала.", youtubeId: "jDPoJQTZCsA", duration: "0:40", year: "2004", category: "trailer" },
+    { id: 3, title: "Анонс сериала Солдаты-3", desc: "Анонс третьего сезона сериала «Солдаты». Промо-ролик с легендарными персонажами.", youtubeId: "l8ieplmmp8I", duration: "0:36", year: "2005", category: "trailer" },
+    { id: 4, title: "Анонс сериала Солдаты-4", desc: "Атмосферный ролик с главными героями и лучшими моментами.", youtubeId: "1mM2rcffCCs", duration: "0:49", year: "2005", category: "trailer" },
+    { id: 5, title: "Анонс сериала Солдаты-5", desc: "Анонс пятого сезона с телеканала Рен ТВ. Декабрь 2005 года.", youtubeId: "A7yf8ozRfog", duration: "0:43", year: "2005", category: "trailer" },
+    { id: 6, title: "Анонс сериала Солдаты-9", desc: "Анонс девятого сезона. Рен ТВ, 2006 год.", youtubeId: "G8FVtub3wVQ", duration: "0:24", year: "2006", category: "trailer" },
+    // Клипы и нарезки
+    { id: 7, title: "Солдаты — Юность в сапогах", desc: "Клип на песню «Юность в сапогах» с кадрами из сериала про 2-ю роту.", youtubeId: "zSGuZo0TXKU", duration: "2:01", year: "2004", category: "clip" },
+    { id: 8, title: "Солдаты — Лучшие моменты", desc: "Подборка самых смешных и легендарных сцен из сериала.", youtubeId: "Qw7UYgxZ9Ik", duration: "3:45", year: "2005", category: "clip" },
+    { id: 9, title: "Солдаты — Прапорщик Шматко", desc: "Лучшие цитаты легендарного прапорщика Шматко.", youtubeId: "rR2XwKl9kUY", duration: "2:30", year: "2005", category: "clip" },
+    // Закулисье (18+)
+    { id: 10, title: "Солдаты — закулисье", desc: "Неформальные моменты со съемочной площадки. Курение, алкоголь, нецензурная лексика.", youtubeId: "HnPzAy8ylNg", duration: "23:38", year: "2007", category: "behind", is18Plus: true },
+    { id: 11, title: "Солдаты — Интервью с актёрами", desc: "Актёры о съёмках и своих персонажах.", youtubeId: "dQw4w9WgXcQ", duration: "5:22", year: "2006", category: "behind" }
 ];
 
-// === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+// ==============================================
+// КАТЕГОРИИ
+// ==============================================
+const categories = [
+    { id: "all", name: "Все видео", icon: "fas fa-video", filter: null },
+    { id: "trailer", name: "Трейлеры и анонсы", icon: "fas fa-film", filter: v => v.category === "trailer" },
+    { id: "clip", name: "Клипы и нарезки", icon: "fas fa-music", filter: v => v.category === "clip" },
+    { id: "behind", name: "Закулисье", icon: "fas fa-users", filter: v => v.category === "behind" }
+];
+
+let currentCategory = "all";
 let currentVideoPlayer = null;
 
+// ==============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ==============================================
 function showToastMessage(message) {
     let toast = document.getElementById('toast');
     if (!toast) {
@@ -105,37 +46,34 @@ function showToastMessage(message) {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 2000);
+    }, 2500);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
 function closeVideoModal() {
     const modal = document.getElementById('videoModal');
     if (modal) modal.style.display = 'none';
-    
     if (currentVideoPlayer && currentVideoPlayer.destroy) {
         try {
             currentVideoPlayer.destroy();
-        } catch(e) {
+        } catch (e) {
             console.warn("Ошибка при уничтожении плеера:", e);
         }
         currentVideoPlayer = null;
     }
-    
     const container = document.getElementById('videoPlayer');
     if (container) container.innerHTML = '';
 }
 
 // ==============================================
-// ПРОВЕРКА ВОЗРАСТА ДЛЯ 18+ КОНТЕНТА (КАЖДЫЙ РАЗ)
+// ПРОВЕРКА ВОЗРАСТА
 // ==============================================
-
-let pendingVideo = null;
-
-// Показать модальное окно проверки возраста
 function showAgeVerificationModal(video, callback) {
-    // Создаём модальное окно, если его нет
     let ageModal = document.getElementById('ageVerificationModal');
-    
     if (!ageModal) {
         ageModal = document.createElement('div');
         ageModal.id = 'ageVerificationModal';
@@ -160,177 +98,176 @@ function showAgeVerificationModal(video, callback) {
         `;
         document.body.appendChild(ageModal);
     }
-    
-    // Сохраняем текущее видео
-    pendingVideo = video;
-    
-    // Показываем модальное окно
     ageModal.style.display = 'flex';
-    
-    // Получаем кнопки
     const confirmBtn = document.getElementById('ageConfirmBtn');
     const cancelBtn = document.getElementById('ageCancelBtn');
-    
-    // Удаляем старые обработчики (если были)
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-    
     const onConfirm = () => {
         ageModal.style.display = 'none';
         if (callback) callback();
-        pendingVideo = null;
     };
-    
     const onCancel = () => {
         ageModal.style.display = 'none';
-        showToastMessage('⛔ Доступ запрещён. Этот контент предназначен для зрителей 18+');
-        pendingVideo = null;
+        showToastMessage('⛔ Доступ запрещён. Контент 18+');
     };
-    
-    newConfirmBtn.addEventListener('click', onConfirm);
-    newCancelBtn.addEventListener('click', onCancel);
-    
-    // Закрытие по клику вне окна (считается как отказ)
+    const newConfirm = confirmBtn.cloneNode(true);
+    const newCancel = cancelBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    newConfirm.addEventListener('click', onConfirm);
+    newCancel.addEventListener('click', onCancel);
     ageModal.onclick = (e) => {
-        if (e.target === ageModal) {
-            ageModal.style.display = 'none';
-            showToastMessage('⛔ Доступ запрещён');
-            pendingVideo = null;
-        }
+        if (e.target === ageModal) onCancel();
     };
 }
 
-// Основная функция воспроизведения (после проверки возраста)
 function playVideoAfterCheck(video) {
     const modal = document.getElementById('videoModal');
     const container = document.getElementById('videoPlayer');
-    
     if (!modal || !container) {
-        console.error("Модальное окно или контейнер не найдены!");
-        showToastMessage('❌ Ошибка: окно просмотра не найдено');
+        showToastMessage('❌ Ошибка открытия плеера');
         return;
     }
-    
+    document.getElementById('videoTitle').innerText = video.title;
+    document.getElementById('videoDesc').innerText = video.desc;
     container.innerHTML = '';
     const playerDiv = document.createElement('div');
     playerDiv.id = 'videoPlayerDiv';
     container.appendChild(playerDiv);
-    
     const createPlayer = () => {
         try {
             currentVideoPlayer = new YT.Player('videoPlayerDiv', {
                 height: '100%',
                 width: '100%',
                 videoId: video.youtubeId,
-                playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
+                playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
                 events: {
-                    'onReady': (event) => event.target.playVideo(),
-                    'onError': (event) => {
-                        let errorMsg = '❌ Ошибка загрузки видео';
-                        if (event.data === 5) errorMsg = '❌ Видео недоступно в этом регионе';
-                        if (event.data === 100) errorMsg = '❌ Видео не найдено';
-                        showToastMessage(errorMsg);
-                    }
+                    onError: (e) => showToastMessage('❌ Ошибка загрузки видео')
                 }
             });
-        } catch(e) {
-            console.error("Ошибка создания плеера:", e);
-            showToastMessage('❌ Не удалось создать плеер');
+        } catch (e) {
+            showToastMessage('❌ Ошибка создания плеера');
         }
     };
-    
-    if (typeof YT === 'undefined' || !YT.Player) {
-        const checkYT = setInterval(() => {
+    if (typeof YT !== 'undefined' && YT.Player) {
+        createPlayer();
+    } else {
+        const interval = setInterval(() => {
             if (typeof YT !== 'undefined' && YT.Player) {
-                clearInterval(checkYT);
+                clearInterval(interval);
                 createPlayer();
             }
         }, 100);
-        setTimeout(() => clearInterval(checkYT), 5000);
-    } else {
-        createPlayer();
+        setTimeout(() => clearInterval(interval), 5000);
     }
-    
     modal.style.display = 'flex';
 }
 
-// Функция playVideo с проверкой возраста
 function playVideo(video) {
     if (!video || !video.youtubeId) {
-        showToastMessage('❌ Видео временно недоступно');
+        showToastMessage('❌ Видео недоступно');
         return;
     }
-    
-    // Проверка возраста для видео с пометкой 18+ (каждый раз)
     if (video.is18Plus === true) {
-        showAgeVerificationModal(video, () => {
-            playVideoAfterCheck(video);
-        });
+        showAgeVerificationModal(video, () => playVideoAfterCheck(video));
         return;
     }
-    
     playVideoAfterCheck(video);
+}
+
+// ==============================================
+// ОТРИСОВКА КАТЕГОРИЙ И ВИДЕО
+// ==============================================
+function renderCategories() {
+    const container = document.getElementById('categoryList');
+    if (!container) return;
+    let html = '';
+    categories.forEach(cat => {
+        const count = cat.filter ? videosData.filter(cat.filter).length : videosData.length;
+        html += `
+            <div class="category-item ${currentCategory === cat.id ? 'active' : ''}" data-category="${cat.id}">
+                <i class="${cat.icon}"></i>
+                <span class="category-name">${cat.name}</span>
+                <span class="category-count">${count}</span>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const catId = item.dataset.category;
+            if (catId) {
+                currentCategory = catId;
+                renderCategories();
+                renderVideos();
+            }
+        });
+    });
 }
 
 function renderVideos() {
     const container = document.getElementById('videosContainer');
-    if (!container) return;
-    
-    const categories = {
-        trailer: { title: "🎬 Трейлеры и анонсы", videos: videosData.filter(v => v.category === 'trailer') },
-        clip: { title: "🎵 Клипы и нарезки", videos: videosData.filter(v => v.category === 'clip') }
-    };
-    
-    let html = '';
-    for (const [key, cat] of Object.entries(categories)) {
-        if (cat.videos.length === 0) continue;
-        html += `<div class="video-category"><h3 class="category-title">${cat.title}</h3><div class="videos-grid">`;
-        cat.videos.forEach(video => {
-            // Добавляем бейдж 18+ и класс для размытия если нужно
-            const ageBadge = video.is18Plus ? '<span class="age-badge-18">18+</span>' : '';
-            const blurClass = video.is18Plus ? 'blurred-thumb' : '';
-            html += `
-                <div class="video-card" data-id="${video.id}">
-                    <div class="video-thumb ${blurClass}">
-                        <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" alt="${video.title}" loading="lazy">
-                        <div class="play-overlay"><i class="fas fa-play"></i></div>
-                        ${ageBadge}
-                        ${video.is18Plus ? '<div class="blur-overlay"><i class="fas fa-lock"></i> Подтвердите возраст</div>' : ''}
-                    </div>
-                    <div class="video-info">
-                        <div class="video-title">${escapeHtml(video.title)}</div>
-                        <div class="video-desc">${escapeHtml(video.desc)}</div>
-                        <div class="video-meta"><span class="video-duration"><i class="far fa-clock"></i> ${video.duration}</span><span class="video-year"><i class="far fa-calendar-alt"></i> ${video.year}</span></div>
+    const countSpan = document.getElementById('videosCount');
+    const titleSpan = document.querySelector('#currentCategoryTitle span');
+    const currentCat = categories.find(c => c.id === currentCategory);
+    if (titleSpan && currentCat) titleSpan.innerText = currentCat.name;
+    let filtered = videosData;
+    const cat = categories.find(c => c.id === currentCategory);
+    if (cat && cat.filter) filtered = videosData.filter(cat.filter);
+    if (countSpan) countSpan.innerText = `${filtered.length} видео`;
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-videos"><i class="fas fa-video-slash"></i> Видео в этой категории временно отсутствуют</div>';
+        return;
+    }
+    let html = '<div class="videos-grid">';
+    filtered.forEach(video => {
+        const ageBadge = video.is18Plus ? '<span class="age-badge-18">18+</span>' : '';
+        const blurClass = video.is18Plus ? 'blurred-thumb' : '';
+        const blurOverlay = video.is18Plus ? '<div class="blur-overlay"><i class="fas fa-lock"></i> Подтвердите возраст</div>' : '';
+        html += `
+            <div class="video-card" data-id="${video.id}">
+                <div class="video-thumb ${blurClass}">
+                    <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" alt="${escapeHtml(video.title)}" loading="lazy">
+                    <div class="play-overlay"><i class="fas fa-play"></i></div>
+                    ${ageBadge}
+                    ${blurOverlay}
+                </div>
+                <div class="video-info">
+                    <div class="video-title">${escapeHtml(video.title)}</div>
+                    <div class="video-desc">${escapeHtml(video.desc)}</div>
+                    <div class="video-meta">
+                        <span class="video-duration"><i class="far fa-clock"></i> ${video.duration}</span>
+                        <span class="video-year"><i class="far fa-calendar-alt"></i> ${video.year}</span>
                     </div>
                 </div>
-            `;
-        });
-        html += `</div></div>`;
-    }
-    container.innerHTML = html || '<div class="empty-videos">Видео временно недоступны</div>';
-    
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
     document.querySelectorAll('.video-card').forEach(card => {
-        card.onclick = () => {
+        card.addEventListener('click', () => {
             const video = videosData.find(v => v.id == card.dataset.id);
             if (video) playVideo(video);
-        };
+        });
     });
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-}
-
-// Инициализация
+// ==============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ==============================================
 document.addEventListener('DOMContentLoaded', () => {
+    renderCategories();
     renderVideos();
+    const modal = document.getElementById('videoModal');
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeVideoModal();
+        };
+    }
     const closeBtn = document.querySelector('#videoModal .modal-close');
     if (closeBtn) closeBtn.onclick = closeVideoModal;
-    const modal = document.getElementById('videoModal');
-    if (modal) modal.onclick = (e) => { if (e.target === modal) closeVideoModal(); };
 });
 
-window.onYouTubeIframeAPIReady = () => console.log("YouTube API готов");
+window.onYouTubeIframeAPIReady = () => {
+    console.log("YouTube API готов");
+};
