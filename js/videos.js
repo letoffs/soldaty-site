@@ -11,11 +11,18 @@ const videosData = [
     { id: 6, title: "Анонс сериала Солдаты-9", desc: "Анонс девятого сезона. Рен ТВ, 2006 год.", youtubeId: "G8FVtub3wVQ", duration: "0:24", year: "2006", category: "trailer" },
     // Клипы и нарезки
     { id: 7, title: "Солдаты — Юность в сапогах", desc: "Клип на песню «Юность в сапогах» с кадрами из сериала про 2-ю роту.", youtubeId: "zSGuZo0TXKU", duration: "2:01", year: "2004", category: "clip" },
-    { id: 8, title: "Солдаты — Лучшие моменты", desc: "Подборка самых смешных и легендарных сцен из сериала.", youtubeId: "Qw7UYgxZ9Ik", duration: "3:45", year: "2005", category: "clip" },
-    { id: 9, title: "Солдаты — Прапорщик Шматко", desc: "Лучшие цитаты легендарного прапорщика Шматко.", youtubeId: "rR2XwKl9kUY", duration: "2:30", year: "2005", category: "clip" },
+    { id: 8, title: "Солдаты — Песня прапорщика Шматко «Не грусти»", desc: "Легендарная песня в исполнении Алексея Маклакова. «А прапорщик Шматко — это зверь, а не мужик!»", youtubeId: "qP1r5eOWNeA", duration: "2:00", year: "2008", category: "clip" },
+    { id: 9, title: "Солдаты — Есть только миг", desc: "Душевная песня из спин-оффа «Новый год, твою дивизию» 2 серия. Отрывок, который трогает до глубины души.", youtubeId: "qirBsztWqWo", duration: "2:51", year: "2007", category: "clip" },
+    { id: 10, title: "Солдаты — Три белых коня", desc: "Песня «Три белых коня» из спин-оффа «Новый год, твою дивизию» 1 серия. Новогоднее настроение по-армейски!", youtubeId: "J1XIfQkJHa0", duration: "2:48", year: "2007", category: "clip" },
+    { id: 11, title: "Солдаты — Песня про зайцев", desc: "Знаменитая песня про зайцев из спин-оффа «Новый год, твою дивизию» 2 серия. «А нам всё равно, а нам всё равно...»", youtubeId: "mO4DaXcvxv0", duration: "2:34", year: "2007", category: "clip" },
+    { id: 12, title: "Солдаты — Мурка", desc: "Песня «Мурка, ты мой мурёночек» из спин-оффа «Новый год, твою дивизию» 1 серия. Легендарный блатняк в армейской обработке!", youtubeId: "As2yFhGKL6E", duration: "3:02", year: "2007", category: "clip" },
+    { id: 13, title: "Маклаков и 23 февраля - Когда поют солдаты", desc: "В концерте прозвучат песни из сериала Солдаты. Участвуют: Конец Фильма с композицией Юность в Сапогах, Дмитрий Маликов, Отпетые Машенники, БИ-2, Олег Газманов, Юта, а также несколько песен исполнит легендарный прапорщик Шматко (Алексей Маклаков). Увидите кадры из сериала Прапорщик. Концерт ведут: Зубов (Алексей Ошурков), Замполит Староконь (Вячеслав Гришечкин), Цлав (Руслан Сасин), Кот (Артем Григорьев), прапорщик Соколов (Иван Моховиков) и др.", youtubeId: "AoD8rwVbvt0", duration: "56:56", year: "2007", category: "clip", requiresAuth: true, warningMessage: "⚠️ Это видео требует авторизации на YouTube (18+ контент). Пожалуйста, нажмите кнопку ниже для просмотра." },
     // Закулисье (18+)
-    { id: 10, title: "Солдаты — закулисье", desc: "Неформальные моменты со съемочной площадки. Курение, алкоголь, нецензурная лексика.", youtubeId: "HnPzAy8ylNg", duration: "23:38", year: "2007", category: "behind", is18Plus: true },
-    { id: 11, title: "Солдаты — Интервью с актёрами", desc: "Актёры о съёмках и своих персонажах.", youtubeId: "dQw4w9WgXcQ", duration: "5:22", year: "2006", category: "behind" }
+    { id: 14, title: "Солдаты — закулисье", desc: "Неформальные моменты со съемочной площадки. Курение, алкоголь, нецензурная лексика.", youtubeId: "HnPzAy8ylNg", duration: "23:38", year: "2007", category: "behind", is18Plus: true },
+    { id: 15, title: "Солдаты — съёмочная группа", desc: "Актёры о съёмках и своих персонажах. Эксклюзивные закулисные истории.", youtubeId: "JMbIM0RKIV8", duration: "7:09", year: "2011", category: "behind" },
+    // Пародии (новая категория)
+    { id: 16, title: "Большая Разница — Шматко на шоу Интуиция (пародия)", desc: "Легендарная пародия от шоу «Большая Разница». Прапорщик Шматко в образе участника шоу «Интуиция». Алексей Маклаков в роли самого себя!", youtubeId: "l4IaVDIm_Ck", duration: "6:29", year: "2009", category: "parody" },
+    { id: 17, title: "Большая Разница — Солдаты Римской империи (пародия)", desc: "Гениальная пародия от шоу «Большая Разница»! Если бы сериал «Солдаты» снимали во времена Римской империи. Легионеры, центурионы и... прапорщик Шматко по-римски!", youtubeId: "mRgplRji4es", duration: "7:41", year: "2009", category: "parody" },
 ];
 
 // ==============================================
@@ -25,6 +32,7 @@ const categories = [
     { id: "all", name: "Все видео", icon: "fas fa-video", filter: null },
     { id: "trailer", name: "Трейлеры и анонсы", icon: "fas fa-film", filter: v => v.category === "trailer" },
     { id: "clip", name: "Клипы и нарезки", icon: "fas fa-music", filter: v => v.category === "clip" },
+    { id: "parody", name: "Пародии", icon: "fas fa-laugh", filter: v => v.category === "parody" },
     { id: "behind", name: "Закулисье", icon: "fas fa-users", filter: v => v.category === "behind" }
 ];
 
@@ -123,42 +131,61 @@ function showAgeVerificationModal(video, callback) {
 function playVideoAfterCheck(video) {
     const modal = document.getElementById('videoModal');
     const container = document.getElementById('videoPlayer');
+    const titleEl = document.getElementById('videoTitle');
+    const descEl = document.getElementById('videoDesc');
+    
     if (!modal || !container) {
         showToastMessage('❌ Ошибка открытия плеера');
         return;
     }
-    document.getElementById('videoTitle').innerText = video.title;
-    document.getElementById('videoDesc').innerText = video.desc;
+    
+    titleEl.innerText = video.title;
+    descEl.innerText = video.desc;
     container.innerHTML = '';
+    
+    // 🔥 ЕСЛИ ВИДЕО БЛОКИРОВАНО — ИСПОЛЬЗУЕМ ПРОКСИ
+    if (video.useProxy === true && video.proxyUrl) {
+        container.innerHTML = `
+            <iframe 
+                src="${video.proxyUrl}"
+                style="width: 100%; height: 100%; border: none;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        `;
+        modal.style.display = 'flex';
+        return;
+    }
+    
+    // Обычный YouTube плеер для всех остальных видео
     const playerDiv = document.createElement('div');
     playerDiv.id = 'videoPlayerDiv';
     container.appendChild(playerDiv);
-    const createPlayer = () => {
-        try {
-            currentVideoPlayer = new YT.Player('videoPlayerDiv', {
-                height: '100%',
-                width: '100%',
-                videoId: video.youtubeId,
-                playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
-                events: {
-                    onError: (e) => showToastMessage('❌ Ошибка загрузки видео')
+    
+    currentVideoPlayer = new YT.Player('videoPlayerDiv', {
+        height: '100%',
+        width: '100%',
+        videoId: video.youtubeId,
+        playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
+        events: {
+            onError: (event) => {
+                // Если ошибка 150 — пробуем через прокси
+                if (event.data === 150 || event.data === 101) {
+                    console.log('Видео заблокировано для встраивания, пробуем прокси');
+                    container.innerHTML = `
+                        <iframe 
+                            src="https://corsproxy.io/?url=https://www.youtube.com/embed/${video.youtubeId}"
+                            style="width: 100%; height: 100%; border: none;"
+                            allowfullscreen>
+                        </iframe>
+                    `;
+                } else {
+                    showToastMessage('❌ Ошибка загрузки видео');
                 }
-            });
-        } catch (e) {
-            showToastMessage('❌ Ошибка создания плеера');
-        }
-    };
-    if (typeof YT !== 'undefined' && YT.Player) {
-        createPlayer();
-    } else {
-        const interval = setInterval(() => {
-            if (typeof YT !== 'undefined' && YT.Player) {
-                clearInterval(interval);
-                createPlayer();
             }
-        }, 100);
-        setTimeout(() => clearInterval(interval), 5000);
-    }
+        }
+    });
+    
     modal.style.display = 'flex';
 }
 
@@ -268,6 +295,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeBtn) closeBtn.onclick = closeVideoModal;
 });
 
-window.onYouTubeIframeAPIReady = () => {
-    console.log("YouTube API готов");
+window.onYouTubeIframeAPIReady = function() {
+    console.log("✅ YouTube API готов");
+    // Если есть отложенные запросы на воспроизведение - выполните их
+    if (window.pendingVideo) {
+        playVideoAfterCheck(window.pendingVideo);
+        window.pendingVideo = null;
+    }
+};
+
+// Также добавьте эту проверку
+window.onerror = function(msg, url, line, col, error) {
+    console.error("Ошибка:", msg, error);
+    return false;
 };
