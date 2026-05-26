@@ -101,7 +101,9 @@ function renderGallery() {
         return;
     }
     
-    let html = '<div class="gallery-grid">';
+    // Убираем лишний div.gallery-grid — контейнер уже сам является grid-контейнером
+    // Просто добавляем карточки напрямую
+    let html = '';
     filtered.forEach(photo => {
         // Обрезаем длинное название
         let shortTitle = photo.title || '';
@@ -126,7 +128,6 @@ function renderGallery() {
             </div>
         `;
     });
-    html += '</div>';
     container.innerHTML = html;
 }
 
