@@ -4,6 +4,24 @@
 
 let galleryData = [];
 let currentFilter = 'all';
+let isAdultVerified = false;
+
+function checkAdultStatus() {
+    // Проверяем, подтверждён ли возраст
+    const adultVerified = localStorage.getItem('adultVerified');
+    if (adultVerified === 'true') {
+        isAdultVerified = true;
+    }
+}
+
+function showAdultWarning() {
+    const warning = confirm('⚠️ Вам есть 18 лет? Контент для взрослых может содержать сцены насилия, нецензурную лексику и другие материалы, не предназначенные для несовершеннолетних.\n\nНажмите "ОК", если вам есть 18 лет.');
+    if (warning) {
+        localStorage.setItem('adultVerified', 'true');
+        isAdultVerified = true;
+        renderGallery(); // Перерисовываем галерею
+    }
+}
 
 function checkForUpdates() {
     const lastUpdate = localStorage.getItem('galleryTimestamp');
@@ -64,7 +82,9 @@ function renderFilters() {
         { id: 'actors', name: 'Актёры' },
         { id: 'spinoff', name: 'Спин-оффы' },
         { id: 'iconic', name: 'Моменты' },
-        { id: 'rare', name: 'Раритеты' }
+        { id: 'rare', name: 'Раритеты' },
+        { id: 'memes', name: 'Приколы' },
+        { id: 'adult', name: '18+' }
     ];
     
     let html = '';
@@ -96,21 +116,34 @@ function renderGallery() {
         filtered = galleryData.filter(photo => photo.category === currentFilter);
     }
     
+    // Если раздел 18+ и пользователь не подтвердил возраст
+    if (currentFilter === 'adult' && !isAdultVerified) {
+        container.innerHTML = `
+            <div class="empty-gallery" style="cursor: pointer;" onclick="showAdultWarning()">
+                <i class="fas fa-lock" style="font-size: 4rem; color: #ff4444;"></i>
+                <p style="font-size: 1.2rem; margin-top: 15px;">🔞 Контент 18+</p>
+                <p>Для просмотра подтвердите свой возраст</p>
+                <button class="verify-age-btn" onclick="showAdultWarning()">Подтвердить возраст</button>
+            </div>
+        `;
+        return;
+    }
+    
     if (filtered.length === 0) {
         container.innerHTML = '<div class="empty-gallery"><i class="fas fa-camera"></i><p>Фотографий в этой категории пока нет</p></div>';
         return;
     }
     
-    // Убираем лишний div.gallery-grid — контейнер уже сам является grid-контейнером
-    // Просто добавляем карточки напрямую
     let html = '';
     filtered.forEach(photo => {
-        // Обрезаем длинное название
         let shortTitle = photo.title || '';
         if (shortTitle.length > 25) shortTitle = shortTitle.substring(0, 22) + '...';
         
+        // Добавляем специальный класс для 18+ фото
+        const adultClass = (photo.category === 'adult' && !isAdultVerified) ? 'adult-photo blurred' : (photo.category === 'adult' ? 'adult-photo' : '');
+        
         html += `
-            <div class="gallery-card" onclick="openPhoto('${photo.id}')">
+            <div class="gallery-card ${adultClass}" onclick="openPhoto('${photo.id}')">
                 <div class="gallery-image">
                     <img src="${photo.image}" alt="Фото" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400?text=Error'">
                     <div class="image-overlay">
@@ -123,6 +156,7 @@ function renderGallery() {
                     <div class="gallery-meta">
                         ${photo.year ? `<span><i class="far fa-calendar-alt"></i> ${photo.year}</span>` : ''}
                         ${photo.location ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(photo.location.substring(0, 20))}</span>` : ''}
+                        ${photo.category === 'adult' ? `<span class="adult-badge"><i class="fas fa-exclamation-triangle"></i> 18+</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -130,6 +164,33 @@ function renderGallery() {
     });
     container.innerHTML = html;
 }
+
+const style = document.createElement('style');
+style.textContent = `
+    .verify-age-btn {
+        background: #bd8a3e;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 40px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: all 0.2s;
+    }
+    .verify-age-btn:hover {
+        background: #ffb347;
+        transform: scale(1.02);
+    }
+    .adult-badge {
+        background: #ff4444;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 0.6rem;
+    }
+`;
+document.head.appendChild(style);
 
 function openPhoto(id) {
     const photo = galleryData.find(p => p.id === id);
@@ -157,6 +218,7 @@ function escapeHtml(str) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    checkAdultStatus();
     loadGalleryFromFirebase();
     setInterval(checkForUpdates, 1000);
     
