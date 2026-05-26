@@ -1,35 +1,47 @@
 // ==============================================
-// ГАЛЕРЕЯ — ПРОСМОТР ФОТО С ОБНОВЛЕНИЕМ В РЕАЛЬНОМ ВРЕМЕНИ
+// ГАЛЕРЕЯ — С АВТОМАТИЧЕСКИМ ОБНОВЛЕНИЕМ
 // ==============================================
 
 let galleryData = [];
 let currentFilter = 'all';
 
-// Подписка на изменения в Firebase (реальное время)
-function subscribeToGalleryUpdates() {
-    const galleryRef = db.ref('gallery');
+function checkForUpdates() {
+    const lastUpdate = localStorage.getItem('galleryTimestamp');
+    const lastProcessed = sessionStorage.getItem('lastProcessedTimestamp');
     
-    // Слушаем изменения в реальном времени
-    galleryRef.on('value', (snapshot) => {
+    if (lastUpdate && lastUpdate !== lastProcessed) {
+        sessionStorage.setItem('lastProcessedTimestamp', lastUpdate);
+        console.log('🔄 Обнаружено обновление, перезагружаем...');
+        loadGalleryFromFirebase();
+    }
+}
+
+async function loadGalleryFromFirebase() {
+    const container = document.getElementById('galleryGrid');
+    if (!container) return;
+    
+    if (galleryData.length === 0) {
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>';
+    }
+    
+    try {
+        const snapshot = await db.ref('gallery').once('value');
         const photos = snapshot.val() || {};
-        galleryData = Object.entries(photos).map(([id, data]) => ({
-            id,
-            ...data
-        })).reverse();
         
-        // Обновляем отображение
-        renderAll();
-    });
+        galleryData = Object.entries(photos).map(([id, data]) => ({ id, ...data })).reverse();
+        
+        console.log('✅ Загружено фото:', galleryData.length);
+        
+        renderGallery();
+        renderFilters();
+        renderStats();
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
+        container.innerHTML = '<div class="empty-gallery"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки</p></div>';
+    }
 }
 
-// Рендер всего
-function renderAll() {
-    renderStats();
-    renderFilters();
-    renderGallery();
-}
-
-// Рендер статистики
 function renderStats() {
     const container = document.getElementById('galleryStats');
     if (!container) return;
@@ -42,7 +54,6 @@ function renderStats() {
     `;
 }
 
-// Рендер фильтров
 function renderFilters() {
     const container = document.getElementById('galleryFilters');
     if (!container) return;
@@ -58,9 +69,10 @@ function renderFilters() {
     
     let html = '';
     categories.forEach(cat => {
+        const count = cat.id === 'all' ? galleryData.length : galleryData.filter(p => p.category === cat.id).length;
         html += `
             <button class="filter-btn ${currentFilter === cat.id ? 'active' : ''}" data-filter="${cat.id}">
-                ${cat.name}
+                ${cat.name} ${cat.id !== 'all' ? `(${count})` : ''}
             </button>
         `;
     });
@@ -75,7 +87,6 @@ function renderFilters() {
     });
 }
 
-// Рендер галереи
 function renderGallery() {
     const container = document.getElementById('galleryGrid');
     if (!container) return;
@@ -115,7 +126,6 @@ function renderGallery() {
     container.innerHTML = html;
 }
 
-// Открыть фото в модальном окне
 function openPhoto(id) {
     const photo = galleryData.find(p => p.id === id);
     if (!photo) return;
@@ -141,9 +151,9 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
-// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
-    subscribeToGalleryUpdates();
+    loadGalleryFromFirebase();
+    setInterval(checkForUpdates, 1000);
     
     const modal = document.getElementById('photoModal');
     if (modal) {
@@ -152,3 +162,5 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
+
+window.loadGalleryFromFirebase = loadGalleryFromFirebase;

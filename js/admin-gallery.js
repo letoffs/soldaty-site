@@ -5,17 +5,14 @@
 let currentEditId = null;
 let currentUserEmail = null;
 
-// Список администраторов
 const ADMIN_EMAILS = ['twinkjjjjkmnb@gmail.com'];
 
-// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         checkAdminAccess();
     }, 500);
 });
 
-// Проверка прав доступа
 async function checkAdminAccess() {
     const container = document.getElementById('adminContainer');
     
@@ -52,7 +49,6 @@ async function checkAdminAccess() {
     loadAdminPanel();
 }
 
-// Загрузка админ-панели
 async function loadAdminPanel() {
     const container = document.getElementById('adminContainer');
     
@@ -69,7 +65,6 @@ async function loadAdminPanel() {
             </div>
         </div>
 
-        <!-- Форма добавления фото -->
         <div class="add-photo-form">
             <div class="form-title">
                 <i class="fas fa-plus-circle"></i>
@@ -105,12 +100,10 @@ async function loadAdminPanel() {
                         <label><i class="fas fa-tag"></i> Название</label>
                         <input type="text" id="photoTitle" class="form-input" placeholder="Например: Шматко на съёмках">
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-align-left"></i> Описание</label>
                         <textarea id="photoDesc" class="form-textarea" placeholder="Описание фотографии..."></textarea>
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-folder"></i> Категория</label>
                         <select id="photoCategory" class="form-select">
@@ -122,12 +115,10 @@ async function loadAdminPanel() {
                             <option value="rare">Раритеты</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-calendar"></i> Год</label>
                         <input type="number" id="photoYear" class="form-input" placeholder="2005">
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-map-marker-alt"></i> Место съёмки</label>
                         <input type="text" id="photoLocation" class="form-input" placeholder="Нахабино">
@@ -151,12 +142,11 @@ async function loadAdminPanel() {
     loadPhotos();
 }
 
-// Загрузка фото из компьютера
 function initFileUpload() {
     const fileInput = document.getElementById('fileInput');
     if (!fileInput) return;
     
-    fileInput.addEventListener('change', async (event) => {
+    fileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (!file) return;
         
@@ -172,33 +162,22 @@ function initFileUpload() {
             return;
         }
         
-        showToast('⏳ Загрузка...');
-        
-        try {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const imageUrl = e.target.result;
-                
-                const preview = document.getElementById('filePreview');
-                preview.innerHTML = `<img src="${imageUrl}" alt="Preview">`;
-                preview.style.display = 'block';
-                
-                window.currentImageUrl = imageUrl;
-                
-                const urlInput = document.getElementById('urlInput');
-                if (urlInput) urlInput.value = '';
-                document.getElementById('urlPreview').style.display = 'none';
-            };
-            reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageUrl = e.target.result;
+            const preview = document.getElementById('filePreview');
+            preview.innerHTML = `<img src="${imageUrl}" alt="Preview">`;
+            preview.style.display = 'block';
+            window.currentImageUrl = imageUrl;
             
-        } catch (error) {
-            console.error('Ошибка:', error);
-            showToast('❌ Ошибка загрузки файла');
-        }
+            const urlInput = document.getElementById('urlInput');
+            if (urlInput) urlInput.value = '';
+            document.getElementById('urlPreview').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
     });
 }
 
-// Предпросмотр ссылки
 function initUrlPreview() {
     const urlInput = document.getElementById('urlInput');
     if (!urlInput) return;
@@ -222,7 +201,6 @@ function initUrlPreview() {
     });
 }
 
-// Показать/скрыть опциональные поля
 function toggleOptional() {
     const content = document.getElementById('optionalContent');
     const icon = document.getElementById('toggleIcon');
@@ -239,7 +217,6 @@ function toggleOptional() {
     }
 }
 
-// Сохранение фото (добавление или обновление)
 async function savePhoto() {
     const imageUrl = window.currentImageUrl;
     
@@ -248,7 +225,6 @@ async function savePhoto() {
         return;
     }
     
-    // Собираем только заполненные поля
     const photoData = {
         image: imageUrl,
         updatedAt: Date.now(),
@@ -272,11 +248,9 @@ async function savePhoto() {
     
     try {
         if (currentEditId) {
-            // ОБНОВЛЕНИЕ существующего фото
             await db.ref(`gallery/${currentEditId}`).update(photoData);
             showToast('✅ Фото обновлено');
         } else {
-            // ДОБАВЛЕНИЕ нового фото
             const newRef = db.ref('gallery').push();
             photoData.id = newRef.key;
             photoData.createdAt = Date.now();
@@ -285,15 +259,8 @@ async function savePhoto() {
             showToast('✅ Фото добавлено');
         }
         
-        // ОБНОВЛЯЕМ список фото на странице
         await loadPhotos();
-        
-        // ОБНОВЛЯЕМ данные в localStorage для галереи (если нужно)
-        const gallerySnapshot = await db.ref('gallery').once('value');
-        const allPhotos = gallerySnapshot.val() || {};
-        localStorage.setItem('galleryCache', JSON.stringify(allPhotos));
-        
-        // Сбрасываем форму
+        await forceGalleryUpdate();
         resetForm();
         
     } catch (error) {
@@ -302,7 +269,26 @@ async function savePhoto() {
     }
 }
 
-// Редактирование фото
+async function forceGalleryUpdate() {
+    try {
+        const snapshot = await db.ref('gallery').once('value');
+        const allPhotos = snapshot.val() || {};
+        
+        localStorage.setItem('galleryData', JSON.stringify(allPhotos));
+        localStorage.setItem('galleryTimestamp', Date.now().toString());
+        localStorage.setItem('forceGalleryReload', Date.now().toString());
+        
+        console.log('✅ Галерея принудительно обновлена');
+        
+        if (typeof window.loadGalleryFromFirebase === 'function') {
+            window.loadGalleryFromFirebase();
+        }
+        
+    } catch (e) {
+        console.error('Ошибка:', e);
+    }
+}
+
 async function editPhoto(id) {
     try {
         const snapshot = await db.ref(`gallery/${id}`).once('value');
@@ -318,10 +304,8 @@ async function editPhoto(id) {
         document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать фото';
         document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Обновить фото';
         
-        // Заполняем изображение
         window.currentImageUrl = photo.image;
         
-        // Показываем превью
         const filePreview = document.getElementById('filePreview');
         filePreview.innerHTML = `<img src="${photo.image}" alt="Preview">`;
         filePreview.style.display = 'block';
@@ -329,14 +313,12 @@ async function editPhoto(id) {
         const urlInput = document.getElementById('urlInput');
         if (urlInput) urlInput.value = photo.image;
         
-        // Заполняем опциональные поля, если они есть
         document.getElementById('photoTitle').value = photo.title || '';
         document.getElementById('photoDesc').value = photo.desc || '';
         document.getElementById('photoCategory').value = photo.category || '';
         document.getElementById('photoYear').value = photo.year || '';
         document.getElementById('photoLocation').value = photo.location || '';
         
-        // Разворачиваем опциональные поля, если есть хоть какие-то данные
         if (photo.title || photo.desc || photo.category || photo.year || photo.location) {
             const content = document.getElementById('optionalContent');
             if (!content.classList.contains('show')) {
@@ -352,22 +334,14 @@ async function editPhoto(id) {
     }
 }
 
-// Удаление фото
 async function deletePhoto(id) {
     if (!confirm('Удалить это фото?')) return;
     
     try {
         await db.ref(`gallery/${id}`).remove();
         showToast('✅ Фото удалено');
-        
-        // ОБНОВЛЯЕМ список после удаления
         await loadPhotos();
-        
-        // ОБНОВЛЯЕМ кэш
-        const gallerySnapshot = await db.ref('gallery').once('value');
-        const allPhotos = gallerySnapshot.val() || {};
-        localStorage.setItem('galleryCache', JSON.stringify(allPhotos));
-        
+        await forceGalleryUpdate();
         if (currentEditId === id) resetForm();
         
     } catch (error) {
@@ -376,7 +350,6 @@ async function deletePhoto(id) {
     }
 }
 
-// Загрузка списка фото
 async function loadPhotos() {
     const container = document.getElementById('photosList');
     if (!container) return;
@@ -387,10 +360,7 @@ async function loadPhotos() {
         const snapshot = await db.ref('gallery').once('value');
         const photos = snapshot.val() || {};
         
-        const photosArray = Object.entries(photos).map(([id, data]) => ({
-            id,
-            ...data
-        })).reverse();
+        const photosArray = Object.entries(photos).map(([id, data]) => ({ id, ...data })).reverse();
         
         if (photosArray.length === 0) {
             container.innerHTML = '<div class="empty-state"><i class="fas fa-camera"></i><p>Нет фотографий. Добавьте первую!</p></div>';
@@ -400,7 +370,7 @@ async function loadPhotos() {
         let html = '';
         photosArray.forEach(photo => {
             html += `
-                <div class="admin-photo-card" data-photo-id="${photo.id}">
+                <div class="admin-photo-card">
                     <img src="${photo.image}" alt="Фото" onerror="this.src='https://via.placeholder.com/200x200?text=Error'">
                     <div class="admin-photo-actions">
                         <button class="edit-btn" onclick="editPhoto('${photo.id}')" title="Редактировать">
@@ -426,7 +396,6 @@ async function loadPhotos() {
     }
 }
 
-// Сброс формы
 function resetForm() {
     currentEditId = null;
     window.currentImageUrl = null;
@@ -442,21 +411,18 @@ function resetForm() {
     document.getElementById('urlPreview').innerHTML = '';
     document.getElementById('urlPreview').style.display = 'none';
     
-    // Очищаем все опциональные поля
     document.getElementById('photoTitle').value = '';
     document.getElementById('photoDesc').value = '';
     document.getElementById('photoCategory').value = '';
     document.getElementById('photoYear').value = '';
     document.getElementById('photoLocation').value = '';
     
-    // Сворачиваем опциональные поля
     const content = document.getElementById('optionalContent');
     if (content.classList.contains('show')) {
         toggleOptional();
     }
 }
 
-// Выход
 async function logoutAndRedirect() {
     await auth.signOut();
     window.location.href = 'index.html';
