@@ -97,7 +97,7 @@ async function loadAdminPanel() {
                 </div>
             </div>
             
-            <!-- Опциональные поля (можно развернуть) -->
+            <!-- Опциональные поля (свёрнуты по умолчанию) -->
             <div class="optional-fields">
                 <button class="toggle-optional" onclick="toggleOptional()">
                     <i class="fas fa-chevron-down" id="toggleIcon"></i> 
@@ -128,7 +128,7 @@ async function loadAdminPanel() {
                     
                     <div class="form-group">
                         <label><i class="fas fa-calendar"></i> Год</label>
-                        <input type="number" id="photoYear" class="form-input" placeholder="2005" value="2005">
+                        <input type="number" id="photoYear" class="form-input" placeholder="2005">
                     </div>
                     
                     <div class="form-group">
@@ -180,18 +180,20 @@ function initFileUpload() {
         showToast('⏳ Загрузка...');
         
         try {
-            // Конвертируем в Base64
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const imageUrl = e.target.result;
                 
-                // Показываем превью
                 const preview = document.getElementById('filePreview');
                 preview.innerHTML = `<img src="${imageUrl}" alt="Preview">`;
                 preview.style.display = 'block';
                 
-                // Сохраняем URL для отправки
                 window.currentImageUrl = imageUrl;
+                
+                // Очищаем URL поле
+                const urlInput = document.getElementById('urlInput');
+                if (urlInput) urlInput.value = '';
+                document.getElementById('urlPreview').style.display = 'none';
             };
             reader.readAsDataURL(file);
             
@@ -215,6 +217,11 @@ function initUrlPreview() {
             preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.src='https://via.placeholder.com/200x200?text=Invalid+URL'">`;
             preview.style.display = 'block';
             window.currentImageUrl = url;
+            
+            // Очищаем файловое поле
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) fileInput.value = '';
+            document.getElementById('filePreview').style.display = 'none';
         } else {
             preview.style.display = 'none';
             window.currentImageUrl = null;
@@ -248,39 +255,40 @@ async function savePhoto() {
         return;
     }
     
-    // Собираем только заполненные поля
+    // Только обязательное поле — изображение
     const photoData = {
         image: imageUrl,
-        createdAt: Date.now(),
-        createdBy: currentUserEmail
+        updatedAt: Date.now(),
+        updatedBy: currentUserEmail
     };
     
-    // Добавляем опциональные поля, только если они заполнены
+    // Добавляем опциональные поля, ТОЛЬКО если они заполнены
     const title = document.getElementById('photoTitle')?.value.trim();
-    if (title) photoData.title = title;
+    if (title && title !== '') photoData.title = title;
     
     const desc = document.getElementById('photoDesc')?.value.trim();
-    if (desc) photoData.desc = desc;
+    if (desc && desc !== '') photoData.desc = desc;
     
     const category = document.getElementById('photoCategory')?.value;
-    if (category && category !== 'other') photoData.category = category;
+    if (category && category !== 'other' && category !== '') photoData.category = category;
     
     const year = document.getElementById('photoYear')?.value;
-    if (year && year >= 2004 && year <= 2013) photoData.year = parseInt(year);
+    if (year && year !== '' && year >= 2004 && year <= 2013) photoData.year = parseInt(year);
     
     const location = document.getElementById('photoLocation')?.value.trim();
-    if (location) photoData.location = location;
+    if (location && location !== '') photoData.location = location;
     
     try {
         if (currentEditId) {
-            // Обновление
-            photoData.updatedAt = Date.now();
+            // Обновление существующего фото
             await db.ref(`gallery/${currentEditId}`).update(photoData);
             showToast('✅ Фото обновлено');
         } else {
-            // Добавление
+            // Добавление нового фото
             const newRef = db.ref('gallery').push();
             photoData.id = newRef.key;
+            photoData.createdAt = Date.now();
+            photoData.createdBy = currentUserEmail;
             await newRef.set(photoData);
             showToast('✅ Фото добавлено');
         }
@@ -290,7 +298,7 @@ async function savePhoto() {
         
     } catch (error) {
         console.error('Ошибка:', error);
-        showToast('❌ Ошибка сохранения');
+        showToast('❌ Ошибка сохранения: ' + error.message);
     }
 }
 
@@ -310,7 +318,7 @@ async function editPhoto(id) {
         document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit"></i> Редактировать фото';
         document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Обновить фото';
         
-        // Заполняем поля
+        // Заполняем изображение
         window.currentImageUrl = photo.image;
         
         // Показываем превью
@@ -321,14 +329,14 @@ async function editPhoto(id) {
         const urlInput = document.getElementById('urlInput');
         if (urlInput) urlInput.value = photo.image;
         
-        // Заполняем опциональные поля
+        // Заполняем опциональные поля, если они есть
         if (photo.title) document.getElementById('photoTitle').value = photo.title;
         if (photo.desc) document.getElementById('photoDesc').value = photo.desc;
         if (photo.category) document.getElementById('photoCategory').value = photo.category;
         if (photo.year) document.getElementById('photoYear').value = photo.year;
         if (photo.location) document.getElementById('photoLocation').value = photo.location;
         
-        // Разворачиваем опциональные поля, если есть данные
+        // Разворачиваем опциональные поля, если есть хоть какие-то данные
         if (photo.title || photo.desc || photo.category || photo.year || photo.location) {
             const content = document.getElementById('optionalContent');
             if (!content.classList.contains('show')) {
@@ -398,6 +406,7 @@ async function loadPhotos() {
                     <div class="admin-photo-info">
                         ${photo.title ? `<span style="color:#ffd966">${escapeHtml(photo.title.substring(0, 30))}</span><br>` : ''}
                         ${photo.year ? `<span><i class="far fa-calendar-alt"></i> ${photo.year}</span>` : ''}
+                        ${!photo.title && !photo.year ? '<span style="color:#8aa07a">Нет данных</span>' : ''}
                     </div>
                 </div>
             `;
@@ -426,10 +435,11 @@ function resetForm() {
     document.getElementById('urlPreview').innerHTML = '';
     document.getElementById('urlPreview').style.display = 'none';
     
+    // Очищаем все опциональные поля
     document.getElementById('photoTitle').value = '';
     document.getElementById('photoDesc').value = '';
     document.getElementById('photoCategory').value = 'behind';
-    document.getElementById('photoYear').value = '2005';
+    document.getElementById('photoYear').value = '';
     document.getElementById('photoLocation').value = '';
 }
 
