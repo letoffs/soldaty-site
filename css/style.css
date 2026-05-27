@@ -5287,3 +5287,149 @@ button,
     color: #aaa;
     text-align: center;
 }
+
+/* ===== МОДАЛЬНОЕ ОКНО ФОТО С НАВИГАЦИЕЙ ===== */
+.photo-modal .modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    padding: 0;
+    background: #0f1a0f;
+    border-radius: 24px;
+    border: 2px solid #bd8a3e;
+    position: relative;
+}
+
+.photo-modal-container {
+    position: relative;
+}
+
+.photo-modal-body {
+    padding: 20px;
+}
+
+.photo-modal-img {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 16px;
+    display: block;
+    margin: 0 auto;
+}
+
+.photo-modal-info {
+    background: #0f1a0f;
+    padding: 15px 20px;
+    border-radius: 16px;
+    margin-top: 15px;
+}
+
+.photo-modal-title {
+    color: #ffd966;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.photo-modal-desc {
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+.photo-modal-counter {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #3e5a3e;
+    font-size: 0.7rem;
+    color: #8aa07a;
+    text-align: center;
+}
+
+/* Кнопки навигации */
+.modal-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid #bd8a3e;
+    color: #bd8a3e;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-nav-btn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.prev-btn {
+    left: -25px;
+}
+
+.next-btn {
+    right: -25px;
+}
+
+.photo-modal-close {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #bd8a3e;
+    border: none;
+    color: #0f1a0f;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-modal-close:hover {
+    background: #ffb347;
+    transform: scale(1.1);
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 700px) {
+    .modal-nav-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .prev-btn {
+        left: -15px;
+    }
+    
+    .next-btn {
+        right: -15px;
+    }
+    
+    .photo-modal-close {
+        top: -10px;
+        right: -10px;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .photo-modal-body {
+        padding: 15px;
+    }
+    
+    .photo-modal-img {
+        max-height: 60vh;
+    }
+}
