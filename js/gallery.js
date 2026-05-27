@@ -1,28 +1,121 @@
 // ==============================================
-// ГАЛЕРЕЯ — С АВТОМАТИЧЕСКИМ ОБНОВЛЕНИЕМ
+// ГАЛЕРЕЯ — С БОКОВОЙ ПАНЕЛЬЮ КАК В ВИДЕОТЕКЕ
 // ==============================================
 
 let galleryData = [];
-let currentFilter = 'all';
+let currentCategory = 'all';
+
+// Категории как в видео
+const categories = [
+    { id: "all", name: "Все фото", icon: "fas fa-images", filter: null },
+    { id: "behind", name: "Со съёмок", icon: "fas fa-video", filter: p => p.category === "behind" },
+    { id: "actors", name: "Актёры", icon: "fas fa-user", filter: p => p.category === "actors" },
+    { id: "spinoff", name: "Спин-оффы", icon: "fas fa-tv", filter: p => p.category === "spinoff" },
+    { id: "iconic", name: "Моменты", icon: "fas fa-star", filter: p => p.category === "iconic" },
+    { id: "rare", name: "Раритеты", icon: "fas fa-camera-retro", filter: p => p.category === "rare" },
+    { id: "memes", name: "Приколы", icon: "fas fa-laugh", filter: p => p.category === "memes" },
+    { id: "adult", name: "18+", icon: "fas fa-lock", filter: p => p.category === "adult" }
+];
+
 let isAdultVerified = false;
 
+// ==============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ==============================================
+function showToastMessage(message) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast-message';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2500);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+}
+
+// ==============================================
+// ПРОВЕРКА ВОЗРАСТА
+// ==============================================
 function checkAdultStatus() {
-    // Проверяем, подтверждён ли возраст
-    const adultVerified = localStorage.getItem('adultVerified');
+    const adultVerified = localStorage.getItem('galleryAdultVerified');
     if (adultVerified === 'true') {
         isAdultVerified = true;
     }
 }
 
-function showAdultWarning() {
-    const warning = confirm('⚠️ Вам есть 18 лет? Контент для взрослых может содержать сцены насилия, нецензурную лексику и другие материалы, не предназначенные для несовершеннолетних.\n\nНажмите "ОК", если вам есть 18 лет.');
-    if (warning) {
-        localStorage.setItem('adultVerified', 'true');
-        isAdultVerified = true;
-        renderGallery(); // Перерисовываем галерею
+function showAgeVerificationModal(callback) {
+    let ageModal = document.getElementById('ageVerificationModal');
+    if (!ageModal) {
+        ageModal = document.createElement('div');
+        ageModal.id = 'ageVerificationModal';
+        ageModal.className = 'modal age-verification-modal';
+        ageModal.innerHTML = `
+            <div class="modal-content age-verification-content">
+                <div class="age-verification-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3>Внимание! Контент 18+</h3>
+                <p>Эти фотографии содержат материалы, которые могут быть неуместны для лиц младше 18 лет.</p>
+                <p>Курение, алкоголь, нецензурная лексика и армейский юмор.</p>
+                <div class="age-verification-buttons">
+                    <button id="ageConfirmBtn" class="age-confirm-btn">
+                        <i class="fas fa-check-circle"></i> Мне есть 18 лет
+                    </button>
+                    <button id="ageCancelBtn" class="age-cancel-btn">
+                        <i class="fas fa-times-circle"></i> Меньше 18 лет
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(ageModal);
     }
+    
+    ageModal.style.display = 'flex';
+    
+    const confirmBtn = document.getElementById('ageConfirmBtn');
+    const cancelBtn = document.getElementById('ageCancelBtn');
+    
+    const onConfirm = () => {
+        ageModal.style.display = 'none';
+        localStorage.setItem('galleryAdultVerified', 'true');
+        isAdultVerified = true;
+        renderGallery();
+        if (callback) callback();
+    };
+    
+    const onCancel = () => {
+        ageModal.style.display = 'none';
+        showToastMessage('⛔ Доступ запрещён. Контент 18+');
+        currentCategory = 'all';
+        renderCategories();
+        renderGallery();
+    };
+    
+    const newConfirm = confirmBtn.cloneNode(true);
+    const newCancel = cancelBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    
+    newConfirm.addEventListener('click', onConfirm);
+    newCancel.addEventListener('click', onCancel);
+    
+    ageModal.onclick = (e) => {
+        if (e.target === ageModal) onCancel();
+    };
 }
 
+// ==============================================
+// ЗАГРУЗКА ДАННЫХ ИЗ FIREBASE
+// ==============================================
 function checkForUpdates() {
     const lastUpdate = localStorage.getItem('galleryTimestamp');
     const lastProcessed = sessionStorage.getItem('lastProcessedTimestamp');
@@ -50,9 +143,8 @@ async function loadGalleryFromFirebase() {
         
         console.log('✅ Загружено фото:', galleryData.length);
         
+        renderCategories();
         renderGallery();
-        renderFilters();
-        renderStats();
         
     } catch (error) {
         console.error('Ошибка:', error);
@@ -60,70 +152,74 @@ async function loadGalleryFromFirebase() {
     }
 }
 
-function renderStats() {
-    const container = document.getElementById('galleryStats');
+// ==============================================
+// ОТРИСОВКА КАТЕГОРИЙ
+// ==============================================
+function renderCategories() {
+    const container = document.getElementById('categoryList');
     if (!container) return;
-    
-    const total = galleryData.length;
-    container.innerHTML = `
-        <div class="stat-badge"><i class="fas fa-images"></i> Всего фото: ${total}</div>
-        <div class="stat-badge"><i class="fas fa-camera"></i> Эксклюзивные кадры</div>
-        <div class="stat-badge"><i class="fas fa-calendar-alt"></i> 2004-2013</div>
-    `;
-}
-
-function renderFilters() {
-    const container = document.getElementById('galleryFilters');
-    if (!container) return;
-    
-    const categories = [
-        { id: 'all', name: 'Все' },
-        { id: 'behind', name: 'Со съёмок' },
-        { id: 'actors', name: 'Актёры' },
-        { id: 'spinoff', name: 'Спин-оффы' },
-        { id: 'iconic', name: 'Моменты' },
-        { id: 'rare', name: 'Раритеты' },
-        { id: 'memes', name: 'Приколы' },
-        { id: 'adult', name: '18+' }
-    ];
     
     let html = '';
     categories.forEach(cat => {
-        const count = cat.id === 'all' ? galleryData.length : galleryData.filter(p => p.category === cat.id).length;
+        let count = 0;
+        if (cat.filter) {
+            count = galleryData.filter(cat.filter).length;
+        } else {
+            count = galleryData.length;
+        }
+        
         html += `
-            <button class="filter-btn ${currentFilter === cat.id ? 'active' : ''}" data-filter="${cat.id}">
-                ${cat.name} ${cat.id !== 'all' ? `(${count})` : ''}
-            </button>
+            <div class="category-item ${currentCategory === cat.id ? 'active' : ''}" data-category="${cat.id}">
+                <i class="${cat.icon}"></i>
+                <span class="category-name">${cat.name}</span>
+                <span class="category-count">${count}</span>
+            </div>
         `;
     });
     container.innerHTML = html;
     
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentFilter = btn.dataset.filter;
-            renderFilters();
-            renderGallery();
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const catId = item.dataset.category;
+            if (catId) {
+                currentCategory = catId;
+                renderCategories();
+                renderGallery();
+            }
         });
     });
 }
 
+// ==============================================
+// ОТРИСОВКА ГАЛЕРЕИ
+// ==============================================
 function renderGallery() {
     const container = document.getElementById('galleryGrid');
+    const countSpan = document.getElementById('galleryCount');
+    const titleSpan = document.querySelector('#currentCategoryTitle span');
+    
     if (!container) return;
     
+    const currentCat = categories.find(c => c.id === currentCategory);
+    if (titleSpan && currentCat) titleSpan.innerText = currentCat.name;
+    
     let filtered = galleryData;
-    if (currentFilter !== 'all') {
-        filtered = galleryData.filter(photo => photo.category === currentFilter);
+    const cat = categories.find(c => c.id === currentCategory);
+    if (cat && cat.filter) {
+        filtered = galleryData.filter(cat.filter);
     }
     
-    // Если раздел 18+ и пользователь не подтвердил возраст
-    if (currentFilter === 'adult' && !isAdultVerified) {
+    if (countSpan) {
+        countSpan.innerHTML = `<i class="fas fa-camera"></i> ${filtered.length} фото`;
+    }
+    
+    if (currentCategory === 'adult' && !isAdultVerified) {
         container.innerHTML = `
-            <div class="empty-gallery" style="cursor: pointer;" onclick="showAdultWarning()">
+            <div class="empty-gallery" style="cursor: pointer;" onclick="showAgeVerificationModal()">
                 <i class="fas fa-lock" style="font-size: 4rem; color: #ff4444;"></i>
                 <p style="font-size: 1.2rem; margin-top: 15px;">🔞 Контент 18+</p>
                 <p>Для просмотра подтвердите свой возраст</p>
-                <button class="verify-age-btn" onclick="showAdultWarning()">Подтвердить возраст</button>
+                <button class="verify-age-btn" onclick="showAgeVerificationModal()">Подтвердить возраст</button>
             </div>
         `;
         return;
@@ -139,16 +235,23 @@ function renderGallery() {
         let shortTitle = photo.title || '';
         if (shortTitle.length > 25) shortTitle = shortTitle.substring(0, 22) + '...';
         
-        // Добавляем специальный класс для 18+ фото
-        const adultClass = (photo.category === 'adult' && !isAdultVerified) ? 'adult-photo blurred' : (photo.category === 'adult' ? 'adult-photo' : '');
+        const ageBadge = (photo.category === 'adult' || photo.is18Plus) ? '<span class="age-badge">18+</span>' : '';
+        const memeBadge = photo.category === 'memes' ? '<span class="meme-badge">Прикол</span>' : '';
+        
+        const blurClass = (photo.category === 'adult' || photo.is18Plus) && !isAdultVerified ? 'blurred-thumb' : '';
+        const blurOverlay = (photo.category === 'adult' || photo.is18Plus) && !isAdultVerified ? 
+            '<div class="blur-overlay"><i class="fas fa-lock"></i> Подтвердите возраст</div>' : '';
         
         html += `
-            <div class="gallery-card ${adultClass}" onclick="openPhoto('${photo.id}')">
-                <div class="gallery-image">
+            <div class="gallery-card" onclick="openPhoto('${photo.id}')">
+                <div class="gallery-image ${blurClass}">
                     <img src="${photo.image}" alt="Фото" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400?text=Error'">
                     <div class="image-overlay">
                         <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
                     </div>
+                    ${ageBadge}
+                    ${memeBadge}
+                    ${blurOverlay}
                 </div>
                 <div class="gallery-info">
                     ${photo.title ? `<div class="gallery-title" title="${escapeHtml(photo.title)}">${escapeHtml(shortTitle)}</div>` : ''}
@@ -156,7 +259,6 @@ function renderGallery() {
                     <div class="gallery-meta">
                         ${photo.year ? `<span><i class="far fa-calendar-alt"></i> ${photo.year}</span>` : ''}
                         ${photo.location ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(photo.location.substring(0, 20))}</span>` : ''}
-                        ${photo.category === 'adult' ? `<span class="adult-badge"><i class="fas fa-exclamation-triangle"></i> 18+</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -165,36 +267,17 @@ function renderGallery() {
     container.innerHTML = html;
 }
 
-const style = document.createElement('style');
-style.textContent = `
-    .verify-age-btn {
-        background: #bd8a3e;
-        border: none;
-        padding: 12px 30px;
-        border-radius: 40px;
-        font-size: 1rem;
-        font-weight: bold;
-        cursor: pointer;
-        margin-top: 20px;
-        transition: all 0.2s;
-    }
-    .verify-age-btn:hover {
-        background: #ffb347;
-        transform: scale(1.02);
-    }
-    .adult-badge {
-        background: #ff4444;
-        color: white;
-        padding: 2px 6px;
-        border-radius: 10px;
-        font-size: 0.6rem;
-    }
-`;
-document.head.appendChild(style);
-
+// ==============================================
+// ОТКРЫТИЕ ФОТО
+// ==============================================
 function openPhoto(id) {
     const photo = galleryData.find(p => p.id === id);
     if (!photo) return;
+    
+    if ((photo.category === 'adult' || photo.is18Plus) && !isAdultVerified) {
+        showAgeVerificationModal(() => openPhoto(id));
+        return;
+    }
     
     const modal = document.getElementById('photoModal');
     const img = document.getElementById('modalPhotoImg');
@@ -212,11 +295,9 @@ function closePhotoModal() {
     document.getElementById('photoModal').style.display = 'none';
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-}
-
+// ==============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ==============================================
 document.addEventListener('DOMContentLoaded', () => {
     checkAdultStatus();
     loadGalleryFromFirebase();
