@@ -294,6 +294,7 @@
 }
 
 /* ===== БОКОВАЯ ПАНЕЛЬ С КАТЕГОРИЯМИ ===== */
+/* ===== БОКОВАЯ ПАНЕЛЬ С КАТЕГОРИЯМИ ===== */
 .videos-page-layout {
     display: flex;
     gap: 30px;
@@ -301,21 +302,20 @@
 }
 
 .videos-sidebar {
-    width: 280px;
-    flex-shrink: 0;
+    flex: 0 0 280px;
     background: #0f1a0f;
-    border-radius: 20px;
+    border-radius: 24px;
+    padding: 20px;
     border: 1px solid #3e5a3e;
-    overflow: hidden;
+    height: fit-content;
     position: sticky;
     top: 20px;
-    align-self: flex-start;
 }
 
 .sidebar-header {
-    background: #1e2a1e;
-    padding: 18px 20px;
-    border-bottom: 1px solid #3e5a3e;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #bd8a3e;
 }
 
 .sidebar-header h3 {
@@ -331,41 +331,54 @@
     color: #bd8a3e;
 }
 
+/* ===== УНИФИЦИРОВАННЫЕ КАТЕГОРИИ (как в галерее) ===== */
 .category-list {
-    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .category-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 20px;
+    padding: 12px 15px;
+    border-radius: 16px;
     cursor: pointer;
     transition: all 0.2s;
-    color: #ccc;
-    border-left: 3px solid transparent;
+    background: #1e2a1e;
+    border: 1px solid transparent;
 }
 
 .category-item:hover {
-    background: #1e2a1e;
-    color: #ffd966;
+    background: #2c3e2c;
+    transform: translateX(5px);
 }
 
 .category-item.active {
-    background: #1e2a1e;
-    border-left-color: #bd8a3e;
-    color: #ffd966;
+    background: #bd8a3e;
+    border-color: #ffd966;
+}
+
+.category-item.active i,
+.category-item.active .category-name {
+    color: #0f1a0f;
 }
 
 .category-item i {
     width: 24px;
-    font-size: 1.1rem;
     color: #bd8a3e;
+    font-size: 1.1rem;
+}
+
+.category-item.active i {
+    color: #0f1a0f;
 }
 
 .category-name {
     flex: 1;
-    font-weight: 500;
+    font-size: 0.9rem;
+    color: #ddd;
 }
 
 .category-count {
@@ -373,12 +386,12 @@
     padding: 2px 8px;
     border-radius: 20px;
     font-size: 0.7rem;
-    color: #8aa07a;
+    color: #ffd966;
 }
 
 .category-item.active .category-count {
-    background: #bd8a3e;
-    color: #0f1a0f;
+    background: #0f1a0f;
+    color: #bd8a3e;
 }
 
 .videos-main {
