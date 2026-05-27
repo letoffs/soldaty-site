@@ -7,7 +7,7 @@
     <meta name="description" content="Эксклюзивные фотографии со съёмок сериала «Солдаты». Редкие кадры, закулисье и любимые герои.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" type="image/png" href="Resources/soldaty_icon.png">
+    <link rel="icon" type="image/png" href=Resources/soldaty_icon.png">
 </head>
 <body>
 
@@ -79,14 +79,25 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРОСМОТРА ФОТО -->
+    <!-- ===== НОВОЕ МОДАЛЬНОЕ ОКНО ДЛЯ ПРОСМОТРА ФОТО С НАВИГАЦИЕЙ ===== -->
     <div id="photoModal" class="modal photo-modal">
-        <div class="modal-content" style="background: transparent; box-shadow: none;">
-            <span class="modal-close" onclick="closePhotoModal()" style="color: white; background: rgba(0,0,0,0.5); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; top: -20px; right: -20px;">&times;</span>
-            <img id="modalPhotoImg" class="photo-modal-img" src="" alt="">
-            <div class="photo-modal-info">
-                <div id="modalPhotoTitle" class="photo-modal-title"></div>
-                <div id="modalPhotoDesc" class="photo-modal-desc"></div>
+        <div class="modal-content photo-modal-container">
+            <button class="modal-nav-btn prev-btn" id="prevPhotoBtn">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="modal-nav-btn next-btn" id="nextPhotoBtn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="modal-close photo-modal-close" onclick="closePhotoModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="photo-modal-body">
+                <img id="modalPhotoImg" class="photo-modal-img" src="" alt="">
+                <div class="photo-modal-info">
+                    <div id="modalPhotoTitle" class="photo-modal-title"></div>
+                    <div id="modalPhotoDesc" class="photo-modal-desc"></div>
+                    <div class="photo-modal-counter" id="photoCounter"></div>
+                </div>
             </div>
         </div>
     </div>
