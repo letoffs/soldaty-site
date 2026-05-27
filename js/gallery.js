@@ -1,9 +1,11 @@
 // ==============================================
-// ГАЛЕРЕЯ — С БОКОВОЙ ПАНЕЛЬЮ КАК В ВИДЕОТЕКЕ
+// ГАЛЕРЕЯ — С БОКОВОЙ ПАНЕЛЬЮ И НАВИГАЦИЕЙ
 // ==============================================
 
 let galleryData = [];
 let currentCategory = 'all';
+let currentPhotoIndex = 0;
+let currentFilteredPhotos = [];
 
 // Категории как в видео
 const categories = [
@@ -191,6 +193,18 @@ function renderCategories() {
 }
 
 // ==============================================
+// ПОЛУЧЕНИЕ ОТФИЛЬТРОВАННЫХ ФОТО
+// ==============================================
+function getCurrentFilteredPhotos() {
+    let filtered = galleryData;
+    const cat = categories.find(c => c.id === currentCategory);
+    if (cat && cat.filter) {
+        filtered = galleryData.filter(cat.filter);
+    }
+    return filtered;
+}
+
+// ==============================================
 // ОТРИСОВКА ГАЛЕРЕИ
 // ==============================================
 function renderGallery() {
@@ -203,11 +217,7 @@ function renderGallery() {
     const currentCat = categories.find(c => c.id === currentCategory);
     if (titleSpan && currentCat) titleSpan.innerText = currentCat.name;
     
-    let filtered = galleryData;
-    const cat = categories.find(c => c.id === currentCategory);
-    if (cat && cat.filter) {
-        filtered = galleryData.filter(cat.filter);
-    }
+    let filtered = getCurrentFilteredPhotos();
     
     if (countSpan) {
         countSpan.innerHTML = `<i class="fas fa-camera"></i> ${filtered.length} фото`;
@@ -235,22 +245,19 @@ function renderGallery() {
         let shortTitle = photo.title || '';
         if (shortTitle.length > 25) shortTitle = shortTitle.substring(0, 22) + '...';
         
-        const ageBadge = (photo.category === 'adult' || photo.is18Plus) ? '<span class="age-badge">18+</span>' : '';
-        const memeBadge = photo.category === 'memes' ? '<span class="meme-badge">Прикол</span>' : '';
-        
+        const ageBadge = (photo.category === 'adult' || photo.is18Plus) ? '<span class="age-badge">🔞 18+</span>' : '';
         const blurClass = (photo.category === 'adult' || photo.is18Plus) && !isAdultVerified ? 'blurred-thumb' : '';
         const blurOverlay = (photo.category === 'adult' || photo.is18Plus) && !isAdultVerified ? 
             '<div class="blur-overlay"><i class="fas fa-lock"></i> Подтвердите возраст</div>' : '';
         
         html += `
-            <div class="gallery-card" onclick="openPhoto('${photo.id}')">
+            <div class="gallery-card" data-photo-id="${photo.id}" data-photo-index="${filtered.indexOf(photo)}">
                 <div class="gallery-image ${blurClass}">
                     <img src="${photo.image}" alt="Фото" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400?text=Error'">
                     <div class="image-overlay">
                         <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
                     </div>
                     ${ageBadge}
-                    ${memeBadge}
                     ${blurOverlay}
                 </div>
                 <div class="gallery-info">
@@ -265,30 +272,69 @@ function renderGallery() {
         `;
     });
     container.innerHTML = html;
+    
+    // Добавляем обработчики кликов на карточки
+    document.querySelectorAll('.gallery-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const photoId = card.dataset.photoId;
+            const photoIndex = parseInt(card.dataset.photoIndex);
+            openPhoto(photoId, photoIndex);
+        });
+    });
 }
 
 // ==============================================
-// ОТКРЫТИЕ ФОТО
+// ОТКРЫТИЕ ФОТО С НАВИГАЦИЕЙ
 // ==============================================
-function openPhoto(id) {
+function openPhoto(id, index) {
     const photo = galleryData.find(p => p.id === id);
     if (!photo) return;
     
     if ((photo.category === 'adult' || photo.is18Plus) && !isAdultVerified) {
-        showAgeVerificationModal(() => openPhoto(id));
+        showAgeVerificationModal(() => openPhoto(id, index));
         return;
     }
     
+    currentPhotoIndex = index;
+    currentFilteredPhotos = getCurrentFilteredPhotos();
+    
+    updatePhotoModal();
+    
     const modal = document.getElementById('photoModal');
+    modal.style.display = 'flex';
+}
+
+function updatePhotoModal() {
+    const photo = currentFilteredPhotos[currentPhotoIndex];
+    if (!photo) return;
+    
     const img = document.getElementById('modalPhotoImg');
     const title = document.getElementById('modalPhotoTitle');
     const desc = document.getElementById('modalPhotoDesc');
+    const counter = document.getElementById('photoCounter');
     
     img.src = photo.image;
     title.innerHTML = photo.title ? `<i class="fas fa-image"></i> ${escapeHtml(photo.title)}` : '<i class="fas fa-image"></i> Фото';
     desc.innerHTML = photo.desc || (photo.year ? `${photo.year} год` : '');
-    
-    modal.style.display = 'flex';
+    counter.innerHTML = `${currentPhotoIndex + 1} из ${currentFilteredPhotos.length}`;
+}
+
+function nextPhoto() {
+    if (currentPhotoIndex < currentFilteredPhotos.length - 1) {
+        currentPhotoIndex++;
+        updatePhotoModal();
+    } else {
+        showToastMessage('📸 Это последнее фото');
+    }
+}
+
+function prevPhoto() {
+    if (currentPhotoIndex > 0) {
+        currentPhotoIndex--;
+        updatePhotoModal();
+    } else {
+        showToastMessage('📸 Это первое фото');
+    }
 }
 
 function closePhotoModal() {
@@ -309,6 +355,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === modal) closePhotoModal();
         };
     }
+    
+    // Обработчики навигации
+    const prevBtn = document.getElementById('prevPhotoBtn');
+    const nextBtn = document.getElementById('nextPhotoBtn');
+    
+    if (prevBtn) prevBtn.addEventListener('click', prevPhoto);
+    if (nextBtn) nextBtn.addEventListener('click', nextPhoto);
+    
+    // Клавиши клавиатуры
+    document.addEventListener('keydown', (e) => {
+        if (modal && modal.style.display === 'flex') {
+            if (e.key === 'ArrowLeft') {
+                prevPhoto();
+            } else if (e.key === 'ArrowRight') {
+                nextPhoto();
+            } else if (e.key === 'Escape') {
+                closePhotoModal();
+            }
+        }
+    });
 });
 
 window.loadGalleryFromFirebase = loadGalleryFromFirebase;
