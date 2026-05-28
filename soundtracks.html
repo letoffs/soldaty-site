@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Солдаты — Саундтреки</title>
 
-    <meta name="description" content="Саундтреки сериала «Солдаты» — слушать онлайн все песни из культового армейского сериала">
-    <meta name="keywords" content="саундтреки Солдаты, песни из Солдатов, Юность в сапогах, Конец фильма, Юта">
+    <meta name="description" content="Саундтреки сериала «Солдаты» — слушать онлайн">
+    <meta name="keywords" content="саундтреки Солдаты, песни из Солдатов">
     <meta name="author" content="Фан-сайт сериала Солдаты">
     <meta name="robots" content="index, follow">
 
     <meta property="og:title" content="Саундтреки сериала Солдаты — слушать онлайн">
-    <meta property="og:description" content="Все песни из культового сериала «Солдаты»">
     <meta property="og:type" content="website">
     
     <meta name="theme-color" content="#1a2a1a">
@@ -26,11 +25,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    <!-- Конфигурация Firebase -->
     <script src="firebase-config.js"></script>
-    <!-- Авторизация -->
     <script src="js/firebase-auth.js"></script>
-    <!-- Логика саундтреков -->
     <script src="js/soundtracks.js"></script>
 </head>
 <body>
@@ -40,11 +36,8 @@
         <a href="index.html" class="logo-link">
             <img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
         </a>
-         
         <p class="music-subtitle">Музыка из сериала «Солдаты» — песни, которые звучали в любимых сериях</p>
-
         <div class="music-line"></div>
-
         <div class="nav-menu">
             <a href="index.html" class="nav-link">Сериал</a>
             <a href="heroes.html" class="nav-link">Персонажи</a>
@@ -55,7 +48,7 @@
         </div>
     </div>
 
-    <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
+    <!-- КНОПКИ ВХОДА -->
     <div id="authButtons" class="auth-buttons">
         <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
         <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-user-plus"></i> Регистрация</button>
@@ -71,7 +64,7 @@
         <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
-    <!-- АДМИН-ПАНЕЛЬ (скрыта, открывается через секретную кнопку в футере) -->
+    <!-- АДМИН-ПАНЕЛЬ (скрыта, открывается 3 кликами в футере) -->
     <div id="adminPanel" class="admin-controls" style="display: none;">
         <div class="admin-header">
             <h3><i class="fas fa-shield-alt"></i> Админ-панель</h3>
@@ -79,7 +72,7 @@
         </div>
         <div class="admin-buttons">
             <button onclick="showAddSongModal()" class="admin-btn"><i class="fas fa-plus"></i> Добавить песню</button>
-            <button onclick="loadSongsFromFirebase()" class="admin-btn"><i class="fas fa-sync"></i> Обновить список</button>
+            <button onclick="loadSongsFromFirebase()" class="admin-btn"><i class="fas fa-sync"></i> Обновить</button>
         </div>
         <div class="admin-songs-list" id="adminSongsList"></div>
     </div>
@@ -87,27 +80,11 @@
     <div class="page-description">
         <h2 class="description-title"><i class="fas fa-headphones"></i> Саундтреки сериала «Солдаты»</h2>
         <div class="description-content">
-            <p>Музыка в сериале «Солдаты» — это отдельная история. Песни групп «Конец фильма» и «Юта» стали не просто саундтреками, а настоящими гимнами для миллионов зрителей.</p>
-            
-            <p>От зажигательной «Юность в сапогах» до трогательной «Жили-были» — каждая композиция идеально попадает в настроение сериала, подчёркивая юмор, драму и дух армейского братства.</p>
-            
+            <p>Музыка из сериала «Солдаты» — песни, которые стали гимнами для миллионов зрителей.</p>
             <div class="description-features">
-                <div class="feature">
-                    <i class="fas fa-music"></i>
-                    <span id="songCount">0</span> треков
-                </div>
-                <div class="feature">
-                    <i class="fas fa-guitar"></i>
-                    <span>Конец фильма</span>
-                </div>
-                <div class="feature">
-                    <i class="fas fa-female"></i>
-                    <span>Юта</span>
-                </div>
-                <div class="feature">
-                    <i class="fas fa-drumstick-bite"></i>
-                    <span>Армейские хиты</span>
-                </div>
+                <div class="feature"><i class="fas fa-music"></i> <span id="songCount">0</span> треков</div>
+                <div class="feature"><i class="fas fa-guitar"></i> Конец фильма</div>
+                <div class="feature"><i class="fas fa-female"></i> Юта</div>
             </div>
         </div>
     </div>
@@ -116,11 +93,11 @@
     <div class="global-player">
         <div class="player-bar">
             <div class="player-controls">
+                <button id="shuffleBtn" class="player-btn" title="Случайный порядок"><i class="fas fa-random"></i></button>
                 <button id="prevBtn" class="player-btn"><i class="fas fa-backward"></i></button>
                 <button id="playPauseBtn" class="player-btn"><i class="fas fa-play"></i></button>
                 <button id="nextBtn" class="player-btn"><i class="fas fa-forward"></i></button>
                 <button id="repeatBtn" class="player-btn" title="Повтор"><i class="fas fa-redo-alt"></i></button>
-                <button id="shuffleBtn" class="player-btn" title="Случайный порядок"><i class="fas fa-random"></i></button>
             </div>
             <div class="player-info">
                 <div class="player-song" id="currentSongTitle">Выберите песню</div>
@@ -128,9 +105,7 @@
             </div>
             <div class="player-progress">
                 <span class="current-time" id="currentTime">0:00</span>
-                <div class="progress-bar" id="progressBar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
+                <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
                 <span class="duration" id="duration">0:00</span>
             </div>
             <div class="volume-control">
@@ -140,33 +115,32 @@
         </div>
     </div>
 
-    <audio id="audioPlayer" preload="metadata" playsinline webkit-playsinline></audio>
+    <audio id="audioPlayer" preload="metadata"></audio>
 
-    <!-- ВЫПАДАЮЩИЙ СПИСОК СОРТИРОВКИ -->
+    <!-- СОРТИРОВКА -->
     <div class="sort-section">
         <div class="sort-container">
             <i class="fas fa-sort-amount-down sort-icon"></i>
             <span class="sort-label">Сортировать:</span>
             <select id="sortSelect" class="sort-select" onchange="setSortType(this.value)">
-                <option value="default">По умолчанию</option>
-                <option value="artist">По исполнителю (А-Я)</option>
-                <option value="artist-desc">По исполнителю (Я-А)</option>
-                <option value="title">По названию (А-Я)</option>
-                <option value="title-desc">По названию (Я-А)</option>
-                <option value="duration">По длительности</option>
+                <option value="default"> По умолчанию</option>
+                <option value="artist"> По исполнителю (А-Я)</option>
+                <option value="artist-desc"> По исполнителю (Я-А)</option>
+                <option value="title"> По названию (А-Я)</option>
+                <option value="title-desc"> По названию (Я-А)</option>
+                <option value="duration"> По длительности</option>
             </select>
         </div>
     </div>
 
     <!-- СПИСОК ПЕСЕН -->
     <div class="music-grid" id="musicGrid">
-        <div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i> Загрузка музыки...</div>
+        <div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
     </div>
 
     <div class="footer">
-        Саундтреки сериала «Солдаты» · Наслаждайтесь любимой музыкой
-        <!-- СЕКРЕТНАЯ КНОПКА ДЛЯ АДМИНОВ (3 клика) -->
-        <div id="secretAdminBtn" class="secret-admin-btn" title="⚡ Для администратора (3 клика)"></div>
+        Саундтреки сериала «Солдаты»
+        <div id="secretAdminBtn" class="secret-admin-btn" title="⚡ Кликните 3 раза для доступа к админ-панели"></div>
     </div>
 </div>
 
@@ -174,130 +148,98 @@
 <div id="authModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeAuthModal()">&times;</span>
-    
         <div class="modal-tabs">
             <button class="modal-tab active" onclick="showLoginForm()">Вход</button>
             <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
         </div>
-    
         <div id="loginForm" class="auth-form">
             <h3>Вход в аккаунт</h3>
             <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
             <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
-            <button onclick="login()" class="auth-btn">
-                <i class="fas fa-sign-in-alt"></i> Войти
-            </button>
+            <button onclick="login()" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Войти</button>
             <div class="auth-divider">или</div>
-            <button onclick="loginWithGoogle()" class="auth-btn google">
-                <i class="fab fa-google"></i> Войти через Google
-            </button>
+            <button onclick="loginWithGoogle()" class="auth-btn google"><i class="fab fa-google"></i> Войти через Google</button>
         </div>
-        
         <div id="registerForm" class="auth-form" style="display: none;">
             <h3>Регистрация</h3>
             <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
             <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
             <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
-            <button onclick="register()" class="auth-btn">
-                <i class="fas fa-user-plus"></i> Зарегистрироваться
-            </button>
+            <button onclick="register()" class="auth-btn"><i class="fas fa-user-plus"></i> Зарегистрироваться</button>
             <div class="auth-divider">или</div>
-            <button onclick="loginWithGoogle()" class="auth-btn google">
-                <i class="fab fa-google"></i> Регистрация через Google
-            </button>
+            <button onclick="loginWithGoogle()" class="auth-btn google"><i class="fab fa-google"></i> Регистрация через Google</button>
         </div>
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ПЕСНИ -->
+<!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ПЕСНИ (ТОЛЬКО URL) -->
 <div id="addSongModal" class="modal-add-song">
     <div class="modal-add-song-content">
         <h3><i class="fas fa-plus-circle"></i> Добавить песню</h3>
         
-        <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('audioFileInput').click()">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>Нажмите или перетащите файл</p>
-            <span class="file-hint">MP3, WAV, OGG</span>
+        <div class="telegram-hint">
+            <i class="fab fa-telegram"></i>
+            <strong>Как получить ссылку:</strong>
+            <ol>
+                <li>Напишите <strong>@FileLinkBot</strong> в Telegram</li>
+                <li>Отправьте ему аудиофайл</li>
+                <li>Скопируйте полученную ссылку</li>
+                <li>Вставьте ссылку в поле ниже</li>
+            </ol>
         </div>
-        <input type="file" id="audioFileInput" accept="audio/*" style="display: none;" onchange="handleAudioFileSelect(event)">
         
-        <div id="selectedFileName" class="selected-file-name"></div>
-        
-        <div class="upload-divider"><span>или укажите URL</span></div>
-        
-        <input type="text" id="newSongUrl" placeholder="URL аудиофайла">
+        <input type="text" id="newSongUrl" placeholder="Ссылка на аудиофайл *">
         <input type="text" id="newSongTitle" placeholder="Название песни *">
         <input type="text" id="newSongArtist" placeholder="Исполнитель *">
         <textarea id="newSongDescription" placeholder="Описание" rows="2"></textarea>
-        <input type="text" id="newSongDuration" placeholder="Длительность (определится автоматически)">
+        <input type="text" id="newSongDuration" placeholder="Длительность (3:45) *">
         
         <div style="margin-top: 20px;">
-            <button onclick="addNewSong()" class="admin-btn" id="addSongBtn"><i class="fas fa-save"></i> Сохранить</button>
+            <button onclick="addNewSong()" class="admin-btn"><i class="fas fa-save"></i> Сохранить</button>
             <button onclick="closeAddSongModal()" class="admin-btn" style="background: #3a2a2a;"><i class="fas fa-times"></i> Отмена</button>
         </div>
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ПЕСНИ -->
+<!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
 <div id="editSongModal" class="modal-add-song">
     <div class="modal-add-song-content">
         <h3><i class="fas fa-edit"></i> Редактировать песню</h3>
         <input type="hidden" id="editSongId">
-        
-        <div class="file-upload-area small" id="editFileUploadArea" onclick="document.getElementById('editAudioFileInput').click()">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>Заменить файл (опционально)</p>
-        </div>
-        <input type="file" id="editAudioFileInput" accept="audio/*" style="display: none;" onchange="handleEditAudioFileSelect(event)">
-        
-        <div id="editSelectedFileName" class="selected-file-name"></div>
-        
-        <div class="upload-divider"><span>или URL</span></div>
-        
         <input type="text" id="editSongUrl" placeholder="URL аудиофайла">
         <input type="text" id="editSongTitle" placeholder="Название песни *">
         <input type="text" id="editSongArtist" placeholder="Исполнитель *">
         <textarea id="editSongDescription" placeholder="Описание" rows="2"></textarea>
         <input type="text" id="editSongDuration" placeholder="Длительность">
-        
         <div style="margin-top: 20px;">
-            <button onclick="updateSong()" class="admin-btn" id="editSongBtn"><i class="fas fa-save"></i> Сохранить изменения</button>
+            <button onclick="updateSong()" class="admin-btn"><i class="fas fa-save"></i> Сохранить</button>
             <button onclick="closeEditSongModal()" class="admin-btn" style="background: #3a2a2a;"><i class="fas fa-times"></i> Отмена</button>
         </div>
     </div>
 </div>
 
 <script>
-// Секретная кнопка для админ-панели (3 клика)
+// Секретная кнопка (3 клика)
 (function() {
     document.addEventListener('DOMContentLoaded', function() {
         const secretBtn = document.getElementById('secretAdminBtn');
         if (secretBtn) {
-            let clickCount = 0;
-            let clickTimer = null;
-            
+            let clickCount = 0, clickTimer = null;
             secretBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 clickCount++;
-                
                 if (clickTimer) clearTimeout(clickTimer);
-                clickTimer = setTimeout(function() {
-                    clickCount = 0;
-                }, 1000);
-                
+                clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
                 if (clickCount >= 3) {
                     clickCount = 0;
-                    // Проверяем, авторизован ли админ
                     if (typeof currentUser !== 'undefined' && currentUser && currentUser.email === 'twinkjjjjkmnb@gmail.com') {
                         showAdminPanel();
                     } else {
-                        showToast("Доступ только для администратора. Войдите как twinkjjjjkmnb@gmail.com", "error");
+                        showToast("Доступ только для администратора", "error");
                         showAuthModal();
                     }
                 }
             });
-            
-            secretBtn.title = '⚡ Кликните 3 раза для доступа к админ-панели';
         }
     });
 })();
