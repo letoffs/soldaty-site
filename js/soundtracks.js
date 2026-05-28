@@ -1,4 +1,4 @@
-// soundtracks.js - исправленная версия
+// soundtracks.js - финальная версия с CDN
 
 let songsData = [];
 let currentSongIndex = 0;
@@ -16,9 +16,7 @@ let playPauseBtn, prevBtn, nextBtn, currentSongTitle, currentSongArtist;
 let progressBar, progressFill, currentTimeSpan, durationSpan, volumeSlider;
 let shuffleBtn, repeatBtn;
 
-// ============================================================
-// ЗАГРУЗКА
-// ============================================================
+// Загрузка песен
 async function loadSongsFromFirebase() {
     const grid = document.getElementById('musicGrid');
     if (grid) grid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>';
@@ -38,7 +36,7 @@ async function loadSongsFromFirebase() {
                 createdAt: songsObj[key].createdAt
             }));
             songsData.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-            console.log(`✅ ${songsData.length} песен`);
+            console.log(`Загружено ${songsData.length} песен`);
         } else {
             songsData = [];
         }
@@ -54,9 +52,7 @@ async function loadSongsFromFirebase() {
     }
 }
 
-// ============================================================
-// СОРТИРОВКА
-// ============================================================
+// Сортировка
 function sortSongs(songs, sortType) {
     const sorted = [...songs];
     switch(sortType) {
@@ -100,9 +96,7 @@ function setSortType(sortType) {
 
 function getSortedSongs() { return sortSongs(songsData, currentSort); }
 
-// ============================================================
-// ПЛЕЙЛИСТ
-// ============================================================
+// Плейлист
 function createShuffledPlaylist() {
     shuffledPlaylist = [...getSortedSongs()];
     for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
@@ -151,9 +145,7 @@ function getPrevIndex() {
     return songsData.findIndex(s => s.id === active[pos - 1]?.id);
 }
 
-// ============================================================
-// ПЛЕЕР
-// ============================================================
+// Плеер
 function initPlayer() {
     audioPlayer = document.getElementById('audioPlayer');
     playPauseBtn = document.getElementById('playPauseBtn');
@@ -175,7 +167,6 @@ function initPlayer() {
     if (shuffleBtn) shuffleBtn.onclick = toggleShuffle;
     if (repeatBtn) repeatBtn.onclick = toggleRepeat;
     
-    // ИСПРАВЛЕНО: убрана проверка авторизации
     if (progressBar) {
         progressBar.onclick = (e) => {
             if (audioPlayer && audioPlayer.duration) {
@@ -203,7 +194,7 @@ function initPlayer() {
         
         audioPlayer.ontimeupdate = () => { 
             if (audioPlayer.duration) {
-                progressFill.style.width = `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`;
+                progressFill.style.width = (audioPlayer.currentTime / audioPlayer.duration) * 100 + '%';
                 currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
                 durationSpan.textContent = formatTime(audioPlayer.duration);
             }
@@ -218,7 +209,6 @@ function loadSong(index) {
     currentSongTitle.textContent = song.title;
     currentSongArtist.textContent = song.artist;
     audioPlayer.src = song.audioUrl;
-    audioPlayer.load();
     renderMusicGrid();
 }
 
@@ -238,7 +228,7 @@ function formatTime(s) {
     if (isNaN(s)) return "0:00"; 
     let m = Math.floor(s / 60); 
     let sec = Math.floor(s % 60); 
-    return `${m}:${sec.toString().padStart(2, '0')}`; 
+    return m + ':' + (sec < 10 ? '0' + sec : sec); 
 }
 
 function playSongByIndex(i) { 
@@ -248,9 +238,7 @@ function playSongByIndex(i) {
     playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; 
 }
 
-// ============================================================
-// ОТРИСОВКА
-// ============================================================
+// Отрисовка
 function renderMusicGrid() {
     let grid = document.getElementById('musicGrid');
     if (!grid) return;
@@ -260,9 +248,11 @@ function renderMusicGrid() {
     }
     
     let songs = getActivePlaylist();
-    grid.innerHTML = songs.map(song => {
+    let html = '';
+    for (let i = 0; i < songs.length; i++) {
+        let song = songs[i];
         let realIndex = songsData.findIndex(s => s.id === song.id);
-        return `<div class="music-card ${currentSongIndex === realIndex ? 'active-music' : ''}" onclick="playSongByIndex(${realIndex})">
+        html += `<div class="music-card ${currentSongIndex === realIndex ? 'active-music' : ''}" onclick="playSongByIndex(${realIndex})">
             <div class="music-icon"><i class="fas fa-music"></i></div>
             <div class="music-info">
                 <div class="music-title">${escapeHtml(song.title)}</div>
@@ -272,12 +262,11 @@ function renderMusicGrid() {
             </div>
             <div class="music-play-btn"><i class="fas fa-play-circle"></i></div>
         </div>`;
-    }).join('');
+    }
+    grid.innerHTML = html;
 }
 
-// ============================================================
-// ДОБАВЛЕНИЕ (только URL)
-// ============================================================
+// Админ-функции
 async function addNewSong() {
     let title = document.getElementById('newSongTitle').value.trim();
     let artist = document.getElementById('newSongArtist').value.trim();
@@ -370,62 +359,48 @@ function renderAdminSongsList() {
         container.innerHTML = '<div class="empty-music">Нет песен</div>'; 
         return; 
     }
-    container.innerHTML = songsData.map(s => `<div class="admin-song-item">
-        <div><b>${escapeHtml(s.title)}</b><br><small>${escapeHtml(s.artist)}</small></div>
-        <div>
-            <button onclick="editSong('${s.id}')" class="edit-song-btn"><i class="fas fa-edit"></i></button>
-            <button onclick="deleteSong('${s.id}','${escapeHtml(s.title)}')" class="delete-song-btn"><i class="fas fa-trash-alt"></i></button>
-        </div>
-    </div>`).join('');
+    let html = '';
+    for (let i = 0; i < songsData.length; i++) {
+        let s = songsData[i];
+        html += `<div class="admin-song-item">
+            <div><b>${escapeHtml(s.title)}</b><br><small>${escapeHtml(s.artist)}</small></div>
+            <div>
+                <button onclick="editSong('${s.id}')" class="edit-song-btn"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteSong('${s.id}','${escapeHtml(s.title)}')" class="delete-song-btn"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
 }
 
 function showAdminPanel() { 
     document.getElementById('adminPanel').style.display = 'block'; 
     renderAdminSongsList(); 
 }
-
-function hideAdminPanel() { 
-    document.getElementById('adminPanel').style.display = 'none'; 
-}
-
-function showAddSongModal() { 
-    document.getElementById('addSongModal').style.display = 'flex'; 
-}
-
-function closeAddSongModal() { 
-    document.getElementById('addSongModal').style.display = 'none'; 
-}
-
-function closeEditSongModal() { 
-    document.getElementById('editSongModal').style.display = 'none'; 
-}
+function hideAdminPanel() { document.getElementById('adminPanel').style.display = 'none'; }
+function showAddSongModal() { document.getElementById('addSongModal').style.display = 'flex'; }
+function closeAddSongModal() { document.getElementById('addSongModal').style.display = 'none'; }
+function closeEditSongModal() { document.getElementById('editSongModal').style.display = 'none'; }
 
 function escapeHtml(s) { 
     if (!s) return ''; 
     return s.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
 }
 
-function showToast(msg, type='success') { 
+function showToast(msg, type) {
     let t = document.createElement('div'); 
     t.className = 'toast-message'; 
-    t.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'}"></i> ${msg}`; 
+    t.innerHTML = '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle') + '"></i> ' + msg; 
     document.body.appendChild(t); 
-    setTimeout(()=>t.remove(),3000); 
+    setTimeout(() => t.remove(), 3000); 
 }
 
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================================
+// Инициализация
 document.addEventListener('DOMContentLoaded', () => { 
     initPlayer(); 
     loadSongsFromFirebase(); 
-    
-    // Слушаем изменения авторизации
     if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            console.log("Auth state changed:", user ? user.email : "not logged");
-        });
+        auth.onAuthStateChanged((user) => { currentUser = user; });
     }
 });
 
@@ -441,3 +416,4 @@ window.showAddSongModal = showAddSongModal;
 window.closeAddSongModal = closeAddSongModal;
 window.closeEditSongModal = closeEditSongModal;
 window.setSortType = setSortType;
+window.loadSongsFromFirebase = loadSongsFromFirebase;
