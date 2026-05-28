@@ -562,28 +562,27 @@
     }
 }
 
-/* Подсказка для Telegram */
-.telegram-hint {
-    background: #1e3a5f;
+/* Стили для подсказки GitHub */
+.github-hint {
+    background: #1e2a2a;
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 15px;
     font-size: 12px;
     color: #fff;
 }
+.github-hint i { color: #fff; margin-right: 8px; }
+.github-hint ol { margin: 8px 0 0 20px; }
+.github-hint li { margin: 4px 0; color: #ccc; }
+.github-hint code { background: #2a3a3a; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 
-.telegram-hint i {
-    color: #26a5e4;
-    font-size: 18px;
-    margin-right: 8px;
+/* Секретная кнопка */
+.secret-admin-btn {
+    width: 100%;
+    height: 8px;
+    background: transparent;
+    cursor: pointer;
+    margin-top: 12px;
+    border-radius: 4px;
 }
-
-.telegram-hint ol {
-    margin: 8px 0 0 20px;
-    padding: 0;
-}
-
-.telegram-hint li {
-    margin: 4px 0;
-    color: #ccc;
-}
+.secret-admin-btn:hover { background: rgba(189, 138, 62, 0.15); }
