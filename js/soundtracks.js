@@ -1,4 +1,4 @@
-// soundtracks.js - полная версия с редактированием
+// soundtracks.js - полная версия
 
 // Глобальные переменные
 let songsData = [];
@@ -11,14 +11,14 @@ const ADMIN_EMAIL = "twinkjjjjkmnb@gmail.com";
 // Функции плеера
 let isShuffle = false;
 let isRepeat = false;
-let originalPlaylist = [];
 let shuffledPlaylist = [];
+
+// Сортировка
+let currentSort = "default";
 
 // Для загрузки файлов
 let pendingAudioFile = null;
 let pendingEditAudioFile = null;
-let isUploading = false;
-let editingSongId = null;
 
 // DOM элементы
 let playPauseBtn, prevBtn, nextBtn, currentSongTitle, currentSongArtist;
@@ -26,14 +26,80 @@ let progressBar, progressFill, currentTimeSpan, durationSpan, volumeSlider;
 let shuffleBtn, repeatBtn;
 
 // ============================================================
+// ФУНКЦИИ СОРТИРОВКИ
+// ============================================================
+
+function sortSongs(songs, sortType) {
+    const sorted = [...songs];
+    
+    switch(sortType) {
+        case "artist":
+            sorted.sort((a, b) => (a.artist || "").localeCompare(b.artist || "", "ru"));
+            break;
+        case "artist-desc":
+            sorted.sort((a, b) => (b.artist || "").localeCompare(a.artist || "", "ru"));
+            break;
+        case "title":
+            sorted.sort((a, b) => (a.title || "").localeCompare(b.title || "", "ru"));
+            break;
+        case "title-desc":
+            sorted.sort((a, b) => (b.title || "").localeCompare(a.title || "", "ru"));
+            break;
+        case "duration":
+            sorted.sort((a, b) => {
+                const durA = parseDuration(a.duration || "0:00");
+                const durB = parseDuration(b.duration || "0:00");
+                return durA - durB;
+            });
+            break;
+        default:
+            sorted.sort((a, b) => {
+                if (a.createdAt && b.createdAt) {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                }
+                return b.id.localeCompare(a.id);
+            });
+            break;
+    }
+    return sorted;
+}
+
+function parseDuration(duration) {
+    if (!duration) return 0;
+    const parts = duration.split(":");
+    if (parts.length === 2) {
+        return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+    return parseInt(parts[0]) || 0;
+}
+
+function setSortType(sortType) {
+    currentSort = sortType;
+    
+    // Обновляем выпадающий список
+    const select = document.getElementById('sortSelect');
+    if (select) select.value = sortType;
+    
+    // Если перемешивание включено, выключаем его
+    if (isShuffle) {
+        isShuffle = false;
+        shuffleBtn.classList.remove('shuffle-active');
+    }
+    
+    renderMusicGrid();
+}
+
+function getSortedSongs() {
+    return sortSongs(songsData, currentSort);
+}
+
+// ============================================================
 // ФУНКЦИИ ПЛЕЙЛИСТА
 // ============================================================
 
 function createShuffledPlaylist() {
-    if (originalPlaylist.length === 0) {
-        originalPlaylist = [...songsData];
-    }
-    shuffledPlaylist = [...songsData];
+    let songsToShuffle = getSortedSongs();
+    shuffledPlaylist = [...songsToShuffle];
     for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
@@ -42,12 +108,12 @@ function createShuffledPlaylist() {
 
 function getActivePlaylist() {
     if (isShuffle) {
-        if (shuffledPlaylist.length !== songsData.length) {
+        if (shuffledPlaylist.length === 0 || shuffledPlaylist.length !== songsData.length) {
             createShuffledPlaylist();
         }
         return shuffledPlaylist;
     }
-    return songsData;
+    return getSortedSongs();
 }
 
 function toggleShuffle() {
@@ -78,10 +144,15 @@ function getNextIndex() {
     if (isRepeat) return currentSongIndex;
     
     const activePlaylist = getActivePlaylist();
+    if (activePlaylist.length === 0) return currentSongIndex;
+    
     const currentSong = songsData[currentSongIndex];
     const currentPosition = activePlaylist.findIndex(song => song.id === currentSong.id);
     
-    if (currentPosition === -1) return 0;
+    if (currentPosition === -1) {
+        const firstSong = activePlaylist[0];
+        return songsData.findIndex(song => song.id === firstSong.id);
+    }
     
     if (currentPosition + 1 >= activePlaylist.length) {
         const firstSong = activePlaylist[0];
@@ -94,10 +165,15 @@ function getNextIndex() {
 
 function getPrevIndex() {
     const activePlaylist = getActivePlaylist();
+    if (activePlaylist.length === 0) return currentSongIndex;
+    
     const currentSong = songsData[currentSongIndex];
     const currentPosition = activePlaylist.findIndex(song => song.id === currentSong.id);
     
-    if (currentPosition === -1) return 0;
+    if (currentPosition === -1) {
+        const lastSong = activePlaylist[activePlaylist.length - 1];
+        return songsData.findIndex(song => song.id === lastSong.id);
+    }
     
     if (currentPosition - 1 < 0) {
         const lastSong = activePlaylist[activePlaylist.length - 1];
@@ -109,8 +185,36 @@ function getPrevIndex() {
 }
 
 // ============================================================
+// ОПРЕДЕЛЕНИЕ ДЛИТЕЛЬНОСТИ
+// ============================================================
+
+function getAudioDuration(file) {
+    return new Promise((resolve, reject) => {
+        const audio = new Audio();
+        const url = URL.createObjectURL(file);
+        audio.addEventListener('loadedmetadata', () => {
+            const duration = audio.duration;
+            URL.revokeObjectURL(url);
+            if (isNaN(duration)) {
+                reject(new Error("Не удалось определить длительность"));
+            } else {
+                const mins = Math.floor(duration / 60);
+                const secs = Math.floor(duration % 60);
+                resolve(`${mins}:${secs.toString().padStart(2, '0')}`);
+            }
+        });
+        audio.addEventListener('error', () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Ошибка загрузки аудиофайла"));
+        });
+        audio.src = url;
+    });
+}
+
+// ============================================================
 // ЗАГРУЗКА ПЕСЕН ИЗ FIREBASE
 // ============================================================
+
 async function loadSongsFromFirebase() {
     const grid = document.getElementById('musicGrid');
     if (grid) {
@@ -118,24 +222,18 @@ async function loadSongsFromFirebase() {
     }
     
     try {
-        const songsRef = db.ref('songs');
-        const snapshot = await songsRef.once('value');
+        const snapshot = await db.ref('songs').once('value');
         
         if (snapshot.exists()) {
             const songsObj = snapshot.val();
-            songsData = Object.keys(songsObj).map(key => ({
-                id: key,
-                ...songsObj[key]
-            }));
+            songsData = Object.keys(songsObj).map(key => ({ id: key, ...songsObj[key] }));
             console.log(`✅ Загружено ${songsData.length} песен`);
-            
-            originalPlaylist = [...songsData];
-            if (isShuffle) createShuffledPlaylist();
         } else {
             songsData = [];
         }
         
         updateSongCount();
+        if (isShuffle) createShuffledPlaylist();
         renderMusicGrid();
         
         if (songsData.length > 0 && (!audioPlayer || !audioPlayer.src)) {
@@ -159,7 +257,8 @@ function updateSongCount() {
 // ============================================================
 // ЗАГРУЗКА ФАЙЛОВ
 // ============================================================
-function handleAudioFileSelect(event) {
+
+async function handleAudioFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -171,18 +270,33 @@ function handleAudioFileSelect(event) {
     pendingAudioFile = file;
     
     const fileNameSpan = document.getElementById('selectedFileName');
+    const durationInput = document.getElementById('newSongDuration');
+    
     if (fileNameSpan) {
         const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-        fileNameSpan.innerHTML = `<i class="fas fa-check-circle"></i> ${file.name} (${sizeMB} МБ)`;
+        fileNameSpan.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> ${file.name} (${sizeMB} МБ) - определение длительности...`;
     }
     
-    const urlInput = document.getElementById('newSongUrl');
-    if (urlInput) urlInput.value = '';
+    try {
+        const duration = await getAudioDuration(file);
+        if (durationInput) durationInput.value = duration;
+        if (fileNameSpan) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            fileNameSpan.innerHTML = `<i class="fas fa-check-circle"></i> ${file.name} (${sizeMB} МБ) - ${duration}`;
+        }
+        showToast(`Длительность: ${duration}`);
+    } catch (error) {
+        if (fileNameSpan) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            fileNameSpan.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${file.name} (${sizeMB} МБ) - длительность не определена`;
+        }
+        showToast("Не удалось определить длительность, укажите вручную", "error");
+    }
     
-    showToast(`Файл выбран: ${file.name}`, "success");
+    document.getElementById('newSongUrl').value = '';
 }
 
-function handleEditAudioFileSelect(event) {
+async function handleEditAudioFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -194,29 +308,36 @@ function handleEditAudioFileSelect(event) {
     pendingEditAudioFile = file;
     
     const fileNameSpan = document.getElementById('editSelectedFileName');
+    const durationInput = document.getElementById('editSongDuration');
+    
     if (fileNameSpan) {
         const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-        fileNameSpan.innerHTML = `<i class="fas fa-check-circle"></i> Новый файл: ${file.name} (${sizeMB} МБ)`;
+        fileNameSpan.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> ${file.name} (${sizeMB} МБ) - определение длительности...`;
     }
     
-    const urlInput = document.getElementById('editSongUrl');
-    if (urlInput) urlInput.value = '';
+    try {
+        const duration = await getAudioDuration(file);
+        if (durationInput) durationInput.value = duration;
+        if (fileNameSpan) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            fileNameSpan.innerHTML = `<i class="fas fa-check-circle"></i> ${file.name} (${sizeMB} МБ) - ${duration}`;
+        }
+        showToast(`Длительность: ${duration}`);
+    } catch (error) {
+        if (fileNameSpan) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            fileNameSpan.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${file.name} (${sizeMB} МБ) - длительность не определена`;
+        }
+        showToast("Не удалось определить длительность", "error");
+    }
     
-    showToast(`Файл выбран: ${file.name}`, "success");
+    document.getElementById('editSongUrl').value = '';
 }
 
-async function uploadAndSaveSong(file) {
-    if (!file) return null;
-    
+function uploadAndSaveSong(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = async function(e) {
-            try {
-                resolve(e.target.result);
-            } catch (error) {
-                reject(error);
-            }
-        };
+        reader.onload = (e) => resolve(e.target.result);
         reader.onerror = () => reject(reader.error);
         reader.readAsDataURL(file);
     });
@@ -225,12 +346,13 @@ async function uploadAndSaveSong(file) {
 // ============================================================
 // ДОБАВЛЕНИЕ ПЕСНИ
 // ============================================================
+
 async function addNewSong() {
     const title = document.getElementById('newSongTitle').value.trim();
     const artist = document.getElementById('newSongArtist').value.trim();
     const description = document.getElementById('newSongDescription').value.trim();
     const urlInput = document.getElementById('newSongUrl').value.trim();
-    const duration = document.getElementById('newSongDuration').value.trim();
+    let duration = document.getElementById('newSongDuration').value.trim();
     
     if (!title || !artist) {
         showToast("Заполните название и исполнителя", "error");
@@ -245,8 +367,13 @@ async function addNewSong() {
         addBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Загрузка...';
         
         try {
+            if (!duration) {
+                try {
+                    duration = await getAudioDuration(pendingAudioFile);
+                    document.getElementById('newSongDuration').value = duration;
+                } catch(e) {}
+            }
             audioUrl = await uploadAndSaveSong(pendingAudioFile);
-            if (!audioUrl) throw new Error("Ошибка чтения файла");
         } catch (error) {
             showToast("Ошибка чтения файла", "error");
             addBtn.disabled = false;
@@ -265,11 +392,8 @@ async function addNewSong() {
     
     try {
         await db.ref('songs').push({
-            title: title,
-            artist: artist,
-            description: description || "",
-            audioUrl: audioUrl,
-            duration: duration || "3:00",
+            title, artist, description: description || "",
+            audioUrl, duration: duration || "3:00",
             createdAt: new Date().toISOString(),
             createdBy: currentUser?.email || ADMIN_EMAIL,
             fileName: pendingAudioFile?.name || null,
@@ -278,7 +402,6 @@ async function addNewSong() {
         
         showToast("Песня добавлена!");
         closeAddSongModal();
-        
         pendingAudioFile = null;
         document.getElementById('audioFileInput').value = '';
         document.getElementById('selectedFileName').innerHTML = '';
@@ -290,7 +413,6 @@ async function addNewSong() {
         
         await loadSongsFromFirebase();
     } catch (error) {
-        console.error("Ошибка:", error);
         showToast("Ошибка добавления", "error");
     }
 }
@@ -298,11 +420,10 @@ async function addNewSong() {
 // ============================================================
 // РЕДАКТИРОВАНИЕ ПЕСНИ
 // ============================================================
+
 function editSong(songId) {
     const song = songsData.find(s => s.id === songId);
     if (!song) return;
-    
-    editingSongId = songId;
     
     document.getElementById('editSongId').value = songId;
     document.getElementById('editSongTitle').value = song.title;
@@ -312,10 +433,8 @@ function editSong(songId) {
     document.getElementById('editSongDuration').value = song.duration || '3:00';
     document.getElementById('editSelectedFileName').innerHTML = '';
     
-    // Сбрасываем файл
     pendingEditAudioFile = null;
     document.getElementById('editAudioFileInput').value = '';
-    
     document.getElementById('editSongModal').style.display = 'flex';
 }
 
@@ -325,7 +444,7 @@ async function updateSong() {
     const artist = document.getElementById('editSongArtist').value.trim();
     const description = document.getElementById('editSongDescription').value.trim();
     const urlInput = document.getElementById('editSongUrl').value.trim();
-    const duration = document.getElementById('editSongDuration').value.trim();
+    let duration = document.getElementById('editSongDuration').value.trim();
     
     if (!title || !artist) {
         showToast("Заполните название и исполнителя", "error");
@@ -334,15 +453,19 @@ async function updateSong() {
     
     let audioUrl = urlInput;
     
-    // Если выбран новый файл
     if (pendingEditAudioFile) {
         const editBtn = document.getElementById('editSongBtn');
         editBtn.disabled = true;
         editBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Загрузка...';
         
         try {
+            if (!duration) {
+                try {
+                    duration = await getAudioDuration(pendingEditAudioFile);
+                    document.getElementById('editSongDuration').value = duration;
+                } catch(e) {}
+            }
             audioUrl = await uploadAndSaveSong(pendingEditAudioFile);
-            if (!audioUrl) throw new Error("Ошибка чтения файла");
         } catch (error) {
             showToast("Ошибка чтения файла", "error");
             editBtn.disabled = false;
@@ -361,11 +484,8 @@ async function updateSong() {
     
     try {
         await db.ref(`songs/${songId}`).update({
-            title: title,
-            artist: artist,
-            description: description || "",
-            audioUrl: audioUrl,
-            duration: duration || "3:00",
+            title, artist, description: description || "",
+            audioUrl, duration: duration || "3:00",
             updatedAt: new Date().toISOString(),
             updatedBy: currentUser?.email || ADMIN_EMAIL,
             fileName: pendingEditAudioFile?.name || null,
@@ -374,32 +494,26 @@ async function updateSong() {
         
         showToast("Песня обновлена!");
         closeEditSongModal();
-        
         pendingEditAudioFile = null;
         
-        // Если редактируем текущую песню, обновляем плеер
         const currentSong = songsData[currentSongIndex];
         if (currentSong && currentSong.id === songId) {
             if (currentSongTitle) currentSongTitle.textContent = title;
             if (currentSongArtist) currentSongArtist.textContent = artist;
             if (audioPlayer && audioPlayer.src === currentSong.audioUrl) {
                 audioPlayer.src = audioUrl;
-                if (isPlaying) {
-                    audioPlayer.play();
-                }
+                if (isPlaying) audioPlayer.play();
             }
         }
         
         await loadSongsFromFirebase();
     } catch (error) {
-        console.error("Ошибка:", error);
         showToast("Ошибка обновления", "error");
     }
 }
 
 function closeEditSongModal() {
     document.getElementById('editSongModal').style.display = 'none';
-    editingSongId = null;
     pendingEditAudioFile = null;
     document.getElementById('editAudioFileInput').value = '';
     document.getElementById('editSelectedFileName').innerHTML = '';
@@ -408,12 +522,13 @@ function closeEditSongModal() {
 // ============================================================
 // УДАЛЕНИЕ ПЕСНИ
 // ============================================================
+
 async function deleteSong(songId, songTitle) {
     if (!confirm(`Удалить "${songTitle}"?`)) return;
     
     try {
         await db.ref(`songs/${songId}`).remove();
-        showToast(`Песня удалена`);
+        showToast("Песня удалена");
         
         if (songsData[currentSongIndex]?.id === songId) {
             if (songsData.length > 1) {
@@ -437,6 +552,7 @@ async function deleteSong(songId, songTitle) {
 // ============================================================
 // АДМИН-ПАНЕЛЬ
 // ============================================================
+
 function showAdminPanel() {
     const panel = document.getElementById('adminPanel');
     if (panel) {
@@ -446,8 +562,7 @@ function showAdminPanel() {
 }
 
 function hideAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    if (panel) panel.style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'none';
 }
 
 function renderAdminSongsList() {
@@ -464,7 +579,7 @@ function renderAdminSongsList() {
             <div class="admin-song-info">
                 <div class="admin-song-title">${escapeHtml(song.title)}</div>
                 <div class="admin-song-artist">${escapeHtml(song.artist)}</div>
-                ${song.fileName ? `<div class="admin-song-file">${escapeHtml(song.fileName)}</div>` : ''}
+                ${song.duration ? `<div class="admin-song-duration">${song.duration}</div>` : ''}
             </div>
             <div class="admin-song-actions">
                 <button onclick="editSong('${song.id}')" class="edit-song-btn" title="Редактировать">
@@ -481,6 +596,7 @@ function renderAdminSongsList() {
 // ============================================================
 // ПЛЕЕР
 // ============================================================
+
 function initPlayer() {
     audioPlayer = document.getElementById('audioPlayer');
     playPauseBtn = document.getElementById('playPauseBtn');
@@ -586,6 +702,7 @@ function playSongByIndex(index) {
 // ============================================================
 // ОТРИСОВКА
 // ============================================================
+
 function renderMusicGrid() {
     const grid = document.getElementById('musicGrid');
     if (!grid) return;
@@ -595,9 +712,9 @@ function renderMusicGrid() {
         return;
     }
     
-    const displayList = isShuffle ? getActivePlaylist() : songsData;
+    const songsToDisplay = isShuffle ? getActivePlaylist() : getSortedSongs();
     
-    grid.innerHTML = displayList.map((song, idx) => {
+    const songsHtml = songsToDisplay.map(song => {
         const realIndex = songsData.findIndex(s => s.id === song.id);
         return `
         <div class="music-card ${currentSongIndex === realIndex ? 'active-music' : ''}" onclick="playSongByIndex(${realIndex})">
@@ -611,6 +728,8 @@ function renderMusicGrid() {
             <div class="music-play-btn"><i class="fas fa-play-circle"></i></div>
         </div>
     `}).join('');
+    
+    grid.innerHTML = songsHtml;
 }
 
 function escapeHtml(str) {
@@ -643,21 +762,9 @@ function closeAddSongModal() {
 }
 
 // ============================================================
-// АДМИН ПРОВЕРКА
-// ============================================================
-function checkAdminAndShowEasterEgg() {
-    const easterEggBtn = document.getElementById('easterEggBtn');
-    const adminPanel = document.getElementById('adminPanel');
-    
-    if (currentUser?.email === ADMIN_EMAIL) {
-        if (easterEggBtn) easterEggBtn.style.display = 'flex';
-    } else {
-        if (easterEggBtn) easterEggBtn.style.display = 'none';
-        if (adminPanel) adminPanel.style.display = 'none';
-    }
-}
-
 // Drag and drop
+// ============================================================
+
 function setupDragAndDrop() {
     const uploadArea = document.getElementById('fileUploadArea');
     if (!uploadArea) return;
@@ -674,7 +781,7 @@ function setupDragAndDrop() {
         uploadArea.style.background = '#1e2a1e';
     });
     
-    uploadArea.addEventListener('drop', (e) => {
+    uploadArea.addEventListener('drop', async (e) => {
         e.preventDefault();
         uploadArea.style.borderColor = '#bd8a3e';
         uploadArea.style.background = '#1e2a1e';
@@ -683,11 +790,30 @@ function setupDragAndDrop() {
         if (file && file.type.startsWith('audio/')) {
             pendingAudioFile = file;
             const fileNameSpan = document.getElementById('selectedFileName');
+            const durationInput = document.getElementById('newSongDuration');
+            
             if (fileNameSpan) {
                 const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-                fileNameSpan.innerHTML = `<i class="fas fa-check-circle"></i> ${file.name} (${sizeMB} МБ)`;
+                fileNameSpan.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> ${file.name} (${sizeMB} МБ) - определение длительности...`;
             }
-            showToast(`Файл выбран: ${file.name}`, "success");
+            
+            try {
+                const duration = await getAudioDuration(file);
+                if (durationInput) durationInput.value = duration;
+                if (fileNameSpan) {
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    fileNameSpan.innerHTML = `<i class="fas fa-check-circle"></i> ${file.name} (${sizeMB} МБ) - ${duration}`;
+                }
+                showToast(`Длительность: ${duration}`);
+            } catch (error) {
+                if (fileNameSpan) {
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    fileNameSpan.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${file.name} (${sizeMB} МБ) - длительность не определена`;
+                }
+                showToast("Не удалось определить длительность", "error");
+            }
+            
+            document.getElementById('newSongUrl').value = '';
         } else {
             showToast("Перетащите аудиофайл", "error");
         }
@@ -697,7 +823,10 @@ function setupDragAndDrop() {
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================================
+
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("🎵 Страница саундтреков загружена");
+    
     initPlayer();
     loadSongsFromFirebase();
     setupDragAndDrop();
@@ -705,12 +834,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof auth !== 'undefined') {
         auth.onAuthStateChanged((user) => {
             currentUser = user;
-            checkAdminAndShowEasterEgg();
         });
     }
 });
 
-// Экспорт
+// Экспорт функций
 window.playSongByIndex = playSongByIndex;
 window.showAddSongModal = showAddSongModal;
 window.closeAddSongModal = closeAddSongModal;
@@ -723,3 +851,4 @@ window.showAdminPanel = showAdminPanel;
 window.hideAdminPanel = hideAdminPanel;
 window.handleAudioFileSelect = handleAudioFileSelect;
 window.handleEditAudioFileSelect = handleEditAudioFileSelect;
+window.setSortType = setSortType;
