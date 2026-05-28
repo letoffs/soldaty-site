@@ -1,5 +1,4 @@
-/* soundtracks.css - только дополнительные стили для страницы саундтреков */
-/* Стили кнопок входа/регистрации НЕ ТРОГАЮТСЯ - они из style.css */
+/* soundtracks.css - стили для страницы саундтреков */
 
 /* Глобальный плеер */
 .global-player {
@@ -29,34 +28,6 @@
     align-items: center;
 }
 
-.player-btn.repeat-active {
-    background: #bd8a3e;
-    color: #0f1a0f;
-    border-color: #ffd966;
-}
-
-.player-btn.shuffle-active {
-    background: #bd8a3e;
-    color: #0f1a0f;
-    border-color: #ffd966;
-}
-
-@keyframes repeatPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-.player-btn.repeat-active i {
-    animation: repeatPulse 1s ease infinite;
-}
-
-/* Индикатор текущего режима */
-.player-mode-indicator {
-    font-size: 10px;
-    margin-left: 8px;
-    color: #bd8a3e;
-}
-
 .player-btn {
     background: #2a3a2a;
     border: 1px solid #bd8a3e;
@@ -73,6 +44,12 @@
     background: #bd8a3e;
     color: #0f1a0f;
     transform: scale(1.05);
+}
+
+.player-btn.repeat-active,
+.player-btn.shuffle-active {
+    background: #bd8a3e;
+    color: #0f1a0f;
 }
 
 .player-info {
@@ -137,13 +114,62 @@
     background: #2a3a2a;
 }
 
+/* Выпадающий список сортировки */
+.sort-section {
+    background: #0f1a0f;
+    border-radius: 16px;
+    padding: 12px 20px;
+    margin: 20px auto;
+    max-width: 800px;
+    border: 1px solid #3e5a3e;
+}
+
+.sort-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sort-icon {
+    color: #bd8a3e;
+    font-size: 16px;
+}
+
+.sort-label {
+    color: #ffd966;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.sort-select {
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    color: #ddd;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.sort-select:hover {
+    border-color: #bd8a3e;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: #bd8a3e;
+}
+
 /* Сетка песен */
 .music-grid {
     display: flex;
     flex-direction: column;
     gap: 12px;
     max-width: 800px;
-    margin: 30px auto;
+    margin: 0 auto 30px;
     padding: 0 20px;
 }
 
@@ -224,31 +250,18 @@
     display: none;
 }
 
-/* Пасхальная кнопка для админов */
-.easter-egg-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: rgba(189, 138, 62, 0.3);
-    border: 1px solid #bd8a3e;
-    color: #bd8a3e;
+/* Секретная кнопка в футере */
+.secret-admin-btn {
+    width: 100%;
+    height: 5px;
+    background: transparent;
     cursor: pointer;
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    transition: all 0.3s;
-    backdrop-filter: blur(5px);
+    margin-top: 10px;
+    transition: all 0.2s;
 }
 
-.easter-egg-btn:hover {
-    background: #bd8a3e;
-    color: #0f1a0f;
-    transform: scale(1.1);
+.secret-admin-btn:hover {
+    background: rgba(189, 138, 62, 0.1);
 }
 
 /* Админ-панель */
@@ -289,10 +302,6 @@
     font-size: 20px;
     cursor: pointer;
     padding: 5px;
-}
-
-.close-admin-btn:hover {
-    color: #ff6b6b;
 }
 
 .admin-buttons {
@@ -349,22 +358,34 @@
     color: #8aa07a;
 }
 
+.admin-song-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-song-btn {
+    background: none;
+    border: none;
+    color: #4caf50;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px 8px;
+}
+
 .delete-song-btn {
     background: none;
     border: none;
     color: #bd8a3e;
     cursor: pointer;
     font-size: 16px;
-    padding: 5px 10px;
-    transition: all 0.2s;
+    padding: 5px 8px;
 }
 
 .delete-song-btn:hover {
     color: #ff6b6b;
-    transform: scale(1.1);
 }
 
-/* Модальное окно добавления песни */
+/* Модальное окно */
 .modal-add-song {
     position: fixed;
     top: 0;
@@ -385,6 +406,8 @@
     max-width: 500px;
     width: 90%;
     border: 2px solid #bd8a3e;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-add-song-content h3 {
@@ -404,10 +427,71 @@
     font-size: 14px;
 }
 
-.modal-add-song-content input:focus,
-.modal-add-song-content textarea:focus {
-    outline: none;
-    border-color: #bd8a3e;
+.file-upload-area {
+    border: 2px dashed #bd8a3e;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #1e2a1e;
+    margin-bottom: 15px;
+}
+
+.file-upload-area:hover {
+    background: #2a3a2a;
+    border-color: #ffd966;
+}
+
+.file-upload-area i {
+    font-size: 32px;
+    color: #bd8a3e;
+    margin-bottom: 8px;
+}
+
+.file-upload-area p {
+    color: #ffd966;
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+.file-hint {
+    font-size: 10px;
+    color: #8aa07a;
+}
+
+.upload-divider {
+    text-align: center;
+    margin: 15px 0;
+    position: relative;
+}
+
+.upload-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #3e5a3e;
+}
+
+.upload-divider span {
+    background: #0f1a0f;
+    padding: 0 15px;
+    position: relative;
+    color: #8aa07a;
+    font-size: 11px;
+}
+
+.selected-file-name {
+    font-size: 11px;
+    color: #4caf50;
+    text-align: center;
+    margin-top: 8px;
+    padding: 5px;
+    background: #1e2a1e;
+    border-radius: 8px;
 }
 
 /* Состояния загрузки */
@@ -423,6 +507,22 @@
     color: #8aa07a;
     background: #0f1a0f;
     border-radius: 24px;
+}
+
+/* Toast уведомление */
+.toast-message {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f1a0f;
+    color: #ffd966;
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: 1px solid #bd8a3e;
+    z-index: 3000;
+    white-space: nowrap;
+    font-size: 14px;
 }
 
 /* Адаптация */
@@ -446,190 +546,18 @@
         text-align: center;
     }
     
-    .admin-controls {
-        width: 95%;
-        max-height: 90vh;
-        overflow-y: auto;
+    .sort-container {
+        justify-content: center;
     }
-}
-
-/* Toast уведомление */
-.toast-message {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #0f1a0f;
-    color: #ffd966;
-    padding: 12px 24px;
-    border-radius: 50px;
-    border: 1px solid #bd8a3e;
-    z-index: 3000;
-    white-space: nowrap;
-    font-size: 14px;
-}
-
-@media (max-width: 500px) {
+    
+    .sort-select {
+        flex: 1;
+        text-align: center;
+    }
+    
     .toast-message {
         white-space: normal;
         text-align: center;
         max-width: 90%;
     }
-}
-
-/* Область загрузки файла */
-.file-upload-area {
-    border: 2px dashed #bd8a3e;
-    border-radius: 16px;
-    padding: 30px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    background: #1e2a1e;
-    margin-bottom: 15px;
-}
-
-.file-upload-area:hover {
-    background: #2a3a2a;
-    border-color: #ffd966;
-}
-
-.file-upload-area i {
-    font-size: 40px;
-    color: #bd8a3e;
-    margin-bottom: 10px;
-}
-
-.file-upload-area p {
-    color: #ffd966;
-    margin: 5px 0;
-}
-
-.file-hint {
-    font-size: 11px;
-    color: #8aa07a;
-}
-
-/* Прогресс загрузки */
-.upload-progress-bar {
-    width: 100%;
-    height: 8px;
-    background: #3e5a3e;
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 10px 0;
-}
-
-.upload-progress-fill {
-    width: 0%;
-    height: 100%;
-    background: #bd8a3e;
-    transition: width 0.3s;
-}
-
-.upload-progress-text {
-    font-size: 12px;
-    color: #ffd966;
-    text-align: center;
-}
-
-/* Разделитель */
-.upload-divider {
-    text-align: center;
-    margin: 20px 0;
-    position: relative;
-}
-
-.upload-divider::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: #3e5a3e;
-}
-
-.upload-divider span {
-    background: #0f1a0f;
-    padding: 0 15px;
-    position: relative;
-    color: #8aa07a;
-    font-size: 12px;
-}
-
-/* Имя выбранного файла */
-.selected-file-name {
-    font-size: 11px;
-    color: #4caf50;
-    text-align: center;
-    margin-top: 10px;
-    padding: 5px;
-    background: #1e2a1e;
-    border-radius: 8px;
-}
-
-/* Отключённая кнопка */
-.admin-btn.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Анимация загрузки */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.uploading {
-    animation: pulse 1s infinite;
-}
-
-/* Кнопки действий в админ-панели */
-.admin-song-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.edit-song-btn {
-    background: none;
-    border: none;
-    color: #4caf50;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 5px 8px;
-    transition: all 0.2s;
-}
-
-.edit-song-btn:hover {
-    color: #ffd966;
-    transform: scale(1.1);
-}
-
-.delete-song-btn {
-    background: none;
-    border: none;
-    color: #bd8a3e;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 5px 8px;
-    transition: all 0.2s;
-}
-
-.delete-song-btn:hover {
-    color: #ff6b6b;
-    transform: scale(1.1);
-}
-
-/* Маленькая область загрузки файла */
-.file-upload-area.small {
-    padding: 15px;
-}
-
-.file-upload-area.small i {
-    font-size: 24px;
-}
-
-.file-upload-area.small p {
-    font-size: 12px;
 }
