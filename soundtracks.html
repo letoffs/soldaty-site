@@ -25,7 +25,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
     <!-- Конфигурация Firebase -->
     <script src="firebase-config.js"></script>
@@ -72,12 +71,7 @@
         <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
-    <!-- ПАСХАЛЬНАЯ КНОПКА ДЛЯ АДМИНОВ (скрытая) -->
-    <div id="easterEggBtn" class="easter-egg-btn" style="display: none;" onclick="showAdminPanel()">
-        <i class="fas fa-crown"></i>
-    </div>
-
-    <!-- АДМИН-ПАНЕЛЬ (скрыта по умолчанию) -->
+    <!-- АДМИН-ПАНЕЛЬ (скрыта, открывается через секретную кнопку в футере) -->
     <div id="adminPanel" class="admin-controls" style="display: none;">
         <div class="admin-header">
             <h3><i class="fas fa-shield-alt"></i> Админ-панель</h3>
@@ -87,11 +81,7 @@
             <button onclick="showAddSongModal()" class="admin-btn"><i class="fas fa-plus"></i> Добавить песню</button>
             <button onclick="loadSongsFromFirebase()" class="admin-btn"><i class="fas fa-sync"></i> Обновить список</button>
         </div>
-        
-        <!-- Список песен для управления -->
-        <div class="admin-songs-list" id="adminSongsList">
-            <!-- Список песен с кнопками удаления -->
-        </div>
+        <div class="admin-songs-list" id="adminSongsList"></div>
     </div>
 
     <div class="page-description">
@@ -152,12 +142,32 @@
 
     <audio id="audioPlayer" preload="metadata" playsinline webkit-playsinline></audio>
 
+    <!-- ВЫПАДАЮЩИЙ СПИСОК СОРТИРОВКИ -->
+    <div class="sort-section">
+        <div class="sort-container">
+            <i class="fas fa-sort-amount-down sort-icon"></i>
+            <span class="sort-label">Сортировать:</span>
+            <select id="sortSelect" class="sort-select" onchange="setSortType(this.value)">
+                <option value="default">По умолчанию</option>
+                <option value="artist">По исполнителю (А-Я)</option>
+                <option value="artist-desc">По исполнителю (Я-А)</option>
+                <option value="title">По названию (А-Я)</option>
+                <option value="title-desc">По названию (Я-А)</option>
+                <option value="duration">По длительности</option>
+            </select>
+        </div>
+    </div>
+
     <!-- СПИСОК ПЕСЕН -->
     <div class="music-grid" id="musicGrid">
         <div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i> Загрузка музыки...</div>
     </div>
 
-    <div class="footer">Саундтреки сериала «Солдаты» · Наслаждайтесь любимой музыкой</div>
+    <div class="footer">
+        Саундтреки сериала «Солдаты» · Наслаждайтесь любимой музыкой
+        <!-- СЕКРЕТНАЯ КНОПКА ДЛЯ АДМИНОВ (3 клика) -->
+        <div id="secretAdminBtn" class="secret-admin-btn" title="⚡ Для администратора (3 клика)"></div>
+    </div>
 </div>
 
 <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
@@ -199,38 +209,27 @@
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ПЕСНИ С ЗАГРУЗКОЙ ФАЙЛА -->
+<!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ПЕСНИ -->
 <div id="addSongModal" class="modal-add-song">
     <div class="modal-add-song-content">
         <h3><i class="fas fa-plus-circle"></i> Добавить песню</h3>
         
-        <!-- Загрузка аудиофайла -->
         <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('audioFileInput').click()">
             <i class="fas fa-cloud-upload-alt"></i>
             <p>Нажмите или перетащите файл</p>
-            <span class="file-hint">MP3, WAV, OGG до 20 МБ</span>
+            <span class="file-hint">MP3, WAV, OGG</span>
         </div>
         <input type="file" id="audioFileInput" accept="audio/*" style="display: none;" onchange="handleAudioFileSelect(event)">
         
-        <!-- Прогресс загрузки -->
-        <div id="uploadProgressContainer" style="display: none;">
-            <div class="upload-progress-bar">
-                <div class="upload-progress-fill" id="uploadProgressFill"></div>
-            </div>
-            <div class="upload-progress-text" id="uploadProgressText">Загрузка 0%</div>
-        </div>
+        <div id="selectedFileName" class="selected-file-name"></div>
         
-        <div class="upload-divider">
-            <span>или укажите URL</span>
-        </div>
+        <div class="upload-divider"><span>или укажите URL</span></div>
         
         <input type="text" id="newSongUrl" placeholder="URL аудиофайла">
         <input type="text" id="newSongTitle" placeholder="Название песни *">
         <input type="text" id="newSongArtist" placeholder="Исполнитель *">
         <textarea id="newSongDescription" placeholder="Описание" rows="2"></textarea>
-        <input type="text" id="newSongDuration" placeholder="Длительность (авто, если не указано)">
-        
-        <div id="selectedFileName" class="selected-file-name"></div>
+        <input type="text" id="newSongDuration" placeholder="Длительность (определится автоматически)">
         
         <div style="margin-top: 20px;">
             <button onclick="addNewSong()" class="admin-btn" id="addSongBtn"><i class="fas fa-save"></i> Сохранить</button>
@@ -244,13 +243,7 @@
     <div class="modal-add-song-content">
         <h3><i class="fas fa-edit"></i> Редактировать песню</h3>
         <input type="hidden" id="editSongId">
-        <input type="text" id="editSongTitle" placeholder="Название песни *">
-        <input type="text" id="editSongArtist" placeholder="Исполнитель *">
-        <textarea id="editSongDescription" placeholder="Описание" rows="2"></textarea>
         
-        <div class="upload-divider"><span>Аудиофайл</span></div>
-        
-        <!-- Область загрузки нового файла -->
         <div class="file-upload-area small" id="editFileUploadArea" onclick="document.getElementById('editAudioFileInput').click()">
             <i class="fas fa-cloud-upload-alt"></i>
             <p>Заменить файл (опционально)</p>
@@ -262,7 +255,10 @@
         <div class="upload-divider"><span>или URL</span></div>
         
         <input type="text" id="editSongUrl" placeholder="URL аудиофайла">
-        <input type="text" id="editSongDuration" placeholder="Длительность (3:45)">
+        <input type="text" id="editSongTitle" placeholder="Название песни *">
+        <input type="text" id="editSongArtist" placeholder="Исполнитель *">
+        <textarea id="editSongDescription" placeholder="Описание" rows="2"></textarea>
+        <input type="text" id="editSongDuration" placeholder="Длительность">
         
         <div style="margin-top: 20px;">
             <button onclick="updateSong()" class="admin-btn" id="editSongBtn"><i class="fas fa-save"></i> Сохранить изменения</button>
@@ -270,6 +266,42 @@
         </div>
     </div>
 </div>
+
+<script>
+// Секретная кнопка для админ-панели (3 клика)
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        const secretBtn = document.getElementById('secretAdminBtn');
+        if (secretBtn) {
+            let clickCount = 0;
+            let clickTimer = null;
+            
+            secretBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                clickCount++;
+                
+                if (clickTimer) clearTimeout(clickTimer);
+                clickTimer = setTimeout(function() {
+                    clickCount = 0;
+                }, 1000);
+                
+                if (clickCount >= 3) {
+                    clickCount = 0;
+                    // Проверяем, авторизован ли админ
+                    if (typeof currentUser !== 'undefined' && currentUser && currentUser.email === 'twinkjjjjkmnb@gmail.com') {
+                        showAdminPanel();
+                    } else {
+                        showToast("Доступ только для администратора. Войдите как twinkjjjjkmnb@gmail.com", "error");
+                        showAuthModal();
+                    }
+                }
+            });
+            
+            secretBtn.title = '⚡ Кликните 3 раза для доступа к админ-панели';
+        }
+    });
+})();
+</script>
 
 </body>
 </html>
