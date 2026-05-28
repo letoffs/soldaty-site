@@ -56,13 +56,15 @@
     <div id="adminPanel" class="admin-controls" style="display: none;">
         <div class="admin-header">
             <h3><i class="fas fa-shield-alt"></i> Админ-панель</h3>
-            <button onclick="if(window.hideAdminPanel) window.hideAdminPanel()" class="close-admin-btn"><i class="fas fa-times"></i></button>
+            <button onclick="window.hideAdminPanel()" class="close-admin-btn"><i class="fas fa-times"></i></button>
         </div>
         <div class="admin-buttons">
-            <button onclick="if(window.showAddSongModal) window.showAddSongModal()" class="admin-btn"><i class="fas fa-plus"></i> Добавить песню</button>
-            <button onclick="if(window.loadSongsFromFirebase) window.loadSongsFromFirebase()" class="admin-btn"><i class="fas fa-sync"></i> Обновить</button>
+            <button onclick="window.showAddSongModal()" class="admin-btn"><i class="fas fa-plus"></i> Добавить песню</button>
+            <button onclick="window.loadSongs()" class="admin-btn"><i class="fas fa-sync"></i> Обновить</button>
         </div>
-        <div class="admin-songs-list" id="adminSongsList"></div>
+        <div class="admin-songs-list" id="adminSongsList">
+            <div class="loading-spinner">Загрузка...</div>
+        </div>
     </div>
 
     <div class="page-description">
