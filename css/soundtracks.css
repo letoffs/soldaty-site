@@ -561,3 +561,29 @@
         max-width: 90%;
     }
 }
+
+/* Подсказка для Telegram */
+.telegram-hint {
+    background: #1e3a5f;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: #fff;
+}
+
+.telegram-hint i {
+    color: #26a5e4;
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.telegram-hint ol {
+    margin: 8px 0 0 20px;
+    padding: 0;
+}
+
+.telegram-hint li {
+    margin: 4px 0;
+    color: #ccc;
+}
