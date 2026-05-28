@@ -1,0 +1,635 @@
+/* soundtracks.css - только дополнительные стили для страницы саундтреков */
+/* Стили кнопок входа/регистрации НЕ ТРОГАЮТСЯ - они из style.css */
+
+/* Глобальный плеер */
+.global-player {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #1a2a1a 0%, #0f1a0f 100%);
+    border-top: 2px solid #bd8a3e;
+    padding: 12px 20px;
+    z-index: 1000;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+}
+
+.player-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.player-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.player-btn.repeat-active {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    border-color: #ffd966;
+}
+
+.player-btn.shuffle-active {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    border-color: #ffd966;
+}
+
+@keyframes repeatPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.player-btn.repeat-active i {
+    animation: repeatPulse 1s ease infinite;
+}
+
+/* Индикатор текущего режима */
+.player-mode-indicator {
+    font-size: 10px;
+    margin-left: 8px;
+    color: #bd8a3e;
+}
+
+.player-btn {
+    background: #2a3a2a;
+    border: 1px solid #bd8a3e;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #ffd966;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.player-btn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: scale(1.05);
+}
+
+.player-info {
+    flex: 1;
+    min-width: 150px;
+}
+
+.player-song {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffd966;
+}
+
+.player-artist {
+    font-size: 12px;
+    color: #8aa07a;
+}
+
+.player-progress {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 180px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: #3e5a3e;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #bd8a3e;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.current-time, .duration {
+    font-size: 11px;
+    color: #8aa07a;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-control i {
+    color: #bd8a3e;
+}
+
+#volumeSlider {
+    width: 70px;
+    cursor: pointer;
+    background: #2a3a2a;
+}
+
+/* Сетка песен */
+.music-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.music-card {
+    background: #0f1a0f;
+    border: 1px solid #3e5a3e;
+    border-radius: 16px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.music-card:hover {
+    background: #1a2a1a;
+    border-color: #bd8a3e;
+    transform: translateX(5px);
+}
+
+.music-card.active-music {
+    background: linear-gradient(135deg, #1a3a1a, #0f1a0f);
+    border: 2px solid #ffd966;
+    box-shadow: 0 0 15px rgba(189,138,62,0.3);
+}
+
+.music-icon {
+    width: 50px;
+    height: 50px;
+    background: #1e2a1e;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #bd8a3e;
+}
+
+.music-info {
+    flex: 1;
+}
+
+.music-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffd966;
+}
+
+.music-artist {
+    font-size: 13px;
+    color: #8aa07a;
+    margin: 4px 0;
+}
+
+.music-desc {
+    font-size: 12px;
+    color: #a0b088;
+}
+
+.music-meta {
+    font-size: 11px;
+    color: #bd8a3e;
+    margin-top: 6px;
+}
+
+.music-play-btn {
+    font-size: 32px;
+    color: #bd8a3e;
+    transition: transform 0.2s;
+}
+
+.music-card:hover .music-play-btn {
+    transform: scale(1.1);
+}
+
+#audioPlayer {
+    display: none;
+}
+
+/* Пасхальная кнопка для админов */
+.easter-egg-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: rgba(189, 138, 62, 0.3);
+    border: 1px solid #bd8a3e;
+    color: #bd8a3e;
+    cursor: pointer;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.3s;
+    backdrop-filter: blur(5px);
+}
+
+.easter-egg-btn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: scale(1.1);
+}
+
+/* Админ-панель */
+.admin-controls {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #0f1a0f;
+    border: 2px solid #bd8a3e;
+    border-radius: 24px;
+    padding: 20px;
+    max-width: 500px;
+    width: 90%;
+    z-index: 2000;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    display: none;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #3e5a3e;
+}
+
+.admin-header h3 {
+    color: #ffd966;
+    margin: 0;
+}
+
+.close-admin-btn {
+    background: none;
+    border: none;
+    color: #bd8a3e;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.close-admin-btn:hover {
+    color: #ff6b6b;
+}
+
+.admin-buttons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.admin-btn {
+    background: #2a3a2a;
+    border: 1px solid #bd8a3e;
+    color: #ffd966;
+    padding: 8px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.admin-btn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+}
+
+.admin-songs-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 15px;
+}
+
+.admin-song-item {
+    background: #1a2a1a;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-song-info {
+    flex: 1;
+}
+
+.admin-song-title {
+    font-weight: bold;
+    color: #ffd966;
+    font-size: 14px;
+}
+
+.admin-song-artist {
+    font-size: 11px;
+    color: #8aa07a;
+}
+
+.delete-song-btn {
+    background: none;
+    border: none;
+    color: #bd8a3e;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px 10px;
+    transition: all 0.2s;
+}
+
+.delete-song-btn:hover {
+    color: #ff6b6b;
+    transform: scale(1.1);
+}
+
+/* Модальное окно добавления песни */
+.modal-add-song {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-add-song-content {
+    background: #0f1a0f;
+    padding: 30px;
+    border-radius: 24px;
+    max-width: 500px;
+    width: 90%;
+    border: 2px solid #bd8a3e;
+}
+
+.modal-add-song-content h3 {
+    color: #ffd966;
+    margin-bottom: 20px;
+}
+
+.modal-add-song-content input,
+.modal-add-song-content textarea {
+    width: 100%;
+    padding: 10px 15px;
+    margin: 10px 0;
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    color: #ddd;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.modal-add-song-content input:focus,
+.modal-add-song-content textarea:focus {
+    outline: none;
+    border-color: #bd8a3e;
+}
+
+/* Состояния загрузки */
+.loading-spinner {
+    text-align: center;
+    padding: 50px;
+    color: #ffd966;
+}
+
+.empty-music {
+    text-align: center;
+    padding: 50px;
+    color: #8aa07a;
+    background: #0f1a0f;
+    border-radius: 24px;
+}
+
+/* Адаптация */
+@media (max-width: 768px) {
+    .player-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .player-progress {
+        width: 100%;
+    }
+    
+    .music-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .music-play-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .admin-controls {
+        width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* Toast уведомление */
+.toast-message {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f1a0f;
+    color: #ffd966;
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: 1px solid #bd8a3e;
+    z-index: 3000;
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+@media (max-width: 500px) {
+    .toast-message {
+        white-space: normal;
+        text-align: center;
+        max-width: 90%;
+    }
+}
+
+/* Область загрузки файла */
+.file-upload-area {
+    border: 2px dashed #bd8a3e;
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #1e2a1e;
+    margin-bottom: 15px;
+}
+
+.file-upload-area:hover {
+    background: #2a3a2a;
+    border-color: #ffd966;
+}
+
+.file-upload-area i {
+    font-size: 40px;
+    color: #bd8a3e;
+    margin-bottom: 10px;
+}
+
+.file-upload-area p {
+    color: #ffd966;
+    margin: 5px 0;
+}
+
+.file-hint {
+    font-size: 11px;
+    color: #8aa07a;
+}
+
+/* Прогресс загрузки */
+.upload-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #3e5a3e;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.upload-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: #bd8a3e;
+    transition: width 0.3s;
+}
+
+.upload-progress-text {
+    font-size: 12px;
+    color: #ffd966;
+    text-align: center;
+}
+
+/* Разделитель */
+.upload-divider {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.upload-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #3e5a3e;
+}
+
+.upload-divider span {
+    background: #0f1a0f;
+    padding: 0 15px;
+    position: relative;
+    color: #8aa07a;
+    font-size: 12px;
+}
+
+/* Имя выбранного файла */
+.selected-file-name {
+    font-size: 11px;
+    color: #4caf50;
+    text-align: center;
+    margin-top: 10px;
+    padding: 5px;
+    background: #1e2a1e;
+    border-radius: 8px;
+}
+
+/* Отключённая кнопка */
+.admin-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Анимация загрузки */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.uploading {
+    animation: pulse 1s infinite;
+}
+
+/* Кнопки действий в админ-панели */
+.admin-song-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-song-btn {
+    background: none;
+    border: none;
+    color: #4caf50;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px 8px;
+    transition: all 0.2s;
+}
+
+.edit-song-btn:hover {
+    color: #ffd966;
+    transform: scale(1.1);
+}
+
+.delete-song-btn {
+    background: none;
+    border: none;
+    color: #bd8a3e;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px 8px;
+    transition: all 0.2s;
+}
+
+.delete-song-btn:hover {
+    color: #ff6b6b;
+    transform: scale(1.1);
+}
+
+/* Маленькая область загрузки файла */
+.file-upload-area.small {
+    padding: 15px;
+}
+
+.file-upload-area.small i {
+    font-size: 24px;
+}
+
+.file-upload-area.small p {
+    font-size: 12px;
+}
