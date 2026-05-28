@@ -1,4 +1,5 @@
-/* soundtracks.css - стили для страницы саундтреков */
+/* soundtracks.css - только для страницы саундтреков */
+/* Основные стили (header, nav, footer, body, container) берутся из style.css */
 
 /* Глобальный плеер */
 .global-player {
@@ -11,6 +12,8 @@
     padding: 12px 20px;
     z-index: 1000;
     box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    border-radius: 16px 16px 0 0;
+    margin-top: 30px;
 }
 
 .player-bar {
@@ -114,7 +117,7 @@
     background: #2a3a2a;
 }
 
-/* Выпадающий список сортировки */
+/* Секция сортировки */
 .sort-section {
     background: #0f1a0f;
     border-radius: 16px;
@@ -155,11 +158,6 @@
 }
 
 .sort-select:hover {
-    border-color: #bd8a3e;
-}
-
-.sort-select:focus {
-    outline: none;
     border-color: #bd8a3e;
 }
 
@@ -250,18 +248,55 @@
     display: none;
 }
 
-/* Секретная кнопка в футере */
+/* Страница описания */
+.page-description {
+    background: #0f1a0f;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.description-title {
+    color: #ffd966;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.description-content p {
+    color: #8aa07a;
+    font-size: 14px;
+}
+
+.description-features {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.feature {
+    color: #bd8a3e;
+    font-size: 14px;
+}
+
+.feature i {
+    margin-right: 8px;
+}
+
+/* Секретная кнопка */
 .secret-admin-btn {
     width: 100%;
-    height: 5px;
+    height: 8px;
     background: transparent;
     cursor: pointer;
-    margin-top: 10px;
-    transition: all 0.2s;
+    margin-top: 12px;
+    border-radius: 4px;
 }
 
 .secret-admin-btn:hover {
-    background: rgba(189, 138, 62, 0.1);
+    background: rgba(189, 138, 62, 0.15);
 }
 
 /* Админ-панель */
@@ -343,26 +378,6 @@
     align-items: center;
 }
 
-.admin-song-info {
-    flex: 1;
-}
-
-.admin-song-title {
-    font-weight: bold;
-    color: #ffd966;
-    font-size: 14px;
-}
-
-.admin-song-artist {
-    font-size: 11px;
-    color: #8aa07a;
-}
-
-.admin-song-actions {
-    display: flex;
-    gap: 8px;
-}
-
 .edit-song-btn {
     background: none;
     border: none;
@@ -385,7 +400,106 @@
     color: #ff6b6b;
 }
 
-/* Модальное окно */
+/* Модальные окна */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #0f1a0f;
+    border: 2px solid #bd8a3e;
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #bd8a3e;
+}
+
+.modal-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-tab {
+    flex: 1;
+    padding: 10px;
+    background: #1e2e1e;
+    border: none;
+    color: #8aa07a;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.modal-tab.active {
+    background: #bd8a3e;
+    color: #0a120a;
+}
+
+.auth-form h3 {
+    color: #ffd966;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background: #1e2e1e;
+    border: 1px solid #3e5a3e;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: #bd8a3e;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 12px;
+    background: #bd8a3e;
+    border: none;
+    border-radius: 12px;
+    color: #0a120a;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 10px 0;
+}
+
+.auth-btn.google {
+    background: #db4437;
+    color: white;
+}
+
+.auth-divider {
+    text-align: center;
+    margin: 15px 0;
+    color: #8aa07a;
+}
+
+/* Модальное окно добавления песни */
 .modal-add-song {
     position: fixed;
     top: 0;
@@ -413,6 +527,7 @@
 .modal-add-song-content h3 {
     color: #ffd966;
     margin-bottom: 20px;
+    text-align: center;
 }
 
 .modal-add-song-content input,
@@ -427,6 +542,7 @@
     font-size: 14px;
 }
 
+/* Загрузка файла */
 .file-upload-area {
     border: 2px dashed #bd8a3e;
     border-radius: 16px;
@@ -447,12 +563,6 @@
     font-size: 32px;
     color: #bd8a3e;
     margin-bottom: 8px;
-}
-
-.file-upload-area p {
-    color: #ffd966;
-    margin: 5px 0;
-    font-size: 13px;
 }
 
 .file-hint {
@@ -494,7 +604,25 @@
     border-radius: 8px;
 }
 
-/* Состояния загрузки */
+.upload-progress {
+    margin: 15px 0;
+}
+
+.progress-bar-small {
+    height: 4px;
+    background: #3e5a3e;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill-small {
+    height: 100%;
+    background: #4caf50;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+/* Состояния */
 .loading-spinner {
     text-align: center;
     padding: 50px;
@@ -505,8 +633,6 @@
     text-align: center;
     padding: 50px;
     color: #8aa07a;
-    background: #0f1a0f;
-    border-radius: 24px;
 }
 
 /* Toast уведомление */
@@ -521,8 +647,13 @@
     border-radius: 50px;
     border: 1px solid #bd8a3e;
     z-index: 3000;
-    white-space: nowrap;
     font-size: 14px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* Адаптация */
@@ -541,48 +672,13 @@
         text-align: center;
     }
     
-    .music-play-btn {
-        width: 100%;
-        text-align: center;
-    }
-    
-    .sort-container {
-        justify-content: center;
-    }
-    
-    .sort-select {
-        flex: 1;
-        text-align: center;
-    }
-    
     .toast-message {
         white-space: normal;
         text-align: center;
         max-width: 90%;
     }
+    
+    .description-features {
+        gap: 15px;
+    }
 }
-
-/* Стили для подсказки GitHub */
-.github-hint {
-    background: #1e2a2a;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 15px;
-    font-size: 12px;
-    color: #fff;
-}
-.github-hint i { color: #fff; margin-right: 8px; }
-.github-hint ol { margin: 8px 0 0 20px; }
-.github-hint li { margin: 4px 0; color: #ccc; }
-.github-hint code { background: #2a3a3a; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
-
-/* Секретная кнопка */
-.secret-admin-btn {
-    width: 100%;
-    height: 8px;
-    background: transparent;
-    cursor: pointer;
-    margin-top: 12px;
-    border-radius: 4px;
-}
-.secret-admin-btn:hover { background: rgba(189, 138, 62, 0.15); }
