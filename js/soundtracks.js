@@ -1,4 +1,4 @@
-// soundtracks.js - ОПТИМИЗИРОВАННАЯ ВЕРСИЯ (без типа трека в списке)
+// soundtracks.js - ОПТИМИЗИРОВАННАЯ ВЕРСИЯ (метаданные и аудио раздельно)
 console.log("✅ soundtracks.js загружен");
 
 let songsData = [];
@@ -53,25 +53,24 @@ function getMp3Duration(file) {
     });
 }
 
-// ============ ЗАГРУЗКА ПЕСЕН (ОПТИМИЗИРОВАННАЯ) ============
+// ============ ЗАГРУЗКА ПЕСЕН (ТОЛЬКО МЕТАДАННЫЕ) ============
 async function loadSongs() {
-    console.log("🔄 Загрузка песен...");
+    console.log("🔄 Загрузка метаданных...");
     const grid = document.getElementById('musicGrid');
     if (grid) grid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>';
     
     const startTime = performance.now();
     
     try {
-        // Загружаем ТОЛЬКО метаданные, без аудиоданных
+        // Загружаем ТОЛЬКО метаданные (быстро)
         const snapshot = await db.ref('songs').once('value');
         
         const loadTime = performance.now() - startTime;
-        console.log(`⏱️ Данные загружены за ${loadTime.toFixed(0)} мс`);
+        console.log(`⏱️ Метаданные загружены за ${loadTime.toFixed(0)} мс`);
         
         if (snapshot.exists()) {
             const obj = snapshot.val();
             
-            // Сразу показываем список, не дожидаясь полной обработки
             songsData = Object.keys(obj).map(key => ({
                 id: key,
                 title: obj[key].title || "Без названия",
@@ -79,16 +78,15 @@ async function loadSongs() {
                 description: obj[key].description || "",
                 lyrics: obj[key].lyrics || "",
                 audioUrl: obj[key].audioUrl,
-                audioBase64: null, // НЕ загружаем Base64 в память при загрузке списка!
                 isBase64: obj[key].isBase64 || false,
                 duration: obj[key].duration || "3:00",
-                createdAt: obj[key].createdAt || new Date().toISOString()
+                createdAt: obj[key].createdAt || 0
             }));
             
-            console.log(`✅ Загружено ${songsData.length} песен`);
+            // Сортируем по дате создания (новые сверху)
+            songsData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             
-            // Сортируем по дате добавления (новые сверху)
-            songsData.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+            console.log(`✅ Загружено ${songsData.length} песен`);
             
         } else {
             songsData = [];
@@ -97,10 +95,7 @@ async function loadSongs() {
         
         document.getElementById('songCount').textContent = songsData.length;
         
-        // Быстрая отрисовка списка
         renderSongs();
-        
-        // Обновляем плейлист для shuffle
         updateShuffledPlaylist();
         
     } catch (error) {
@@ -134,7 +129,7 @@ function getCurrentIndexInPlaylist() {
     return playlist.findIndex(song => song.id === currentSong.id);
 }
 
-// ============ ОТРИСОВКА (БЕЗ ТИПА ТРЕКА) ============
+// ============ ОТРИСОВКА ============
 function renderSongs() {
     const grid = document.getElementById('musicGrid');
     if (!grid) return;
@@ -349,34 +344,37 @@ async function playSong(index) {
         lyricsBtn.style.display = song.lyrics && song.lyrics.trim().length > 0 ? 'inline-flex' : 'none';
     }
     
-    showToast("Загрузка аудио...");
+    showToast("🎵 Загрузка аудио...");
     
-    // Загружаем аудио только при воспроизведении
-    if (song.isBase64 && !song.audioBase64) {
-        // Если Base64 не загружен, загружаем из базы
-        const snapshot = await db.ref(`songs/${song.id}/audioBase64`).once('value');
-        const base64Data = snapshot.val();
-        if (base64Data) {
-            song.audioBase64 = base64Data;
-            audio.src = base64Data;
+    try {
+        // Загружаем аудио (ленивая загрузка)
+        if (song.isBase64) {
+            // Получаем Base64 из отдельного узла
+            const audioSnapshot = await db.ref(`songAudio/${song.id}/audioBase64`).once('value');
+            const base64Data = audioSnapshot.val();
+            if (base64Data) {
+                audio.src = base64Data;
+            } else {
+                showToast("Ошибка: данные аудио не найдены");
+                return;
+            }
+        } else if (song.audioUrl) {
+            audio.src = song.audioUrl;
         } else {
-            showToast("Ошибка: данные аудио не найдены");
+            showToast("Ошибка: нет аудиоданных");
             return;
         }
-    } else if (song.isBase64 && song.audioBase64) {
-        audio.src = song.audioBase64;
-    } else if (song.audioUrl) {
-        audio.src = song.audioUrl;
-    } else {
-        showToast("Ошибка: нет аудиоданных");
-        return;
+        
+        audio.play();
+        isPlaying = true;
+        const playBtn = document.getElementById('playPauseBtn');
+        if (playBtn) playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        renderSongs();
+        
+    } catch (error) {
+        console.error("Ошибка загрузки аудио:", error);
+        showToast("Ошибка загрузки аудио");
     }
-    
-    audio.play();
-    isPlaying = true;
-    const playBtn = document.getElementById('playPauseBtn');
-    if (playBtn) playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    renderSongs();
 }
 
 window.playSong = playSong;
@@ -473,7 +471,6 @@ window.closeEditSongModal = () => {
 
 // ============ ВЫБОР ФАЙЛА ============
 window.handleFileSelect = async function(event) {
-    console.log("🔵 handleFileSelect вызвана");
     const file = event.target.files[0];
     if (!file) return;
     
@@ -503,10 +500,9 @@ window.handleFileSelect = async function(event) {
     
     document.getElementById('newSongUrl').value = '';
     showToast(`Файл выбран: ${file.name}`);
-    pendingFileUpload = file;
 };
 
-// ============ ДОБАВЛЕНИЕ ПЕСНИ ============
+// ============ ДОБАВЛЕНИЕ ПЕСНИ (РАЗДЕЛЬНОЕ ХРАНЕНИЕ) ============
 window.addNewSong = async function() {
     const title = document.getElementById('newSongTitle')?.value.trim();
     const artist = document.getElementById('newSongArtist')?.value.trim();
@@ -547,29 +543,38 @@ window.addNewSong = async function() {
     }
     
     try {
-        const songData = {
-            title, artist, description: description || "",
+        showToast("Сохранение...");
+        
+        // 1. Сохраняем метаданные (быстрая загрузка списка)
+        const newSongRef = db.ref('songs').push();
+        const songId = newSongRef.key;
+        
+        await newSongRef.set({
+            title: title,
+            artist: artist,
+            description: description || "",
             lyrics: lyrics || "",
             duration: duration || "3:00",
-            createdAt: new Date().toISOString(),
+            isBase64: isBase64,
+            audioUrl: isBase64 ? null : audioUrl,
+            createdAt: Date.now(),
             createdBy: currentUser?.email || "unknown"
-        };
+        });
         
+        // 2. Сохраняем аудиоданные отдельно (если Base64)
         if (isBase64 && finalAudioData) {
-            songData.audioBase64 = finalAudioData;
-            songData.isBase64 = true;
-        } else if (audioUrl) {
-            songData.audioUrl = audioUrl;
-            songData.isBase64 = false;
+            await db.ref(`songAudio/${songId}`).set({
+                audioBase64: finalAudioData
+            });
         }
         
-        await db.ref('songs').push(songData);
         showToast("✅ Песня добавлена!");
         window.closeAddSongModal();
         pendingFileUpload = null;
         await loadSongs();
         
     } catch (error) {
+        console.error("Ошибка:", error);
         showToast("Ошибка: " + error.message);
     }
 };
@@ -605,19 +610,20 @@ window.updateSong = async function() {
     }
     
     try {
-        const updateData = {
+        await db.ref(`songs/${id}`).update({
             title, artist, description, lyrics,
             duration: duration || "3:00",
-            updatedAt: new Date().toISOString()
-        };
+            audioUrl: audioUrl || null,
+            updatedAt: Date.now()
+        });
         
-        if (audioUrl) {
-            updateData.audioUrl = audioUrl;
-            updateData.isBase64 = false;
-            updateData.audioBase64 = null;
+        // Если был Base64 и меняем на URL — удаляем аудиоданные
+        const song = songsData.find(s => s.id === id);
+        if (song && song.isBase64 && audioUrl) {
+            await db.ref(`songAudio/${id}`).remove();
+            await db.ref(`songs/${id}/isBase64`).set(false);
         }
         
-        await db.ref(`songs/${id}`).update(updateData);
         showToast("Песня обновлена!");
         window.closeEditSongModal();
         await loadSongs();
@@ -635,7 +641,11 @@ window.deleteSong = async function(id, title) {
     if (!confirm(`Удалить "${title}"?`)) return;
     
     try {
+        // Удаляем метаданные
         await db.ref(`songs/${id}`).remove();
+        // Удаляем аудиоданные (если есть)
+        await db.ref(`songAudio/${id}`).remove();
+        
         showToast(`Песня удалена`);
         
         if (songsData[currentIndex]?.id === id) {
@@ -725,9 +735,10 @@ function renderAdminSongsList() {
     let html = '';
     for (let i = 0; i < songsData.length; i++) {
         const s = songsData[i];
+        const typeIcon = s.isBase64 ? '📦' : '🔗';
         html += `<div class="admin-song-item">
             <div>
-                <b>${escapeHtml(s.title)}</b><br>
+                <b>${escapeHtml(s.title)}</b> ${typeIcon}<br>
                 <small>${escapeHtml(s.artist)}</small><br>
                 <small style="color:#8aa07a">${s.duration}</small>
             </div>
