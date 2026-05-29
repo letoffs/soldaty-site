@@ -53,6 +53,77 @@ function getMp3Duration(file) {
     });
 }
 
+// ============ ОПРЕДЕЛЕНИЕ ДЛИТЕЛЬНОСТИ ПО URL ИЛИ ФАЙЛУ ============
+async function getDurationFromUrlOrFile(source) {
+    return new Promise((resolve, reject) => {
+        const audio = new Audio();
+        
+        // Для файла (Blob)
+        if (source instanceof File) {
+            const url = URL.createObjectURL(source);
+            audio.src = url;
+            audio.onloadedmetadata = () => {
+                URL.revokeObjectURL(url);
+                const duration = audio.duration;
+                if (isNaN(duration)) reject(new Error("Не удалось определить"));
+                else {
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = Math.floor(duration % 60);
+                    resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+                }
+            };
+            audio.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error("Ошибка загрузки"));
+            };
+            return;
+        }
+        
+        // Для URL (строка)
+        if (typeof source === 'string' && source.startsWith('http')) {
+            audio.crossOrigin = "Anonymous";
+            audio.src = source;
+            audio.onloadedmetadata = () => {
+                const duration = audio.duration;
+                if (isNaN(duration)) reject(new Error("Не удалось определить"));
+                else {
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = Math.floor(duration % 60);
+                    resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+                }
+            };
+            audio.onerror = () => {
+                reject(new Error("Ошибка загрузки URL"));
+            };
+            return;
+        }
+        
+        reject(new Error("Некорректный источник"));
+    });
+}
+
+// ============ ОПРЕДЕЛЕНИЕ ДЛИТЕЛЬНОСТИ ПО URL ============
+window.fetchDurationFromUrl = async function() {
+    const urlInput = document.getElementById('newSongUrl');
+    const url = urlInput?.value.trim();
+    
+    if (!url) {
+        showToast("Введите URL аудиофайла");
+        return;
+    }
+    
+    showToast("Определение длительности...");
+    
+    try {
+        const duration = await getDurationFromUrlOrFile(url);
+        document.getElementById('newSongDuration').value = duration;
+        showToast(`Длительность: ${duration}`);
+    } catch (error) {
+        console.error("Ошибка:", error);
+        showToast("Не удалось определить длительность, укажите вручную");
+    }
+};
+
 // ============ ЗАГРУЗКА ПЕСЕН (ТОЛЬКО МЕТАДАННЫЕ) ============
 async function loadSongs() {
     console.log("🔄 Загрузка метаданных...");
@@ -506,26 +577,21 @@ window.handleFileSelect = async function(event) {
     }
     
     pendingFileUpload = file;
-    const fileNameDisplay = document.getElementById('selectedFileName');
     
+    // Определяем длительность
     showToast("Определение длительности...");
-    
     try {
-        const duration = await getMp3Duration(file);
-        const durationInput = document.getElementById('newSongDuration');
-        if (durationInput) durationInput.value = duration;
+        const duration = await getDurationFromUrlOrFile(file);
+        document.getElementById('newSongDuration').value = duration;
         showToast(`Длительность: ${duration}`);
     } catch (error) {
         showToast("Укажите длительность вручную");
     }
     
-    if (fileNameDisplay) {
-        fileNameDisplay.textContent = `📁 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} МБ)`;
-        fileNameDisplay.style.display = 'block';
-    }
-    
+    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+    document.getElementById('selectedFileName').textContent = `📁 ${file.name} (${sizeMB} МБ)`;
+    document.getElementById('selectedFileName').style.display = 'block';
     document.getElementById('newSongUrl').value = '';
-    showToast(`Файл выбран: ${file.name}`);
 };
 
 // ============ ДОБАВЛЕНИЕ ПЕСНИ (РАЗДЕЛЬНОЕ ХРАНЕНИЕ) ============
