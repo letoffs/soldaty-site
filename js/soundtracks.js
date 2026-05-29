@@ -1,4 +1,4 @@
-// soundtracks.js - ПОЛНАЯ ВЕРСИЯ С BASE64 (без ограничений, без автовоспроизведения)
+// soundtracks.js - ОПТИМИЗИРОВАННАЯ ВЕРСИЯ (без типа трека в списке)
 console.log("✅ soundtracks.js загружен");
 
 let songsData = [];
@@ -9,7 +9,11 @@ let currentUser = null;
 const ADMIN_EMAIL = "twinkjjjjkmnb@gmail.com";
 let currentSort = "default";
 let pendingFileUpload = null;
-let autoPlayEnabled = false; // ← ОТКЛЮЧАЕМ АВТОВОСПРОИЗВЕДЕНИЕ
+
+// ============ ПЕРЕМЕННЫЕ ДЛЯ SHUFFLE И REPEAT ============
+let isShuffle = false;
+let isRepeat = false;
+let shuffledPlaylist = [];
 
 // ============ КОНВЕРТАЦИЯ ФАЙЛА В BASE64 ============
 function fileToBase64(file) {
@@ -21,42 +25,83 @@ function fileToBase64(file) {
     });
 }
 
-// ============ ЗАГРУЗКА ПЕСЕН ============
+// ============ ОПРЕДЕЛЕНИЕ ДЛИТЕЛЬНОСТИ MP3 ============
+function getMp3Duration(file) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const testAudio = new Audio();
+        
+        testAudio.addEventListener('loadedmetadata', () => {
+            const duration = testAudio.duration;
+            URL.revokeObjectURL(url);
+            
+            if (isNaN(duration)) {
+                reject(new Error("Не удалось определить длительность"));
+            } else {
+                const minutes = Math.floor(duration / 60);
+                const seconds = Math.floor(duration % 60);
+                resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+            }
+        });
+        
+        testAudio.addEventListener('error', () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Ошибка загрузки аудио"));
+        });
+        
+        testAudio.src = url;
+    });
+}
+
+// ============ ЗАГРУЗКА ПЕСЕН (ОПТИМИЗИРОВАННАЯ) ============
 async function loadSongs() {
     console.log("🔄 Загрузка песен...");
     const grid = document.getElementById('musicGrid');
     if (grid) grid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>';
     
+    const startTime = performance.now();
+    
     try {
+        // Загружаем ТОЛЬКО метаданные, без аудиоданных
         const snapshot = await db.ref('songs').once('value');
+        
+        const loadTime = performance.now() - startTime;
+        console.log(`⏱️ Данные загружены за ${loadTime.toFixed(0)} мс`);
         
         if (snapshot.exists()) {
             const obj = snapshot.val();
+            
+            // Сразу показываем список, не дожидаясь полной обработки
             songsData = Object.keys(obj).map(key => ({
                 id: key,
                 title: obj[key].title || "Без названия",
                 artist: obj[key].artist || "Неизвестен",
                 description: obj[key].description || "",
+                lyrics: obj[key].lyrics || "",
                 audioUrl: obj[key].audioUrl,
-                audioBase64: obj[key].audioBase64,
+                audioBase64: null, // НЕ загружаем Base64 в память при загрузке списка!
                 isBase64: obj[key].isBase64 || false,
                 duration: obj[key].duration || "3:00",
                 createdAt: obj[key].createdAt || new Date().toISOString()
             }));
+            
             console.log(`✅ Загружено ${songsData.length} песен`);
-            console.log("Base64 песен:", songsData.filter(s => s.isBase64).length);
+            
+            // Сортируем по дате добавления (новые сверху)
+            songsData.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+            
         } else {
             songsData = [];
             console.log("📭 Нет песен");
         }
         
         document.getElementById('songCount').textContent = songsData.length;
+        
+        // Быстрая отрисовка списка
         renderSongs();
         
-        // ← УБИРАЕМ АВТОВОСПРОИЗВЕДЕНИЕ
-        // if (songsData.length > 0 && audio && !audio.src) {
-        //     playSong(0);
-        // }
+        // Обновляем плейлист для shuffle
+        updateShuffledPlaylist();
         
     } catch (error) {
         console.error("❌ Ошибка:", error);
@@ -68,7 +113,28 @@ async function loadSongs() {
     }
 }
 
-// ============ ОТРИСОВКА ============
+function updateShuffledPlaylist() {
+    shuffledPlaylist = [...songsData];
+    for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
+    }
+}
+
+function getCurrentPlaylist() {
+    if (isShuffle && shuffledPlaylist.length > 0) {
+        return shuffledPlaylist;
+    }
+    return songsData;
+}
+
+function getCurrentIndexInPlaylist() {
+    const playlist = getCurrentPlaylist();
+    const currentSong = songsData[currentIndex];
+    return playlist.findIndex(song => song.id === currentSong.id);
+}
+
+// ============ ОТРИСОВКА (БЕЗ ТИПА ТРЕКА) ============
 function renderSongs() {
     const grid = document.getElementById('musicGrid');
     if (!grid) return;
@@ -87,26 +153,36 @@ function renderSongs() {
     let list = [...songsData];
     if (currentSort === 'artist') list.sort((a,b) => a.artist.localeCompare(b.artist, 'ru'));
     if (currentSort === 'title') list.sort((a,b) => a.title.localeCompare(b.title, 'ru'));
+    if (currentSort === 'duration') list.sort((a,b) => parseDuration(a.duration) - parseDuration(b.duration));
     
     let html = '';
     for (let i = 0; i < list.length; i++) {
         const song = list[i];
         const originalIndex = songsData.findIndex(s => s.id === song.id);
         const isActive = currentIndex === originalIndex;
-        const sourceType = song.isBase64 ? '' : '';
+        const hasLyrics = song.lyrics && song.lyrics.trim().length > 0;
         
         html += `<div class="music-card ${isActive ? 'active-music' : ''}" onclick="window.playSong(${originalIndex})">
             <div class="music-icon"><i class="fas ${isActive ? 'fa-play-circle' : 'fa-music'}"></i></div>
             <div class="music-info">
-                <div class="music-title">${escapeHtml(song.title)} ${sourceType}</div>
+                <div class="music-title">${escapeHtml(song.title)}</div>
                 <div class="music-artist">${escapeHtml(song.artist)}</div>
                 <div class="music-desc">${escapeHtml(song.description) || ''}</div>
-                <div class="music-meta"><i class="far fa-clock"></i> ${song.duration}</div>
+                <div class="music-meta">
+                    <span><i class="far fa-clock"></i> ${song.duration}</span>
+                    ${hasLyrics ? '<span class="has-lyrics"><i class="fas fa-scroll"></i> Текст</span>' : ''}
+                </div>
             </div>
             <div class="music-play-btn"><i class="fas fa-play-circle"></i></div>
         </div>`;
     }
     grid.innerHTML = html;
+}
+
+function parseDuration(d) {
+    if (!d) return 0;
+    const parts = d.split(":");
+    return parts.length === 2 ? parseInt(parts[0])*60 + parseInt(parts[1]) : parseInt(d) || 0;
 }
 
 // ============ ПЛЕЕР ============
@@ -120,6 +196,9 @@ function initPlayer() {
     const playBtn = document.getElementById('playPauseBtn');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const repeatBtn = document.getElementById('repeatBtn');
+    const lyricsBtn = document.getElementById('lyricsBtn');
     const volumeSlider = document.getElementById('volumeSlider');
     const progressBar = document.getElementById('progressBar');
     const progressFill = document.getElementById('progressFill');
@@ -142,17 +221,47 @@ function initPlayer() {
     
     if (prevBtn) {
         prevBtn.onclick = () => {
-            let newIndex = currentIndex - 1;
-            if (newIndex < 0) newIndex = songsData.length - 1;
-            if (songsData[newIndex]) playSong(newIndex);
+            playPreviousSong();
         };
     }
     
     if (nextBtn) {
         nextBtn.onclick = () => {
-            let newIndex = currentIndex + 1;
-            if (newIndex >= songsData.length) newIndex = 0;
-            if (songsData[newIndex]) playSong(newIndex);
+            playNextSong();
+        };
+    }
+    
+    if (shuffleBtn) {
+        shuffleBtn.onclick = () => {
+            isShuffle = !isShuffle;
+            if (isShuffle) {
+                updateShuffledPlaylist();
+                shuffleBtn.classList.add('shuffle-active');
+                showToast("🔀 Случайный порядок");
+            } else {
+                shuffleBtn.classList.remove('shuffle-active');
+                showToast("🔀 Обычный порядок");
+            }
+            renderSongs();
+        };
+    }
+    
+    if (repeatBtn) {
+        repeatBtn.onclick = () => {
+            isRepeat = !isRepeat;
+            if (isRepeat) {
+                repeatBtn.classList.add('repeat-active');
+                showToast("🔁 Повтор");
+            } else {
+                repeatBtn.classList.remove('repeat-active');
+                showToast("🔁 Повтор выключен");
+            }
+        };
+    }
+    
+    if (lyricsBtn) {
+        lyricsBtn.onclick = () => {
+            showLyricsModal();
         };
     }
     
@@ -180,36 +289,85 @@ function initPlayer() {
     };
     
     audio.onended = () => {
-        let newIndex = currentIndex + 1;
-        if (newIndex >= songsData.length) newIndex = 0;
-        if (songsData[newIndex] && autoPlayEnabled) {
-            playSong(newIndex);
+        if (isRepeat) {
+            audio.currentTime = 0;
+            audio.play();
         } else {
-            // Останавливаем воспроизведение и меняем кнопку
-            isPlaying = false;
-            const playBtn = document.getElementById('playPauseBtn');
-            if (playBtn) playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            playNextSong();
         }
     };
 }
 
-function playSong(index) {
+function playNextSong() {
+    const playlist = getCurrentPlaylist();
+    const currentPos = getCurrentIndexInPlaylist();
+    let nextPos = currentPos + 1;
+    
+    if (nextPos >= playlist.length) {
+        nextPos = 0;
+    }
+    
+    if (playlist[nextPos]) {
+        const nextSongId = playlist[nextPos].id;
+        const originalIndex = songsData.findIndex(s => s.id === nextSongId);
+        if (originalIndex !== -1) {
+            playSong(originalIndex);
+        }
+    }
+}
+
+function playPreviousSong() {
+    const playlist = getCurrentPlaylist();
+    const currentPos = getCurrentIndexInPlaylist();
+    let prevPos = currentPos - 1;
+    
+    if (prevPos < 0) {
+        prevPos = playlist.length - 1;
+    }
+    
+    if (playlist[prevPos]) {
+        const prevSongId = playlist[prevPos].id;
+        const originalIndex = songsData.findIndex(s => s.id === prevSongId);
+        if (originalIndex !== -1) {
+            playSong(originalIndex);
+        }
+    }
+}
+
+async function playSong(index) {
     if (!songsData[index]) return;
     currentIndex = index;
     const song = songsData[currentIndex];
     const titleEl = document.getElementById('currentSongTitle');
     const artistEl = document.getElementById('currentSongArtist');
+    const lyricsBtn = document.getElementById('lyricsBtn');
+    
     if (titleEl) titleEl.textContent = song.title;
     if (artistEl) artistEl.textContent = song.artist;
     
-    if (song.isBase64 && song.audioBase64) {
+    if (lyricsBtn) {
+        lyricsBtn.style.display = song.lyrics && song.lyrics.trim().length > 0 ? 'inline-flex' : 'none';
+    }
+    
+    showToast("Загрузка аудио...");
+    
+    // Загружаем аудио только при воспроизведении
+    if (song.isBase64 && !song.audioBase64) {
+        // Если Base64 не загружен, загружаем из базы
+        const snapshot = await db.ref(`songs/${song.id}/audioBase64`).once('value');
+        const base64Data = snapshot.val();
+        if (base64Data) {
+            song.audioBase64 = base64Data;
+            audio.src = base64Data;
+        } else {
+            showToast("Ошибка: данные аудио не найдены");
+            return;
+        }
+    } else if (song.isBase64 && song.audioBase64) {
         audio.src = song.audioBase64;
-        console.log("Воспроизведение из Base64");
     } else if (song.audioUrl) {
         audio.src = song.audioUrl;
-        console.log("Воспроизведение из URL");
     } else {
-        console.error("Нет аудиоданных!");
         showToast("Ошибка: нет аудиоданных");
         return;
     }
@@ -229,6 +387,45 @@ function formatTime(s) {
     const sec = Math.floor(s % 60);
     return m + ':' + (sec < 10 ? '0' + sec : sec);
 }
+
+// ============ ТЕКСТ ПЕСНИ ============
+function showLyricsModal() {
+    const currentSong = songsData[currentIndex];
+    if (!currentSong || !currentSong.lyrics) {
+        showToast("📜 Текст песни отсутствует");
+        return;
+    }
+    
+    let lyricsModal = document.getElementById('lyricsModal');
+    if (!lyricsModal) {
+        lyricsModal = document.createElement('div');
+        lyricsModal.id = 'lyricsModal';
+        lyricsModal.className = 'modal lyrics-modal';
+        lyricsModal.innerHTML = `
+            <div class="modal-content lyrics-content">
+                <span class="modal-close" onclick="closeLyricsModal()">&times;</span>
+                <h3 id="lyricsTitle"></h3>
+                <div id="lyricsText" class="lyrics-text"></div>
+            </div>
+        `;
+        document.body.appendChild(lyricsModal);
+    }
+    
+    document.getElementById('lyricsTitle').textContent = `${currentSong.title} - ${currentSong.artist}`;
+    document.getElementById('lyricsText').innerHTML = formatLyrics(currentSong.lyrics);
+    lyricsModal.style.display = 'flex';
+}
+
+function closeLyricsModal() {
+    const modal = document.getElementById('lyricsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function formatLyrics(lyrics) {
+    return escapeHtml(lyrics).replace(/\n/g, '<br>');
+}
+
+window.closeLyricsModal = closeLyricsModal;
 
 // ============ СОРТИРОВКА ============
 window.setSortType = function(type) {
@@ -261,6 +458,7 @@ window.closeAddSongModal = () => {
     document.getElementById('newSongTitle').value = '';
     document.getElementById('newSongArtist').value = '';
     document.getElementById('newSongDescription').value = '';
+    document.getElementById('newSongLyrics').value = '';
     document.getElementById('newSongUrl').value = '';
     document.getElementById('newSongDuration').value = '';
     document.getElementById('selectedFileName').style.display = 'none';
@@ -277,68 +475,48 @@ window.closeEditSongModal = () => {
 window.handleFileSelect = async function(event) {
     console.log("🔵 handleFileSelect вызвана");
     const file = event.target.files[0];
-    if (!file) {
-        console.log("Файл не выбран");
-        return;
-    }
-    
-    console.log("Выбран файл:", file.name, file.size, file.type);
+    if (!file) return;
     
     if (!file.type.match('audio/mpeg')) {
-        showToast("Пожалуйста, выберите MP3 файл");
+        showToast("Выберите MP3 файл");
         return;
     }
     
     pendingFileUpload = file;
     const fileNameDisplay = document.getElementById('selectedFileName');
     
-    // Показываем индикатор определения длительности
     showToast("Определение длительности...");
     
     try {
-        // Автоматически определяем длительность
         const duration = await getMp3Duration(file);
         const durationInput = document.getElementById('newSongDuration');
-        if (durationInput) {
-            durationInput.value = duration;
-            console.log("✅ Длительность определена:", duration);
-        }
+        if (durationInput) durationInput.value = duration;
         showToast(`Длительность: ${duration}`);
     } catch (error) {
-        console.warn("Не удалось определить длительность:", error);
-        showToast("Не удалось определить длительность, укажите вручную");
+        showToast("Укажите длительность вручную");
     }
     
     if (fileNameDisplay) {
-        const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-        fileNameDisplay.textContent = `📁 Выбран: ${file.name} (${sizeMB} МБ)`;
+        fileNameDisplay.textContent = `📁 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} МБ)`;
         fileNameDisplay.style.display = 'block';
     }
     
-    const urlInput = document.getElementById('newSongUrl');
-    if (urlInput) urlInput.value = '';
-    
+    document.getElementById('newSongUrl').value = '';
     showToast(`Файл выбран: ${file.name}`);
-    console.log("✅ Файл сохранён для Base64 конвертации");
+    pendingFileUpload = file;
 };
 
-// ============ ДОБАВЛЕНИЕ ПЕСНИ (BASE64) ============
+// ============ ДОБАВЛЕНИЕ ПЕСНИ ============
 window.addNewSong = async function() {
-    console.log("🔵 addNewSong вызвана");
-    
     const title = document.getElementById('newSongTitle')?.value.trim();
     const artist = document.getElementById('newSongArtist')?.value.trim();
     const description = document.getElementById('newSongDescription')?.value.trim();
+    const lyrics = document.getElementById('newSongLyrics')?.value.trim();
     const audioUrl = document.getElementById('newSongUrl')?.value.trim();
     let duration = document.getElementById('newSongDuration')?.value.trim();
     
-    if (!title) {
-        showToast("Введите название песни");
-        return;
-    }
-    
-    if (!artist) {
-        showToast("Введите исполнителя");
+    if (!title || !artist) {
+        showToast("Заполните название и исполнителя");
         return;
     }
     
@@ -348,7 +526,6 @@ window.addNewSong = async function() {
     if (pendingFileUpload) {
         showToast("Конвертация MP3 в Base64...");
         try {
-            // Если длительность ещё не определена, определяем сейчас
             if (!duration) {
                 try {
                     duration = await getMp3Duration(pendingFileUpload);
@@ -357,30 +534,23 @@ window.addNewSong = async function() {
                     duration = "3:00";
                 }
             }
-            
             finalAudioData = await fileToBase64(pendingFileUpload);
             isBase64 = true;
-            console.log("✅ Файл сконвертирован в Base64, длина:", finalAudioData.length);
             showToast("Файл сконвертирован!");
         } catch (error) {
             showToast("Ошибка конвертации: " + error.message);
             return;
         }
     } else if (!audioUrl) {
-        showToast("Укажите URL аудиофайла или загрузите MP3 файл");
+        showToast("Укажите URL аудиофайла или загрузите MP3");
         return;
     }
     
-    let finalDuration = duration && duration !== "" ? duration : "3:00";
-    
     try {
-        showToast("Сохранение песни...");
-        
         const songData = {
-            title: title,
-            artist: artist,
-            description: description || "",
-            duration: finalDuration,
+            title, artist, description: description || "",
+            lyrics: lyrics || "",
+            duration: duration || "3:00",
             createdAt: new Date().toISOString(),
             createdBy: currentUser?.email || "unknown"
         };
@@ -394,14 +564,12 @@ window.addNewSong = async function() {
         }
         
         await db.ref('songs').push(songData);
-        
         showToast("✅ Песня добавлена!");
         window.closeAddSongModal();
         pendingFileUpload = null;
         await loadSongs();
         
     } catch (error) {
-        console.error("Ошибка:", error);
         showToast("Ошибка: " + error.message);
     }
 };
@@ -415,6 +583,7 @@ window.editSong = function(id) {
     document.getElementById('editSongTitle').value = song.title;
     document.getElementById('editSongArtist').value = song.artist;
     document.getElementById('editSongDescription').value = song.description || '';
+    document.getElementById('editSongLyrics').value = song.lyrics || '';
     document.getElementById('editSongUrl').value = song.audioUrl || '';
     document.getElementById('editSongDuration').value = song.duration;
     
@@ -426,6 +595,7 @@ window.updateSong = async function() {
     const title = document.getElementById('editSongTitle').value.trim();
     const artist = document.getElementById('editSongArtist').value.trim();
     const description = document.getElementById('editSongDescription').value.trim();
+    const lyrics = document.getElementById('editSongLyrics').value.trim();
     const audioUrl = document.getElementById('editSongUrl').value.trim();
     const duration = document.getElementById('editSongDuration').value.trim();
     
@@ -436,7 +606,7 @@ window.updateSong = async function() {
     
     try {
         const updateData = {
-            title, artist, description,
+            title, artist, description, lyrics,
             duration: duration || "3:00",
             updatedAt: new Date().toISOString()
         };
@@ -462,11 +632,11 @@ window.updateSong = async function() {
 
 // ============ УДАЛЕНИЕ ============
 window.deleteSong = async function(id, title) {
-    if (!confirm(`Удалить песню "${title}"?`)) return;
+    if (!confirm(`Удалить "${title}"?`)) return;
     
     try {
         await db.ref(`songs/${id}`).remove();
-        showToast(`Песня "${title}" удалена`);
+        showToast(`Песня удалена`);
         
         if (songsData[currentIndex]?.id === id) {
             if (songsData.length > 1) {
@@ -555,12 +725,11 @@ function renderAdminSongsList() {
     let html = '';
     for (let i = 0; i < songsData.length; i++) {
         const s = songsData[i];
-        const sourceType = s.isBase64 ? 'Base64' : '🔗 URL';
         html += `<div class="admin-song-item">
             <div>
                 <b>${escapeHtml(s.title)}</b><br>
                 <small>${escapeHtml(s.artist)}</small><br>
-                <small style="color:#8aa07a">${sourceType}</small>
+                <small style="color:#8aa07a">${s.duration}</small>
             </div>
             <div>
                 <button onclick="window.editSong('${s.id}')" class="edit-song-btn"><i class="fas fa-edit"></i></button>
@@ -569,35 +738,6 @@ function renderAdminSongsList() {
         </div>`;
     }
     container.innerHTML = html;
-}
-
-// ============ ОПРЕДЕЛЕНИЕ ДЛИТЕЛЬНОСТИ MP3 ============
-function getMp3Duration(file) {
-    return new Promise((resolve, reject) => {
-        const url = URL.createObjectURL(file);
-        const audio = new Audio();
-        
-        audio.addEventListener('loadedmetadata', () => {
-            const duration = audio.duration;
-            URL.revokeObjectURL(url);
-            
-            if (isNaN(duration)) {
-                reject(new Error("Не удалось определить длительность"));
-            } else {
-                const minutes = Math.floor(duration / 60);
-                const seconds = Math.floor(duration % 60);
-                const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                resolve(formattedDuration);
-            }
-        });
-        
-        audio.addEventListener('error', () => {
-            URL.revokeObjectURL(url);
-            reject(new Error("Ошибка загрузки аудио"));
-        });
-        
-        audio.src = url;
-    });
 }
 
 // ============ ВСПОМОГАТЕЛЬНЫЕ ============
