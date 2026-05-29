@@ -347,33 +347,59 @@ async function playSong(index) {
     showToast("🎵 Загрузка аудио...");
     
     try {
+        let audioSrc = null;
+        
         // Загружаем аудио (ленивая загрузка)
         if (song.isBase64) {
-            // Получаем Base64 из отдельного узла
+            // Получаем Base64 из отдельного узла songAudio
+            console.log("Загружаем Base64 для песни:", song.id);
             const audioSnapshot = await db.ref(`songAudio/${song.id}/audioBase64`).once('value');
             const base64Data = audioSnapshot.val();
+            
             if (base64Data) {
-                audio.src = base64Data;
+                audioSrc = base64Data;
+                console.log("Base64 загружен, длина:", base64Data.length);
             } else {
-                showToast("Ошибка: данные аудио не найдены");
+                console.error("Base64 данные не найдены для:", song.id);
+                showToast("Ошибка: аудиоданные не найдены");
                 return;
             }
         } else if (song.audioUrl) {
-            audio.src = song.audioUrl;
+            audioSrc = song.audioUrl;
+            console.log("Загружаем по URL:", song.audioUrl);
         } else {
             showToast("Ошибка: нет аудиоданных");
             return;
         }
         
-        audio.play();
-        isPlaying = true;
-        const playBtn = document.getElementById('playPauseBtn');
-        if (playBtn) playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        renderSongs();
+        if (!audioSrc) {
+            showToast("Ошибка: не удалось получить аудио");
+            return;
+        }
+        
+        audio.src = audioSrc;
+        
+        // Ждём загрузки метаданных перед воспроизведением
+        audio.onloadedmetadata = () => {
+            console.log("Аудио загружено, длительность:", audio.duration);
+            audio.play();
+            isPlaying = true;
+            const playBtn = document.getElementById('playPauseBtn');
+            if (playBtn) playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            renderSongs();
+        };
+        
+        audio.onerror = (e) => {
+            console.error("Ошибка загрузки аудио:", e);
+            showToast("Ошибка загрузки аудио");
+        };
+        
+        // Устанавливаем src (onloadedmetadata сработает после этого)
+        audio.load();
         
     } catch (error) {
-        console.error("Ошибка загрузки аудио:", error);
-        showToast("Ошибка загрузки аудио");
+        console.error("Ошибка в playSong:", error);
+        showToast("Ошибка загрузки аудио: " + error.message);
     }
 }
 
