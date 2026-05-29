@@ -86,6 +86,7 @@
                 <button id="nextBtn" class="player-btn"><i class="fas fa-forward"></i></button>
                 <button id="repeatBtn" class="player-btn" title="Повтор"><i class="fas fa-redo-alt"></i></button>
                 <button id="shuffleBtn" class="player-btn" title="Случайный порядок"><i class="fas fa-random"></i></button>
+                <button id="lyricsBtn" class="player-btn" title="Текст песни" style="display: none;"><i class="fas fa-scroll"></i></button>
             </div>
             <div class="player-info">
                 <div class="player-song" id="currentSongTitle">Выберите песню</div>
@@ -181,6 +182,7 @@
         <input type="text" id="newSongArtist" placeholder="Исполнитель *">
         <textarea id="newSongDescription" placeholder="Описание" rows="2"></textarea>
         <input type="text" id="newSongDuration" placeholder="Длительность (3:45)">
+        <textarea id="newSongLyrics" placeholder="Текст песни (необязательно)" rows="4" style="width:100%; padding:10px; margin:10px 0; background:#1e2a1e; border:1px solid #3e5a3e; color:#ddd; border-radius:12px;"></textarea>
         
         <div class="upload-progress" id="uploadProgress" style="display: none">
             <div class="progress-bar-small"><div class="progress-fill-small" id="uploadProgressFill"></div></div>
@@ -205,6 +207,7 @@
         <input type="text" id="editSongArtist" placeholder="Исполнитель">
         <textarea id="editSongDescription" placeholder="Описание" rows="2"></textarea>
         <input type="text" id="editSongDuration" placeholder="Длительность">
+        <textarea id="editSongLyrics" placeholder="Текст песни" rows="4" style="width:100%; padding:10px; margin:10px 0; background:#1e2a1e; border:1px solid #3e5a3e; color:#ddd; border-radius:12px;"></textarea>
         <div style="margin-top:20px">
             <button onclick="if(window.updateSong) window.updateSong()" class="admin-btn"><i class="fas fa-save"></i> Сохранить</button>
             <button onclick="if(window.closeEditSongModal) window.closeEditSongModal()" class="admin-btn" style="background:#3a2a2a"><i class="fas fa-times"></i> Отмена</button>
