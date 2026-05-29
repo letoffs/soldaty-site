@@ -178,6 +178,9 @@
         <div class="upload-divider"><span>или укажите URL</span></div>
         
         <input type="text" id="newSongUrl" placeholder="URL аудиофайла">
+        <button type="button" onclick="fetchDurationFromUrl()" class="admin-btn" style="white-space: nowrap;">
+            <i class="fas fa-clock"></i> Опред.
+        </button>
         <input type="text" id="newSongTitle" placeholder="Название песни *">
         <input type="text" id="newSongArtist" placeholder="Исполнитель *">
         <textarea id="newSongDescription" placeholder="Описание" rows="2"></textarea>
