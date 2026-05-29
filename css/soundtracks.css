@@ -927,3 +927,46 @@
     max-height: 500px;
     overflow-y: auto;
 }
+
+/* Стиль для иконки текста песни */
+.has-lyrics {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #1e2a1e;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    color: #bd8a3e;
+    margin-left: 8px;
+}
+
+.has-lyrics i {
+    font-size: 0.7rem;
+}
+
+/* Кнопка текста в плеере */
+#lyricsBtn {
+    background: #2a3a2a;
+    border: 1px solid #bd8a3e;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #ffd966;
+    font-size: 16px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#lyricsBtn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: scale(1.05);
+}
+
+#lyricsBtn i {
+    font-size: 1rem;
+}
