@@ -40,6 +40,34 @@
 
 <div class="container">
     <div class="header">
+        <div class="weather-time-block">
+            <div class="time-block">
+                <div class="time-display" id="currentTime">--:--</div>
+                <div class="date-display" id="currentDate">-- --- ----</div>
+            </div>
+            <div class="weather-block" id="weatherBlock">
+                <div class="weather-icon" id="weatherIcon">☀️</div>
+                <div class="weather-temp" id="weatherTemp">--°C</div>
+                <select id="citySelect" class="city-select">
+                    <option value="auto">📍 Определить автоматически</option>
+                    <option value="moskau">🇷🇺 Москва</option>
+                    <option value="spb">🇷🇺 Санкт-Петербург</option>
+                    <option value="kiev">🇺🇦 Киев</option>
+                    <option value="minsk">🇧🇾 Минск</option>
+                    <option value="almaty">🇰🇿 Алматы</option>
+                    <option value="london">🇬🇧 Лондон</option>
+                    <option value="newyork">🇺🇸 Нью-Йорк</option>
+                    <option value="berlin">🇩🇪 Берлин</option>
+                    <option value="paris">🇫🇷 Париж</option>
+                    <option value="rome">🇮🇹 Рим</option>
+                    <option value="madrid">🇪🇸 Мадрид</option>
+                    <option value="istanbul">🇹🇷 Стамбул</option>
+                    <option value="beijing">🇨🇳 Пекин</option>
+                    <option value="tokyo">🇯🇵 Токио</option>
+                </select>
+            </div>
+        </div>
+
         <a href="#" class="logo-link" onclick="location.reload(); return false;">
             <img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
         </a>
