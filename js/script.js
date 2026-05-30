@@ -1,3 +1,4 @@
+// ========== ВАШ СУЩЕСТВУЮЩИЙ КОД (всё, что было до этого) ==========
 // Глобальные переменные
 let currentSeason = 1;
 let currentEpisodeObj = episodesData[0];
@@ -548,7 +549,7 @@ function loadFirstEpisode() {
     }
 }
 
-// ---------- КОММЕНТАРИИ И ОЦЕНКИ (остаются без изменений) ----------
+// ---------- КОММЕНТАРИИ И ОЦЕНКИ ----------
 function loadRatings() {
     const saved = localStorage.getItem('soldaty_ratings');
     ratings = saved ? JSON.parse(saved) : {};
@@ -923,70 +924,6 @@ function navigateToNextEpisode() {
     }
 }
 
-// ---------- ЗАПУСК ----------
-window.onload = () => {
-    renderSeasonNav();
-    renderEpisodesGrid(currentSeason);
-    loadComments();
-    loadRatings();
-    updateFormStarsDisplay();
-    
-    const submitBtn = document.getElementById('submitCommentBtn');
-    if (submitBtn) {
-        submitBtn.onclick = () => {
-            if (!window.currentUser) {
-                alert('Войдите, чтобы оставить комментарий');
-                if (typeof showAuthModal === 'function') showAuthModal();
-                return;
-            }
-            const textInput = document.getElementById('commentText');
-            if (!textInput) return;
-            const commentText = textInput.value;
-            if (!commentText || !commentText.trim()) {
-                alert("Введите текст комментария");
-                return;
-            }
-            if (addComment(commentText)) {
-                textInput.value = '';
-                currentFormRating = 0;
-                updateFormStarsDisplay();
-            }
-        };
-    }
-    
-    const autoplayToggle = document.getElementById('autoplayToggle');
-    if (autoplayToggle) {
-        autoplayToggle.checked = autoplayEnabled;
-        autoplayToggle.onchange = toggleAutoplay;
-    }
-    
-    const favoriteBtn = document.getElementById('favoriteBtn');
-    if (favoriteBtn) {
-        favoriteBtn.onclick = toggleFavorite;
-    }
-    
-    console.log("✅ Сайт «Солдаты» готов!");
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    const userAvatar = document.getElementById('userAvatar');
-    if (userAvatar) {
-        userAvatar.style.cursor = 'pointer';
-        userAvatar.onclick = () => {
-            if (window.currentUser) window.location.href = 'profile.html';
-        };
-    }
-    const userName = document.getElementById('userName');
-    if (userName) {
-        userName.style.cursor = 'pointer';
-        userName.onclick = () => {
-            if (window.currentUser) window.location.href = 'profile.html';
-        };
-    }
-});
-
-window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-
 // ========== ИЗБРАННОЕ ==========
 let isFavorite = false;
 
@@ -1057,7 +994,7 @@ async function toggleFavorite() {
     }
 }
 
-
+// ========== ФУНКЦИЯ ДЛЯ ПОКАЗА УВЕДОМЛЕНИЙ ==========
 function showToast(message) {
     let toast = document.getElementById('toast');
     if (!toast) {
@@ -1072,3 +1009,164 @@ function showToast(message) {
         toast.classList.remove('show');
     }, 2000);
 }
+
+// ========== PWA: УСТАНОВКА ПРИЛОЖЕНИЯ ==========
+// Показываем кнопку установки приложения
+let deferredInstallPrompt = null;
+
+// Получаем элементы (дождёмся загрузки DOM)
+function initPWAInstall() {
+    const installContainer = document.getElementById('installAppContainer');
+    const installBtn = document.getElementById('installAppBtn');
+    
+    if (!installContainer || !installBtn) {
+        console.log('⚠️ Элементы для PWA не найдены в DOM');
+        return;
+    }
+    
+    // Перехватываем событие beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        
+        // Показываем кнопку установки
+        installContainer.style.display = 'block';
+        console.log('✅ Приложение можно установить');
+    });
+    
+    // Обработчик клика по кнопке
+    installBtn.addEventListener('click', async () => {
+        if (!deferredInstallPrompt) {
+            // Если событие не перехватилось, показываем инструкцию
+            showInstallInstructions();
+            return;
+        }
+        
+        // Показываем диалог установки
+        deferredInstallPrompt.prompt();
+        
+        // Ждём выбора пользователя
+        const choiceResult = await deferredInstallPrompt.userChoice;
+        if (choiceResult.outcome === 'accepted') {
+            console.log('✅ Пользователь установил приложение');
+            // Скрываем кнопку после установки
+            installContainer.style.display = 'none';
+        } else {
+            console.log('❌ Пользователь отклонил установку');
+        }
+        
+        deferredInstallPrompt = null;
+    });
+    
+    // Если приложение уже запущено в режиме standalone, скрываем кнопку
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        installContainer.style.display = 'none';
+    }
+}
+
+// Инструкция для браузеров, которые не поддерживают beforeinstallprompt
+function showInstallInstructions() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    let message = '';
+    if (isIOS) {
+        message = '📱 Нажмите кнопку "Поделиться" → "На экран \"Домой\""';
+    } else if (isAndroid) {
+        message = '📱 Нажмите ⋮ (меню) → "Установить приложение"';
+    } else {
+        message = '📱 Откройте меню браузера и выберите "Установить приложение"';
+    }
+    
+    showToast(message);
+}
+
+// Слушаем событие успешной установки
+window.addEventListener('appinstalled', () => {
+    console.log('✅ Приложение успешно установлено!');
+    const installContainer = document.getElementById('installAppContainer');
+    if (installContainer) {
+        installContainer.style.display = 'none';
+    }
+    showToast('🎉 Спасибо за установку приложения "Солдаты"!');
+});
+
+// Регистрация Service Worker для PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('✅ Service Worker зарегистрирован:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('❌ Ошибка регистрации Service Worker:', error);
+            });
+    });
+}
+
+// ========== ЗАПУСК ==========
+window.onload = () => {
+    renderSeasonNav();
+    renderEpisodesGrid(currentSeason);
+    loadComments();
+    loadRatings();
+    updateFormStarsDisplay();
+    
+    const submitBtn = document.getElementById('submitCommentBtn');
+    if (submitBtn) {
+        submitBtn.onclick = () => {
+            if (!window.currentUser) {
+                alert('Войдите, чтобы оставить комментарий');
+                if (typeof showAuthModal === 'function') showAuthModal();
+                return;
+            }
+            const textInput = document.getElementById('commentText');
+            if (!textInput) return;
+            const commentText = textInput.value;
+            if (!commentText || !commentText.trim()) {
+                alert("Введите текст комментария");
+                return;
+            }
+            if (addComment(commentText)) {
+                textInput.value = '';
+                currentFormRating = 0;
+                updateFormStarsDisplay();
+            }
+        };
+    }
+    
+    const autoplayToggle = document.getElementById('autoplayToggle');
+    if (autoplayToggle) {
+        autoplayToggle.checked = autoplayEnabled;
+        autoplayToggle.onchange = toggleAutoplay;
+    }
+    
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    if (favoriteBtn) {
+        favoriteBtn.onclick = toggleFavorite;
+    }
+    
+    // Инициализируем PWA после загрузки DOM
+    initPWAInstall();
+    
+    console.log("✅ Сайт «Солдаты» готов!");
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const userAvatar = document.getElementById('userAvatar');
+    if (userAvatar) {
+        userAvatar.style.cursor = 'pointer';
+        userAvatar.onclick = () => {
+            if (window.currentUser) window.location.href = 'profile.html';
+        };
+    }
+    const userName = document.getElementById('userName');
+    if (userName) {
+        userName.style.cursor = 'pointer';
+        userName.onclick = () => {
+            if (window.currentUser) window.location.href = 'profile.html';
+        };
+    }
+});
+
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
