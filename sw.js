@@ -4,17 +4,17 @@ const CACHE_NAME = 'soldaty-v1.0';
 // Файлы, которые нужно кэшировать для офлайн-доступа
 const FILES_TO_CACHE = [
   '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/script.js',
-  '/js/episodes-data.js',
-  '/js/firebase-auth.js',
-  '/js/analytics.js',
-  '/js/season-descriptions.js',
-  '/firebase-config.js',
-  '/Resources/soldaty_logo.png',
-  '/Resources/soldaty_icon.png',
-  '/manifest.json'
+  'index.html',
+  'css/style.css',
+  'js/script.js',
+  'js/episodes-data.js',
+  'js/firebase-auth.js',
+  'js/analytics.js',
+  'js/season-descriptions.js',
+  'firebase-config.js',
+  'Resources/soldaty_logo.png',
+  'Resources/soldaty_icon.png',
+  'manifest.json'
 ];
 
 // Установка Service Worker — кэшируем файлы
