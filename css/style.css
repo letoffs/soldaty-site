@@ -5433,3 +5433,72 @@ button,
         max-height: 60vh;
     }
 }
+
+/* ===== КНОПКА УСТАНОВКИ ПРИЛОЖЕНИЯ В ФУТЕРЕ ===== */
+.install-app-container {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.install-app-footer-btn {
+    background: linear-gradient(135deg, #2a5a2a, #1a3a1a);
+    border: 2px solid #bd8a3e;
+    color: #ffd966;
+    padding: 14px 28px;
+    border-radius: 60px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.install-app-footer-btn:hover {
+    background: linear-gradient(135deg, #3a7a3a, #2a5a2a);
+    transform: scale(1.02);
+    border-color: #ffd966;
+    box-shadow: 0 6px 20px rgba(189, 138, 62, 0.4);
+}
+
+.install-app-footer-btn i {
+    font-size: 1.2rem;
+}
+
+.install-badge {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.install-hint {
+    font-size: 0.7rem;
+    color: #8aa07a;
+    margin-top: 10px;
+}
+
+.install-hint i {
+    margin-right: 5px;
+    color: #bd8a3e;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 700px) {
+    .install-app-footer-btn {
+        padding: 12px 20px;
+        font-size: 0.85rem;
+        gap: 8px;
+    }
+    
+    .install-badge {
+        padding: 3px 8px;
+        font-size: 0.6rem;
+    }
+}
