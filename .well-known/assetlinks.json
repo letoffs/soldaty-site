@@ -2,7 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.yourcompany.soldatyfans",
+    "package_name": "com.letoffs.soldatyfans",
     "sha256_cert_fingerprints": ["ЗДЕСЬ_БУДЕТ_ВАШ_КЛЮЧ"]
   }
 }]
