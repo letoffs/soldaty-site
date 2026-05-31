@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "com.letoffs.soldatyfans",
-    "sha256_cert_fingerprints": ["ЗДЕСЬ_БУДЕТ_ВАШ_КЛЮЧ"]
+    "sha256_cert_fingerprints": ["16:10:58:E9:DE:0A:67:87:21:7F:1C:27:D3:46:2C:0E:73:65:67:04:BF:97:14:18:63:78:0C:55:67:E0:2E:C5"]
   }
 }]
