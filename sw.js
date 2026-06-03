@@ -1,4 +1,4 @@
-const CACHE_NAME = 'soldaty-v5.0';
+const CACHE_NAME = 'soldaty-v6.0';
 
 const OFFLINE_CACHE = [
   '/',
