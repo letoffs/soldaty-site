@@ -319,6 +319,21 @@
 </div>
 
 <script>
+
+    (function() {
+        var script = document.createElement('script');
+        script.src = 'https://www.youtube.com/iframe_api';
+        script.async = false;
+        document.head.appendChild(script);
+        
+        // Ждём готовности YouTube API
+        window._ytReady = false;
+        window.onYouTubeIframeAPIReady = function() {
+            window._ytReady = true;
+            console.log("✅ YouTube API готов");
+        };
+    })();
+    
 // Регистрация Service Worker для PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
