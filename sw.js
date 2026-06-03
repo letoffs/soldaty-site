@@ -74,6 +74,9 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   
+  // Логируем все запросы (для отладки)
+  console.log('[SW] Запрос:', url);
+
   // Пропускаем запросы к внешним API
   if (url.includes('firebaseio.com') || 
       url.includes('googleapis.com') ||
@@ -82,12 +85,14 @@ self.addEventListener('fetch', event => {
       url.includes('googlevideo.com') ||
       url.includes('rutube.ru') ||
       url.includes('ren.tv')) {
+    console.log('[SW] Пропускаем внешний запрос:', url);
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then(response => {
+        console.log('[SW] Успешный ответ из сети:', url);
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then(cache => {
           cache.put(event.request, responseToCache);
@@ -95,12 +100,15 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => {
+        console.log('[SW] Ошибка сети, ищем в кэше:', url);
         return caches.match(event.request)
           .then(cachedResponse => {
             if (cachedResponse) {
+              console.log('[SW] Найдено в кэше:', url);
               return cachedResponse;
             }
             if (event.request.mode === 'navigate') {
+              console.log('[SW] Показываем offline.html');
               return caches.match('/offline.html');
             }
             return new Response('Нет соединения', {
