@@ -1,6 +1,5 @@
-// sw.js — Полностью переработан для офлайн-режима
-const CACHE_NAME = 'soldaty-v2.0'; // Новая версия кэша
-// Файлы, которые будут доступны офлайн
+const CACHE_NAME = 'soldaty-v5.0';
+
 const OFFLINE_CACHE = [
   '/',
   '/index.html',
@@ -9,27 +8,45 @@ const OFFLINE_CACHE = [
   '/quiz.html',
   '/soundtracks.html',
   '/videos.html',
+  '/profile.html',
+  '/contacts.html',
+  '/offer.html',
+  '/admin-gallery.html',
+  '/analytics.html',
+  '/offline.html',
   '/css/style.css',
-  '/js/script.js',
-  '/js/heroes-data.js',
-  '/js/heroes.js',
-  '/js/season-descriptions.js',
+  '/css/soundtracks.css',
+  '/css/videos.css',
+  '/js/admin-gallery.js',
+  '/js/analytics.js',
   '/js/episodes-data.js',
   '/js/firebase-auth.js',
-  '/js/analytics.js',
+  '/js/gallery.js',
+  '/js/heroes-data.js',
+  '/js/heroes.js',
+  '/js/profile.js',
+  '/js/quiz-levels.js',
+  '/js/quiz.js',
+  '/js/script.js',
+  '/js/season-descriptions.js',
+  '/js/soundtracks.js',
+  '/js/videos.js',
   '/firebase-config.js',
+  '/sw.js',
   '/manifest.json',
+  '/.nojekyll',
+  '/CNAME',
   '/Resources/soldaty_logo.png',
-  '/Resources/soldaty_icon.png',
-  '/offline.html' // Создайте этот файл (см. ниже)
+  '/Resources/soldaty_icon.png'
 ];
 
 // Установка: кэшируем файлы
 self.addEventListener('install', event => {
-  console.log('[SW] Установка и кэширование ресурсов...');
+  console.log('[SW] Установка и кэширование всех ресурсов...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
+        console.log('[SW] Кэширование файлов, всего:', OFFLINE_CACHE.length);
         return cache.addAll(OFFLINE_CACHE);
       })
       .catch(err => console.error('[SW] Ошибка кэширования:', err))
@@ -57,19 +74,20 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   
-  // Пропускаем запросы к API и Firebase
+  // Пропускаем запросы к внешним API
   if (url.includes('firebaseio.com') || 
       url.includes('googleapis.com') ||
       url.includes('youtube.com') ||
       url.includes('ytimg.com') ||
-      url.includes('googlevideo.com')) {
+      url.includes('googlevideo.com') ||
+      url.includes('rutube.ru') ||
+      url.includes('ren.tv')) {
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        // Кэшируем успешные ответы для будущего офлайн-доступа
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then(cache => {
           cache.put(event.request, responseToCache);
@@ -77,14 +95,18 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => {
-        // Если сеть недоступна, ищем в кэше
         return caches.match(event.request)
           .then(cachedResponse => {
             if (cachedResponse) {
               return cachedResponse;
             }
-            // Если в кэше нет, показываем страницу-заглушку
-            return caches.match('/offline.html');
+            if (event.request.mode === 'navigate') {
+              return caches.match('/offline.html');
+            }
+            return new Response('Нет соединения', {
+              status: 503,
+              statusText: 'Service Unavailable'
+            });
           });
       })
   );
