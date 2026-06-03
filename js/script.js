@@ -198,21 +198,40 @@ function onVideoEnded() {
 }
 
 // ========== YOUTUBE ПЛЕЕР ==========
-function onYouTubeIframeAPIReady() {
-    initPlayerSwitch();
-    loadFirstEpisode();
-}
+// function onYouTubeIframeAPIReady() {
+//     initPlayerSwitch();
+//     loadFirstEpisode();
+// }
 
 function createYouTubePlayer(videoId) {
     const playerDiv = document.getElementById('youtubePlayerContainer');
     if (!playerDiv) return;
-    playerDiv.innerHTML = '';
-    if (currentPlayer && currentPlayer.destroy) currentPlayer.destroy();
+    
+    // Показываем индикатор загрузки
+    playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffd966;"><i class="fas fa-spinner fa-pulse"></i> Загрузка YouTube плеера...</div>';
+    
+    if (currentPlayer && currentPlayer.destroy) {
+        currentPlayer.destroy();
+        currentPlayer = null;
+    }
     
     currentPlayer = new YT.Player('youtubePlayerContainer', {
-        height: '100%', width: '100%', videoId: videoId,
-        playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
-        events: { 'onStateChange': onPlayerStateChange }
+        height: '100%',
+        width: '100%',
+        videoId: videoId,
+        playerVars: {
+            'autoplay': 1,
+            'rel': 0,
+            'modestbranding': 1
+        },
+        events: {
+            'onStateChange': onPlayerStateChange,
+            'onError': (event) => {
+                console.error("YouTube плеер ошибка:", event);
+                playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffaa44;"><i class="fas fa-exclamation-triangle"></i> Ошибка YouTube, попробуйте Rutube</div>';
+                showToast("⚠️ Ошибка YouTube плеера, используйте Rutube");
+            }
+        }
     });
 }
 
@@ -314,12 +333,7 @@ function switchToYouTube() {
     updateActiveButton('youtube');
     
     if (currentEpisodeObj && currentEpisodeObj.youtubeId) {
-        if (currentPlayer && currentPlayer.loadVideoById) {
-            currentPlayer.loadVideoById(currentEpisodeObj.youtubeId);
-            currentPlayer.playVideo();
-        } else {
-            createYouTubePlayer(currentEpisodeObj.youtubeId);
-        }
+        createYouTubePlayer(currentEpisodeObj.youtubeId);
     }
 }
 
@@ -408,7 +422,24 @@ function loadEpisode(episode) {
 
 function loadFirstEpisode() {
     const firstEpisodes = getEpisodesBySeason(currentSeason);
-    if (firstEpisodes.length) loadEpisode(firstEpisodes[0]);
+    if (firstEpisodes.length) {
+        currentEpisodeObj = firstEpisodes[0];
+        
+        // Обновляем заголовок и описание
+        const seasonDisplay = getSeasonDisplayName(currentEpisodeObj.season);
+        if (currentEpisodeObj.season >= 18) {
+            document.getElementById('currentSeriesTitle').innerHTML = `${seasonDisplay} · ${currentEpisodeObj.episode} серия &nbsp;|&nbsp; ${currentEpisodeObj.title}`;
+        } else {
+            document.getElementById('currentSeriesTitle').innerHTML = `Солдаты ${currentEpisodeObj.season} сезон · ${currentEpisodeObj.episode} серия &nbsp;|&nbsp; ${currentEpisodeObj.title}`;
+        }
+        document.getElementById('currentSeriesDesc').innerHTML = firstEpisodes[0].desc;
+        
+        // НЕ создаём YouTube плеер! Только показываем заглушку
+        const youtubeContainer = document.getElementById('youtubePlayerContainer');
+        if (youtubeContainer) {
+            youtubeContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#aaa;"><i class="fas fa-play-circle"></i> Нажмите на плеер, чтобы начать просмотр</div>';
+        }
+    }
 }
 
 // ========== КОММЕНТАРИИ ==========
@@ -851,39 +882,106 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ========== ПРОВЕРКА ДОСТУПНОСТИ YOUTUBE API ==========
-function checkYouTubeAPI() {
-    setTimeout(function() {
-        if (typeof YT === 'undefined') {
-            console.log("⚠️ YouTube API не загрузился, но кнопки переключения работают");
-            showYouTubeNotice();
+// Запускаем проверку каждые 500 мс, максимум 30 секунд
+let youtubeInitAttempts = 0;
+const youtubeInitInterval = setInterval(() => {
+    if (typeof YT !== 'undefined' && YT && YT.Player) {
+        clearInterval(youtubeInitInterval);
+        if (typeof onYouTubeIframeAPIReady === 'function') {
+            onYouTubeIframeAPIReady();
         }
-    }, 5000);
-}
+    }
+    youtubeInitAttempts++;
+    if (youtubeInitAttempts > 60) { // 30 секунд
+        clearInterval(youtubeInitInterval);
+        console.warn("⚠️ YouTube API не загрузился, но кнопки переключения работают");
+        // Показываем уведомление пользователю
+        showToast("⚠️ YouTube недоступен, используйте Rutube или РЕН ТВ");
+    }
+}, 500);
 
-function showYouTubeNotice() {
-    const notice = document.createElement('div');
-    notice.style.cssText = 'position:fixed;bottom:20px;left:20px;background:#1e2a1e;color:#ffd966;padding:8px 15px;border-radius:20px;font-size:12px;z-index:9999;border:1px solid #bd8a3e;';
-    notice.innerHTML = '<i class="fas fa-info-circle"></i> YouTube может быть недоступен, используйте Rutube или РЕН ТВ';
-    document.body.appendChild(notice);
-    setTimeout(() => notice.remove(), 5000);
-}
+// ========== ЛЕНИВАЯ ЗАГРУЗКА YOUTUBE (ТОЛЬКО ПРИ КЛИКЕ) ==========
+let youtubeLoaded = false;
+let youtubeLoading = false;
+let youtubePromise = null;
 
-// ========== ИНИЦИАЛИЗАЦИЯ КНОПОК ПЕРЕКЛЮЧЕНИЯ (независимо от YouTube) ==========
-function initPlayerSwitchEarly() {
-    const switchBtns = document.querySelectorAll('.player-switch-btn');
-    console.log("🎮 Ранняя инициализация кнопок, найдено:", switchBtns.length);
+function loadYouTubeAPI() {
+    if (youtubeLoaded) return Promise.resolve();
+    if (youtubePromise) return youtubePromise;
     
-    switchBtns.forEach(btn => {
-        btn.removeEventListener('click', handleSwitchClick);
-        btn.addEventListener('click', handleSwitchClick);
+    youtubeLoading = true;
+    youtubePromise = new Promise((resolve, reject) => {
+        console.log("🔄 Загружаем YouTube API...");
+        
+        // Показываем индикатор загрузки
+        const container = document.getElementById('youtubePlayerContainer');
+        if (container) {
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffd966;"><i class="fas fa-spinner fa-pulse"></i> Загрузка YouTube плеера...</div>';
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://www.youtube.com/iframe_api';
+        script.async = true;
+        
+        script.onload = () => {
+            // Ждём появления YT объекта (увеличиваем таймаут до 30 секунд)
+            let attempts = 0;
+            const checkYT = setInterval(() => {
+                if (typeof YT !== 'undefined' && YT && YT.Player) {
+                    clearInterval(checkYT);
+                    youtubeLoaded = true;
+                    youtubeLoading = false;
+                    console.log("✅ YouTube API загружен");
+                    resolve();
+                }
+                attempts++;
+                if (attempts > 300) { // 30 секунд (300 * 100мс)
+                    clearInterval(checkYT);
+                    console.error("❌ Таймаут загрузки YouTube API");
+                    reject(new Error('YouTube API не загрузился за 30 секунд'));
+                }
+            }, 100);
+        };
+        
+        script.onerror = () => {
+            youtubeLoading = false;
+            youtubePromise = null;
+            console.error("❌ Ошибка загрузки YouTube скрипта");
+            reject(new Error('Не удалось загрузить YouTube API'));
+        };
+        
+        document.head.appendChild(script);
     });
+    
+    return youtubePromise;
 }
+
+// Переопределяем switchToYouTube
+const originalSwitchToYouTube = switchToYouTube;
+window.switchToYouTube = async function() {
+    console.log("🖱️ Пользователь переключился на YouTube");
+    
+    // Показываем индикатор загрузки
+    const container = document.getElementById('youtubePlayerContainer');
+    if (container) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffd966;"><i class="fas fa-spinner fa-pulse"></i> Загрузка YouTube плеера...</div>';
+    }
+    
+    try {
+        await loadYouTubeAPI();
+        originalSwitchToYouTube();
+    } catch (error) {
+        console.error("❌ Ошибка загрузки YouTube:", error);
+        if (container) {
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffaa44;"><i class="fas fa-exclamation-triangle"></i> YouTube недоступен, попробуйте Rutube или РЕН ТВ</div>';
+        }
+        showToast("⚠️ YouTube недоступен, используйте Rutube или РЕН ТВ");
+    }
+}.bind(this);
 
 // ========== ЗАПУСК ==========
 window.onload = () => {
-    initPlayerSwitchEarly();
-    checkYouTubeAPI();
+    initPlayerSwitch();
     renderSeasonNav();
     renderEpisodesGrid(currentSeason);
     loadComments();
