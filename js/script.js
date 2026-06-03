@@ -302,38 +302,63 @@ function stopRentvPlayer() { const c = document.getElementById('rentvPlayerConta
 function stopAllPlayers() { stopYouTubePlayer(); stopRutubePlayer(); stopRentvPlayer(); stopVideoEndChecker(); stopAutoplayTimer(); }
 
 function switchToYouTube() {
-    stopRutubePlayer(); stopRentvPlayer(); stopVideoEndChecker();
+    console.log("switchToYouTube вызван");
+    stopAllPlayers();
+    
     currentPlatform = 'youtube';
+    
     document.getElementById('youtubePlayer').style.display = 'block';
     document.getElementById('rutubePlayer').style.display = 'none';
     document.getElementById('rentvPlayer').style.display = 'none';
+    
     updateActiveButton('youtube');
+    
     if (currentEpisodeObj && currentEpisodeObj.youtubeId) {
-        if (currentPlayer && currentPlayer.loadVideoById) { currentPlayer.loadVideoById(currentEpisodeObj.youtubeId); currentPlayer.playVideo(); }
-        else createYouTubePlayer(currentEpisodeObj.youtubeId);
+        if (currentPlayer && currentPlayer.loadVideoById) {
+            currentPlayer.loadVideoById(currentEpisodeObj.youtubeId);
+            currentPlayer.playVideo();
+        } else {
+            createYouTubePlayer(currentEpisodeObj.youtubeId);
+        }
     }
 }
 
 function switchToRutube() {
-    stopYouTubePlayer(); stopRentvPlayer(); stopVideoEndChecker();
+    console.log("switchToRutube вызван");
+    stopAllPlayers();
+    
     currentPlatform = 'rutube';
+    
     document.getElementById('youtubePlayer').style.display = 'none';
     document.getElementById('rutubePlayer').style.display = 'block';
     document.getElementById('rentvPlayer').style.display = 'none';
+    
     updateActiveButton('rutube');
-    if (currentEpisodeObj && currentEpisodeObj.rutubeId) loadRutubePlayer(currentEpisodeObj.rutubeId);
-    else showToast("⚠️ Эта серия временно недоступна на Rutube");
+    
+    if (currentEpisodeObj && currentEpisodeObj.rutubeId) {
+        loadRutubePlayer(currentEpisodeObj.rutubeId);
+    } else {
+        showToast("⚠️ Rutube плеер временно недоступен для этой серии");
+    }
 }
 
 function switchToRentv() {
-    stopYouTubePlayer(); stopRutubePlayer(); stopVideoEndChecker();
+    console.log("switchToRentv вызван");
+    stopAllPlayers();
+    
     currentPlatform = 'rentv';
+    
     document.getElementById('youtubePlayer').style.display = 'none';
     document.getElementById('rutubePlayer').style.display = 'none';
     document.getElementById('rentvPlayer').style.display = 'block';
+    
     updateActiveButton('rentv');
-    if (currentEpisodeObj && currentEpisodeObj.rentvId) loadRentvPlayer(currentEpisodeObj.rentvId);
-    else showToast("⚠️ Эта серия временно недоступна на РЕН ТВ");
+    
+    if (currentEpisodeObj && currentEpisodeObj.rentvId) {
+        loadRentvPlayer(currentEpisodeObj.rentvId);
+    } else {
+        showToast("⚠️ РЕН ТВ плеер временно недоступен для этой серии");
+    }
 }
 
 function updateActiveButton(activePlatform) {
@@ -348,6 +373,7 @@ function initPlayerSwitch() {
         btn.removeEventListener('click', handleSwitchClick);
         btn.addEventListener('click', handleSwitchClick);
     });
+    updateActiveButton(currentPlatform);
 }
 
 function handleSwitchClick(e) {
@@ -825,8 +851,39 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ========== ПРОВЕРКА ДОСТУПНОСТИ YOUTUBE API ==========
+function checkYouTubeAPI() {
+    setTimeout(function() {
+        if (typeof YT === 'undefined') {
+            console.log("⚠️ YouTube API не загрузился, но кнопки переключения работают");
+            showYouTubeNotice();
+        }
+    }, 5000);
+}
+
+function showYouTubeNotice() {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;bottom:20px;left:20px;background:#1e2a1e;color:#ffd966;padding:8px 15px;border-radius:20px;font-size:12px;z-index:9999;border:1px solid #bd8a3e;';
+    notice.innerHTML = '<i class="fas fa-info-circle"></i> YouTube может быть недоступен, используйте Rutube или РЕН ТВ';
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 5000);
+}
+
+// ========== ИНИЦИАЛИЗАЦИЯ КНОПОК ПЕРЕКЛЮЧЕНИЯ (независимо от YouTube) ==========
+function initPlayerSwitchEarly() {
+    const switchBtns = document.querySelectorAll('.player-switch-btn');
+    console.log("🎮 Ранняя инициализация кнопок, найдено:", switchBtns.length);
+    
+    switchBtns.forEach(btn => {
+        btn.removeEventListener('click', handleSwitchClick);
+        btn.addEventListener('click', handleSwitchClick);
+    });
+}
+
 // ========== ЗАПУСК ==========
 window.onload = () => {
+    initPlayerSwitchEarly();
+    checkYouTubeAPI();
     renderSeasonNav();
     renderEpisodesGrid(currentSeason);
     loadComments();
