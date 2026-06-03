@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Нет соединения</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Gotham Pro', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a1a 0%, #0e1a0e 100%);
+            color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .offline-container {
+            padding: 30px;
+            background: #0f1a0f;
+            border-radius: 30px;
+            border: 1px solid #bd8a3e;
+            max-width: 300px;
+        }
+        .offline-icon {
+            font-size: 4rem;
+            color: #bd8a3e;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #ffd966;
+            margin-bottom: 15px;
+        }
+        p {
+            color: #ccc;
+            margin-bottom: 25px;
+        }
+        .retry-btn {
+            background: #bd8a3e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .retry-btn:hover {
+            background: #ffb347;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">
+            <i class="fas fa-wifi"></i>
+        </div>
+        <h2>Нет соединения</h2>
+        <p>Проверьте подключение к интернету и попробуйте снова.</p>
+        <button class="retry-btn" onclick="location.reload()">
+            <i class="fas fa-sync-alt"></i> Повторить
+        </button>
+        <p style="font-size: 0.7rem; margin-top: 20px;">Список серий и информация о персонажах доступны офлайн.</p>
+    </div>
+</body>
+</html>
