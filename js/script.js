@@ -4,7 +4,7 @@ let currentEpisodeObj = episodesData[0];
 let currentPlayer = null;
 let currentRutubePlayer = null;
 let currentRentvPlayer = null;
-let currentPlatform = 'youtube';
+let currentPlatform = 'rutube';
 let currentFormRating = 0;
 let autoplayEnabled = true;
 let autoplayTimer = null;
@@ -202,29 +202,66 @@ function createYouTubePlayer(videoId) {
     const playerDiv = document.getElementById('youtubePlayerContainer');
     if (!playerDiv) return;
     
-    if (currentPlayer && currentPlayer.destroy) {
-        currentPlayer.destroy();
-        currentPlayer = null;
-    }
-    
-    currentPlayer = new YT.Player('youtubePlayerContainer', {
-        height: '100%',
-        width: '100%',
-        videoId: videoId,
-        playerVars: {
-            'autoplay': 1,
-            'rel': 0,
-            'modestbranding': 1
-        },
-        events: {
-            'onStateChange': onPlayerStateChange,
-            'onError': (event) => {
-                console.error("YouTube плеер ошибка:", event);
-                playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffaa44;"><i class="fas fa-exclamation-triangle"></i> Ошибка YouTube, попробуйте Rutube</div>';
-                showToast("⚠️ Ошибка YouTube плеера, используйте Rutube");
-            }
+    // Проверяем, загружен ли уже API
+    if (typeof YT !== 'undefined' && YT && YT.Player) {
+        // API уже загружен, создаём плеер
+        if (currentPlayer && currentPlayer.destroy) {
+            currentPlayer.destroy();
+            currentPlayer = null;
         }
-    });
+        
+        playerDiv.innerHTML = '';
+        currentPlayer = new YT.Player('youtubePlayerContainer', {
+            height: '100%', width: '100%', videoId: videoId,
+            playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
+            events: {
+                'onStateChange': onPlayerStateChange,
+                'onError': () => {
+                    playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffaa44;"><i class="fas fa-exclamation-triangle"></i> Ошибка YouTube, попробуйте Rutube</div>';
+                    showToast("⚠️ Ошибка YouTube, используйте Rutube");
+                }
+            }
+        });
+    } else {
+        // API не загружен, загружаем его и ждём
+        playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffd966;"><i class="fas fa-spinner fa-pulse"></i> Загрузка YouTube...</div>';
+        
+        // Загружаем API
+        const script = document.createElement('script');
+        script.src = 'https://www.youtube.com/iframe_api';
+        script.async = true;
+        script.onload = () => {
+            // Ждём появления YT объекта
+            let attempts = 0;
+            const checkYT = setInterval(() => {
+                if (typeof YT !== 'undefined' && YT && YT.Player) {
+                    clearInterval(checkYT);
+                    // API загружен, создаём плеер
+                    if (currentPlayer && currentPlayer.destroy) currentPlayer.destroy();
+                    playerDiv.innerHTML = '';
+                    currentPlayer = new YT.Player('youtubePlayerContainer', {
+                        height: '100%', width: '100%', videoId: videoId,
+                        playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
+                        events: {
+                            'onStateChange': onPlayerStateChange,
+                            'onError': () => {
+                                playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffaa44;"><i class="fas fa-exclamation-triangle"></i> Ошибка YouTube</div>';
+                            }
+                        }
+                    });
+                }
+                attempts++;
+                if (attempts > 300) {
+                    clearInterval(checkYT);
+                    playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffaa44;"><i class="fas fa-exclamation-triangle"></i> YouTube недоступен, попробуйте Rutube</div>';
+                }
+            }, 100);
+        };
+        script.onerror = () => {
+            playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffaa44;"><i class="fas fa-exclamation-triangle"></i> YouTube недоступен</div>';
+        };
+        document.head.appendChild(script);
+    }
 }
 
 function onPlayerStateChange(event) {
@@ -323,6 +360,8 @@ function switchToYouTube() {
     
     if (currentEpisodeObj && currentEpisodeObj.youtubeId) {
         createYouTubePlayer(currentEpisodeObj.youtubeId);
+    } else {
+        showToast("❌ YouTube видео недоступно для этой серии");
     }
 }
 
@@ -422,9 +461,30 @@ function loadFirstEpisode() {
         }
         document.getElementById('currentSeriesDesc').innerHTML = firstEpisodes[0].desc;
         
-        const youtubeContainer = document.getElementById('youtubePlayerContainer');
-        if (youtubeContainer) {
-            youtubeContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#aaa;"> Нажмите на плеер, чтобы начать просмотр</div>';
+        // Показываем правильный плеер при загрузке
+        const youtubePlayer = document.getElementById('youtubePlayer');
+        const rutubePlayer = document.getElementById('rutubePlayer');
+        const rentvPlayer = document.getElementById('rentvPlayer');
+        
+        // По умолчанию показываем Rutube (если есть ID)
+        if (currentEpisodeObj.rutubeId) {
+            youtubePlayer.style.display = 'none';
+            rutubePlayer.style.display = 'block';
+            rentvPlayer.style.display = 'none';
+            loadRutubePlayer(currentEpisodeObj.rutubeId);
+            updateActiveButton('rutube');
+        } else if (currentEpisodeObj.youtubeId) {
+            // Если нет Rutube, но есть YouTube
+            youtubePlayer.style.display = 'block';
+            rutubePlayer.style.display = 'none';
+            rentvPlayer.style.display = 'none';
+            updateActiveButton('youtube');
+        } else if (currentEpisodeObj.rentvId) {
+            youtubePlayer.style.display = 'none';
+            rutubePlayer.style.display = 'none';
+            rentvPlayer.style.display = 'block';
+            updateActiveButton('rentv');
+            loadRentvPlayer(currentEpisodeObj.rentvId);
         }
     }
 }
@@ -869,25 +929,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ========== ПРЕДЗАГРУЗКА YOUTUBE API ==========
-let ytPreloadDone = false;
-
-function preloadYouTube() {
-    if (ytPreloadDone) return;
-    if (typeof YT !== 'undefined' && YT && YT.Player) {
-        ytPreloadDone = true;
-        console.log("✅ YouTube уже загружен");
-        return;
-    }
-    
-    console.log("🔄 Предзагрузка YouTube API...");
-    const script = document.createElement('script');
-    script.src = 'https://www.youtube.com/iframe_api';
-    script.async = true;
-    document.head.appendChild(script);
-    ytPreloadDone = true;
-}
-
 // ========== ЗАПУСК ==========
 window.onload = () => {
     initPlayerSwitch();
@@ -896,9 +937,6 @@ window.onload = () => {
     loadComments();
     loadRatings();
     updateFormStarsDisplay();
-    
-    // Предзагружаем YouTube API (фоном, не блокируя страницу)
-    preloadYouTube();
     
     const submitBtn = document.getElementById('submitCommentBtn');
     if (submitBtn) {
