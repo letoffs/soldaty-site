@@ -766,7 +766,21 @@ const cities = {
     madrid: { name: 'Мадрид', lat: 40.4168, lon: -3.7038 },
     istanbul: { name: 'Стамбул', lat: 41.0082, lon: 28.9784 },
     beijing: { name: 'Пекин', lat: 39.9042, lon: 116.4074 },
-    tokyo: { name: 'Токио', lat: 35.6895, lon: 139.6917 }
+    tashkent: { name: 'Ташкент', lat: 41.2995, lon: 69.2401 },
+    tokyo: { name: 'Токио', lat: 35.6895, lon: 139.6917 },
+    novosibirsk: { name: 'Новосибирск', lat: 55.0084, lon: 82.9357 },
+    ekaterinburg: { name: 'Екатеринбург', lat: 56.8389, lon: 60.6057 },
+    kazan: { name: 'Казань', lat: 55.7961, lon: 49.1064 },
+    nizhny: { name: 'Нижний Новгород', lat: 56.2965, lon: 43.9361 },
+    chelyabinsk: { name: 'Челябинск', lat: 55.1644, lon: 61.4368 },
+    omsk: { name: 'Омск', lat: 54.9885, lon: 73.3242 },
+    samara: { name: 'Самара', lat: 53.2415, lon: 50.2212 },
+    rostov: { name: 'Ростов-на-Дону', lat: 47.2221, lon: 39.7203 },
+    ufa: { name: 'Уфа', lat: 54.7388, lon: 55.9721 },
+    krasnoyarsk: { name: 'Красноярск', lat: 56.0153, lon: 92.8932 },
+    perm: { name: 'Пермь', lat: 58.0105, lon: 56.2294 },
+    voronezh: { name: 'Воронеж', lat: 51.6605, lon: 39.2003 },
+    volgograd: { name: 'Волгоград', lat: 48.7071, lon: 44.5169 },
 };
 
 async function fetchWeatherByCoords(lat, lon, cityName) {
