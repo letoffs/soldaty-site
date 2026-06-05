@@ -5658,3 +5658,112 @@ button,
         max-width: 100px;
     }
 }
+
+/* ===== СТИЛИ ДЛЯ ГАЛЕРЕИ ===== */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.gallery-item {
+    background: #1a2a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #3e5a3e;
+}
+
+.gallery-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    border-color: #bd8a3e;
+}
+
+.gallery-item img {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Квадратные превью */
+    object-fit: cover;
+    display: block;
+}
+
+.gallery-caption {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    color: #ddd;
+    text-align: center;
+    background: #0f1a0f;
+}
+
+/* Модальное окно для просмотра фото */
+.photo-modal {
+    display: none;
+    position: fixed;
+    z-index: 2100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.photo-modal-content {
+    max-width: 90%;
+    max-height: 80%;
+    object-fit: contain;
+    animation: zoomIn 0.3s ease;
+    border: 2px solid #bd8a3e;
+    border-radius: 8px;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.photo-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+    z-index: 2101;
+}
+
+.photo-modal-close:hover {
+    color: #bd8a3e;
+}
+
+.photo-modal-caption {
+    margin-top: 15px;
+    text-align: center;
+    color: #ccc;
+    font-size: 1rem;
+    background: rgba(0,0,0,0.7);
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 600px) {
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    .gallery-caption {
+        font-size: 0.7rem;
+    }
+    .photo-modal-close {
+        top: 10px;
+        right: 20px;
+        font-size: 30px;
+    }
+}
