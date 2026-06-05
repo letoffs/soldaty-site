@@ -37,7 +37,8 @@ const categories = [
     { id: "trailer", name: "Трейлеры и анонсы", icon: "fas fa-film", filter: v => v.category === "trailer" },
     { id: "clip", name: "Клипы и нарезки", icon: "fas fa-music", filter: v => v.category === "clip" },
     { id: "parody", name: "Пародии", icon: "fas fa-laugh", filter: v => v.category === "parody" },
-    { id: "behind", name: "Закулисье", icon: "fas fa-users", filter: v => v.category === "behind" }
+    { id: "behind", name: "Закулисье", icon: "fas fa-users", filter: v => v.category === "behind" },
+    { id: "dembel", name: "Дембель", icon: "fas fa-flag-checkered", filter: v => v.category === "dembel" },
 ];
 
 let currentCategory = "all";
