@@ -85,6 +85,7 @@ function openHeroModal(heroId) {
             <div class="hero-modal-tabs">
                 <button class="hero-tab active" onclick="switchTab('bio')">📖 Биография</button>
                 <button class="hero-tab" onclick="switchTab('details')">📋 Детали</button>
+                <button class="hero-tab" onclick="switchTab('gallery')">🖼️ Фото</button> <!-- Новая вкладка -->
             </div>
             
             <div id="heroTabBio" class="hero-tab-content active">
@@ -96,11 +97,66 @@ function openHeroModal(heroId) {
                 <h3>📋 Подробная информация</h3>
                 ${renderDetailsTab(hero)}
             </div>
+
+            <!-- НОВАЯ ВКЛАДКА GALLERY -->
+            <div id="heroTabGallery" class="hero-tab-content">
+                <h3>🖼️ Фотогалерея</h3>
+                ${renderGalleryTab(hero)}
+            </div>
         </div>
     `;
     
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+}
+
+// НОВАЯ ФУНКЦИЯ: Отрисовывает галерею
+function renderGalleryTab(hero) {
+    if (!hero.gallery || hero.gallery.length === 0) {
+        return '<div class="no-details">📭 Фотографии для этого персонажа пока не добавлены.</div>';
+    }
+
+    let html = '<div class="gallery-grid">';
+    for (const photo of hero.gallery) {
+        html += `
+            <div class="gallery-item" onclick="openPhotoModal('${escapeHtml(photo.url)}', '${escapeHtml(photo.caption)}')">
+                <img src="${escapeHtml(photo.url)}" alt="${escapeHtml(photo.caption)}" loading="lazy">
+                <div class="gallery-caption">${escapeHtml(photo.caption)}</div>
+            </div>
+        `;
+    }
+    html += '</div>';
+    
+    // Добавляем модальное окно для просмотра фото
+    html += `
+        <div id="photoModal" class="photo-modal">
+            <span class="photo-modal-close" onclick="closePhotoModal()">&times;</span>
+            <img class="photo-modal-content" id="modalPhoto">
+            <div id="modalCaption" class="photo-modal-caption"></div>
+        </div>
+    `;
+    return html;
+}
+
+// Функция для открытия увеличенного фото
+function openPhotoModal(imgUrl, caption) {
+    const modal = document.getElementById('photoModal');
+    const modalImg = document.getElementById('modalPhoto');
+    const captionText = document.getElementById('modalCaption');
+    
+    if (modal && modalImg) {
+        modal.style.display = "flex";
+        modalImg.src = imgUrl;
+        captionText.innerHTML = caption;
+    }
+}
+
+// Функция для закрытия окна с фото
+function closePhotoModal() {
+    const modal = document.getElementById('photoModal');
+    if (modal) {
+        modal.style.display = "none";
+    }
 }
 
 // ============================================
@@ -300,11 +356,13 @@ function renderDetailsTab(hero) {
 function switchTab(tabName) {
     const bioTab = document.getElementById('heroTabBio');
     const detailsTab = document.getElementById('heroTabDetails');
+    const galleryTab = document.getElementById('heroTabGallery');
     const tabs = document.querySelectorAll('.hero-tab');
     
-    // Скрываем все
+    // Скрываем все вкладки
     if (bioTab) bioTab.classList.remove('active');
     if (detailsTab) detailsTab.classList.remove('active');
+    if (galleryTab) galleryTab.classList.remove('active');
     
     // Убираем активный класс у всех кнопок
     tabs.forEach(tab => tab.classList.remove('active'));
@@ -316,6 +374,9 @@ function switchTab(tabName) {
     } else if (tabName === 'details' && detailsTab) {
         detailsTab.classList.add('active');
         if (tabs[1]) tabs[1].classList.add('active');
+    } else if (tabName === 'gallery' && galleryTab) {
+        galleryTab.classList.add('active');
+        if (tabs[2]) tabs[2].classList.add('active');
     }
 }
 
