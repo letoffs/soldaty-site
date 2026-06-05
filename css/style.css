@@ -4,12 +4,23 @@
     box-sizing: border-box;
 }
 
+@font-face {
+    font-family: 'Gotham Pro';
+    src: url('../fonts/GothamPro.woff2') format('woff2'),
+         url('../fonts/GothamPro.woff') format('woff'),
+         url('../fonts/GothamPro.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 body {
-    font-family: 'Gotham Pro', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Gotham Pro', 'Montserrat', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #1a2a1a 0%, #0e1a0e 100%);
     color: #eee;
     min-height: 100vh;
 }
+
 
 /* военный камуфляжный фон поверх */
 body::before {
