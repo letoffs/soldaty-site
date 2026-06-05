@@ -75,6 +75,9 @@ const heroesData = [
             { targetId: 3, type: "враг", name: "Майор Колобков" },
             { targetId: 5, type: "командир", name: "Капитан Николай Зубов" }
         ]
+        gallery: [
+            { url: "Resources/maklakov_now.png", caption: "Алексей Маклаков сейчас" }
+        ],
     },
     {
         id: 2,
