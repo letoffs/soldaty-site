@@ -21,8 +21,6 @@ body {
     min-height: 100vh;
 }
 
-
-/* военный камуфляжный фон поверх */
 body::before {
     content: "";
     position: fixed;
@@ -4795,6 +4793,11 @@ button,
     display: flex;
     align-items: center;
     gap: 10px;
+    margin: 0;
+}
+
+.sidebar-header h3 i {
+    color: #bd8a3e;
 }
 
 /* КАТЕГОРИИ (унифицированные) */
@@ -4835,6 +4838,10 @@ button,
     width: 24px;
     color: #bd8a3e;
     font-size: 1.1rem;
+}
+
+.category-item.active i {
+    color: #0f1a0f;
 }
 
 .category-name {
@@ -5707,6 +5714,8 @@ button,
     text-align: center;
     background: #0f1a0f;
 }
+
+
 
 /* Модальное окно для просмотра фото */
 .photo-modal {
