@@ -4881,12 +4881,16 @@ button,
 }
 
 .current-category-title {
+    font-size: 1.6rem;
+    color: #ffd966;
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #ffd966;
+}
+
+.current-category-title i {
+    color: #bd8a3e;
+    font-size: 1.4rem;
 }
 
 .gallery-count {
