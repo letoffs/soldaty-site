@@ -666,7 +666,7 @@ function renderWelcomeScreen() {
         html += `
             <div class="level-card ${!unlocked ? 'locked' : ''}" data-level="${i}">
                 <div class="level-icon">
-                    <img src="../Resources/quiz-levels/rank_${i+1}.png" alt="${level.name}" class="level-rank-img">
+                    <img src="Resources/quiz-levels/rank_${i+1}.png" alt="${level.name}" class="level-rank-img">
                 </div>
                 <div class="level-name">${level.name}</div>
                 <div class="level-desc">${level.description}</div>
