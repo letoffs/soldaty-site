@@ -639,7 +639,7 @@ function renderWelcomeScreen() {
     const levels = quizLevels;
     let html = `
         <div class="welcome-screen">
-            <div class="welcome-icon"><img src="Resources/soldaty_quiz_preview.jpg" alt="Викторина Солдаты" class="welcome-image"></div>
+            <div class="welcome-icon"><img src="../resources/soldaty_quiz_preview.jpg" alt="Викторина Солдаты" class="welcome-image"></div>
             <h2 class="welcome-title">Викторина «Солдаты»</h2>
             <div class="welcome-text">
                 <p>Выберите уровень сложности!</p>
@@ -666,7 +666,7 @@ function renderWelcomeScreen() {
         html += `
             <div class="level-card ${!unlocked ? 'locked' : ''}" data-level="${i}">
                 <div class="level-icon">
-                    <img src="resources/quiz-levels/rank_${i+1}.png" alt="${level.name}" class="level-rank-img">
+                    <img src="../Resources/quiz-levels/rank_${i+1}.png" alt="${level.name}" class="level-rank-img">
                 </div>
                 <div class="level-name">${level.name}</div>
                 <div class="level-desc">${level.description}</div>
