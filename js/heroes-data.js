@@ -2259,6 +2259,9 @@ const heroesData = [
             appearance: "9 сезон 2 серия",
             disappearance: "16 сезон 90 серия"
         },
+        gallery: [
+            { url: "Resources/buzin_now.jpg", caption: "Денис Бузин сейчас" }
+        ],
     },
     {
         id: 71,
