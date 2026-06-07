@@ -762,7 +762,9 @@ function renderCurrentQuestion() {
         <div class="quiz-card">
             <div class="quiz-header">
                 <div class="level-badge">
-                    <span class="level-icon">${level.icon}</span>
+                    <div class="level-icon" style="width: 40px; height: 40px; margin: 0;">
+                        <img src="resources/quiz-levels/rank_${currentLevel+1}.png" alt="${level.name}" class="level-rank-img-small">
+                    </div>
                     <span class="level-name">${level.name}</span>
                     <span class="level-requirement-mini">📋 Отвечено: ${answeredCount}/${totalQuestions}</span>
                 </div>
