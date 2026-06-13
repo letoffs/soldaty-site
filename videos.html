@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="css/videos.css">
     <link rel="icon" type="image/png" href="Resources/soldaty_icon.png">
     <style>
-        /* Секретная кнопка в футере */
         .secret-admin-btn {
             width: 100%;
             height: 20px;
@@ -21,6 +20,35 @@
         }
         .secret-admin-btn:hover {
             opacity: 0.5;
+        }
+        /* Стиль для поля с длительностью при авто-заполнении */
+        .duration-auto {
+            background: rgba(46, 125, 50, 0.3) !important;
+            border-color: #2e7d32 !important;
+        }
+        .fetch-duration-btn {
+            background: #2e7d32;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.2s;
+        }
+        .fetch-duration-btn:hover {
+            background: #3e9142;
+            transform: scale(1.02);
+        }
+        .duration-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .duration-input-wrapper input {
+            flex: 1;
+            margin-bottom: 0;
         }
     </style>
 </head>
@@ -93,7 +121,7 @@
         </div>
     </div>
 
-    <!-- АДМИН-ПАНЕЛЬ (только по пасхалке) -->
+    <!-- АДМИН-ПАНЕЛЬ -->
     <div id="adminPanel" class="admin-panel" style="display: none;">
         <div class="admin-header">
             <h3><i class="fas fa-crown"></i> Админ-панель — Управление видео</h3>
@@ -105,10 +133,16 @@
                 <input type="text" id="newVideoTitle" placeholder="Название видео *">
                 <input type="text" id="newVideoYoutubeId" placeholder="YouTube ID (например, SKgkjpOmSQ8) *">
                 <textarea id="newVideoDesc" placeholder="Описание видео"></textarea>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="newVideoDuration" placeholder="Длительность (4:16)" style="flex: 1;">
-                    <input type="text" id="newVideoYear" placeholder="Год" style="flex: 1;">
+                
+                <!-- Поле длительности с кнопкой авто-заполнения -->
+                <div class="duration-input-wrapper">
+                    <input type="text" id="newVideoDuration" placeholder="Длительность (авто-заполнится)" style="flex: 1;">
+                    <button type="button" id="fetchDurationBtn" class="fetch-duration-btn" onclick="fetchVideoDuration()">
+                        <i class="fas fa-magic"></i> Определить
+                    </button>
                 </div>
+                
+                <input type="text" id="newVideoYear" placeholder="Год">
                 <select id="newVideoCategory">
                     <option value="trailer">Трейлеры и анонсы</option>
                     <option value="clip">Клипы и нарезки</option>
@@ -129,7 +163,7 @@
                     Из ссылки https://youtu.be/<strong>SKgkjpOmSQ8</strong>
                 </p>
                 <p style="color: #ffd700; font-size: 14px;">
-                    <i class="fas fa-shield-alt"></i> Видео добавляются в реальном времени.<br>
+                    <i class="fas fa-magic"></i> Введите YouTube ID и нажмите <strong>"Определить"</strong> — длительность подставится автоматически!<br>
                     <i class="fas fa-trash-alt"></i> Наведите на карточку для удаления.
                 </p>
             </div>
@@ -174,10 +208,7 @@
 
     <div class="footer">
         <i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · 2004-2013
-        <div class="copyright">
-            © 2026 Фан-сайт сериала «Солдаты». Все права защищены.
-            Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
-        </div>
+        <div class="copyright">© 2026 Фан-сайт сериала «Солдаты»</div>
         <div id="secretAdminBtn" class="secret-admin-btn" title="⚡ Кликните 3 раза для доступа к админ-панели"></div>
     </div>
 </div>
@@ -191,7 +222,6 @@
 <script src="js/videos.js"></script>
 
 <script>
-    // АДМИН EMAIL
     const ADMIN_EMAIL = 'twinkjjjjkmnb@gmail.com';
     
     function isAdmin() {
@@ -202,13 +232,9 @@
     function showAdminPanel() {
         if (isAdmin()) {
             document.getElementById('adminPanel').style.display = 'block';
-            if (typeof showToastMessage === 'function') {
-                showToastMessage('🔐 Админ-панель активирована');
-            }
+            if (typeof showToastMessage === 'function') showToastMessage('🔐 Админ-панель активирована');
         } else {
-            if (typeof showToastMessage === 'function') {
-                showToastMessage('⛔ Доступ только для администратора');
-            }
+            if (typeof showToastMessage === 'function') showToastMessage('⛔ Доступ только для администратора');
         }
     }
 
@@ -216,6 +242,141 @@
         document.getElementById('adminPanel').style.display = 'none';
     }
 
+    // ==============================================
+    // АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ ДЛИТЕЛЬНОСТИ
+    // ==============================================
+    async function fetchVideoDuration() {
+        const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
+        const durationInput = document.getElementById('newVideoDuration');
+        
+        if (!youtubeId) {
+            if (typeof showToastMessage === 'function') {
+                showToastMessage('❌ Сначала введите YouTube ID');
+            }
+            return;
+        }
+        
+        // Показываем загрузку
+        const originalPlaceholder = durationInput.placeholder;
+        durationInput.placeholder = '⏳ Определяем длительность...';
+        
+        try {
+            // Используем YouTube API v3 (бесплатно, но нужен API ключ)
+            // Для простоты используем oEmbed API (без ключа, но с CORS)
+            const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
+            const data = await response.json();
+            
+            if (data && data.duration) {
+                // Длительность приходит в формате "PT#M#S" или "PT#H#M#S"
+                const durationFormatted = formatDuration(data.duration);
+                durationInput.value = durationFormatted;
+                durationInput.classList.add('duration-auto');
+                if (typeof showToastMessage === 'function') {
+                    showToastMessage(`✅ Длительность: ${durationFormatted}`);
+                }
+                setTimeout(() => durationInput.classList.remove('duration-auto'), 2000);
+            } else {
+                // Пробуем альтернативный API
+                await fetchDurationViaAPI(youtubeId, durationInput);
+            }
+        } catch (error) {
+            console.warn('oEmbed error:', error);
+            // Пробуем альтернативный метод
+            await fetchDurationViaAPI(youtubeId, durationInput);
+        }
+        
+        durationInput.placeholder = originalPlaceholder;
+    }
+    
+    // Альтернативный метод через API без ключа
+    async function fetchDurationViaAPI(youtubeId, durationInput) {
+        try {
+            // Используем YouTube oEmbed официальный
+            const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
+            const data = await response.json();
+            
+            if (data && data.html) {
+                // Не даёт длительность напрямую, пробуем другой метод
+                await fetchDurationViaIframe(youtubeId, durationInput);
+            } else {
+                throw new Error('No data');
+            }
+        } catch (error) {
+            // Последний метод - через iframe (имитируем загрузку)
+            await fetchDurationViaIframe(youtubeId, durationInput);
+        }
+    }
+    
+    // Метод через скрытый iframe (самый надёжный без API ключа)
+    function fetchDurationViaIframe(youtubeId, durationInput) {
+        return new Promise((resolve) => {
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1`;
+            
+            iframe.onload = () => {
+                try {
+                    const player = new YT.Player(iframe, {
+                        events: {
+                            onReady: (event) => {
+                                const duration = event.target.getDuration();
+                                if (duration && duration > 0) {
+                                    const minutes = Math.floor(duration / 60);
+                                    const seconds = Math.floor(duration % 60);
+                                    const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                                    durationInput.value = formatted;
+                                    durationInput.classList.add('duration-auto');
+                                    if (typeof showToastMessage === 'function') {
+                                        showToastMessage(`✅ Длительность: ${formatted}`);
+                                    }
+                                    setTimeout(() => durationInput.classList.remove('duration-auto'), 2000);
+                                }
+                                iframe.remove();
+                                resolve();
+                            },
+                            onError: () => {
+                                iframe.remove();
+                                resolve();
+                            }
+                        }
+                    });
+                } catch (e) {
+                    iframe.remove();
+                    resolve();
+                }
+            };
+            
+            iframe.onerror = () => {
+                iframe.remove();
+                resolve();
+            };
+            
+            document.body.appendChild(iframe);
+            
+            // Таймаут на случай если не загрузится
+            setTimeout(() => {
+                if (iframe.parentNode) iframe.remove();
+                resolve();
+            }, 5000);
+        });
+    }
+    
+    // Конвертация ISO 8601 duration в MM:SS
+    function formatDuration(isoDuration) {
+        const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        if (!match) return '0:00';
+        
+        const hours = parseInt(match[1]) || 0;
+        const minutes = parseInt(match[2]) || 0;
+        const seconds = parseInt(match[3]) || 0;
+        
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Функция добавления видео
     async function addNewVideo() {
         if (!isAdmin()) {
             if (typeof showToastMessage === 'function') showToastMessage('⛔ Нет прав');
@@ -225,7 +386,7 @@
         const title = document.getElementById('newVideoTitle').value.trim();
         const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
         const desc = document.getElementById('newVideoDesc').value.trim();
-        const duration = document.getElementById('newVideoDuration').value.trim() || "0:00";
+        let duration = document.getElementById('newVideoDuration').value.trim();
         const year = document.getElementById('newVideoYear').value.trim() || new Date().getFullYear().toString();
         const category = document.getElementById('newVideoCategory').value;
         const is18Plus = document.getElementById('newVideo18Plus').checked;
@@ -234,6 +395,15 @@
             if (typeof showToastMessage === 'function') showToastMessage('❌ Заполните название и YouTube ID');
             return;
         }
+        
+        // Если длительность не указана, пробуем определить автоматически
+        if (!duration) {
+            if (typeof showToastMessage === 'function') showToastMessage('⏳ Определяем длительность...');
+            await fetchVideoDuration();
+            duration = document.getElementById('newVideoDuration').value.trim();
+        }
+        
+        if (!duration) duration = "0:00";
 
         if (typeof window.addVideoToFirebase === 'function') {
             const success = await window.addVideoToFirebase({
@@ -252,9 +422,7 @@
         }
     }
 
-    // ==============================================
-    // ПАСХАЛКА: 3 клика по секретной кнопке в футере
-    // ==============================================
+    // Пасхалка
     let clickCount = 0;
     let clickTimer = null;
     
@@ -267,9 +435,7 @@
             clickCount++;
             
             if (clickTimer) clearTimeout(clickTimer);
-            clickTimer = setTimeout(() => {
-                clickCount = 0;
-            }, 1000);
+            clickTimer = setTimeout(() => clickCount = 0, 1000);
             
             if (clickCount === 3) {
                 clickCount = 0;
@@ -277,9 +443,7 @@
                 
                 const user = firebase.auth().currentUser;
                 if (!user) {
-                    if (typeof showToastMessage === 'function') {
-                        showToastMessage('🔐 Сначала войдите в аккаунт');
-                    }
+                    if (typeof showToastMessage === 'function') showToastMessage('🔐 Сначала войдите в аккаунт');
                     if (typeof showAuthModal === 'function') showAuthModal();
                     return;
                 }
@@ -287,9 +451,7 @@
                 if (isAdmin()) {
                     showAdminPanel();
                 } else {
-                    if (typeof showToastMessage === 'function') {
-                        showToastMessage('⛔ Доступ только для администратора');
-                    }
+                    if (typeof showToastMessage === 'function') showToastMessage('⛔ Доступ только для администратора');
                 }
             }
         });
@@ -297,6 +459,16 @@
     
     document.addEventListener('DOMContentLoaded', function() {
         initSecretAdminButton();
+        
+        // Авто-определение при потере фокуса с поля YouTube ID
+        const youtubeIdInput = document.getElementById('newVideoYoutubeId');
+        if (youtubeIdInput) {
+            youtubeIdInput.addEventListener('blur', function() {
+                if (this.value.trim() && !document.getElementById('newVideoDuration').value.trim()) {
+                    fetchVideoDuration();
+                }
+            });
+        }
     });
 </script>
 </body>
