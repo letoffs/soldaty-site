@@ -3655,6 +3655,9 @@ button,
 }
 
 .season-description-header {
+    font-family: 'Magistral-BoldItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-style: italic;
     font-size: 1.6rem;
     color: #ffd966;
     margin-bottom: 20px;
