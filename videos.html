@@ -85,74 +85,64 @@
             <h3><i class="fas fa-crown"></i> Админ-панель — Управление видео</h3>
             <button onclick="hideAdminPanel()" class="close-admin"><i class="fas fa-times"></i> Закрыть</button>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div>
-                <h4><i class="fas fa-plus-circle"></i> Добавить новое видео</h4>
-                <input type="text" id="newVideoTitle" placeholder="Название видео *">
-                <input type="text" id="newVideoYoutubeId" placeholder="YouTube ID (например, SKgkjpOmSQ8) *">
-                <textarea id="newVideoDesc" placeholder="Описание видео"></textarea>
-                
-                <div class="duration-input-wrapper">
-                    <input type="text" id="newVideoDuration" placeholder="Длительность (авто-заполнится)">
-                    <button type="button" class="fetch-duration-btn" onclick="fetchVideoDuration()">
-                        <i class="fas fa-magic"></i> Определить
-                    </button>
-                </div>
-
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; color: #ffd966; font-size: 14px;">
-                        <i class="fas fa-image"></i> Превью для видео:
+        
+        <div class="upload-methods">
+            <div class="upload-method">
+                <h3><i class="fas fa-upload"></i> Загрузить с компьютера</h3>
+                <div class="file-input-wrapper">
+                    <label class="file-input-label">
+                        <i class="fas fa-folder-open"></i> Выбрать файл
+                        <input type="file" id="thumbFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none" onchange="uploadThumbnailFile(event)">
                     </label>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
-                        <button type="button" class="generate-thumb-btn upload-thumb-btn" onclick="document.getElementById('thumbFileInput').click()">
-                            <i class="fas fa-upload"></i> Загрузить фото с компьютера
-                        </button>
-                        <button type="button" class="generate-thumb-btn" onclick="generateThumbnailFromYouTube()" style="background: #ff5722;">
-                            <i class="fab fa-youtube"></i> Из YouTube
-                        </button>
-                    </div>
-                    <input type="file" id="thumbFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none" onchange="uploadThumbnailFile(event)">
-                    <input type="hidden" id="newVideoThumb" value="">
-                    
-                    <div id="thumbPreview" class="thumb-preview" style="display: none;">
-                        <img id="thumbPreviewImg" src="" alt="Превью">
-                        <span class="thumb-hint"><i class="fas fa-check-circle"></i> Превью загружено</span>
-                        <button type="button" class="clear-thumb-btn" onclick="clearThumbnail()">
-                            <i class="fas fa-times"></i> Удалить
-                        </button>
-                    </div>
-                    <div class="thumb-hint" style="font-size: 12px; color: #8aa07a;">
-                        <i class="fas fa-info-circle"></i> Поддерживаются: JPG, PNG, WEBP, GIF до 2 МБ. Если не загрузить — будет превью из YouTube.
-                    </div>
                 </div>
-                
-                <input type="text" id="newVideoYear" placeholder="Год">
-                <select id="newVideoCategory">
-                    <option value="trailer">Трейлеры и анонсы</option>
-                    <option value="clip">Клипы и нарезки</option>
-                    <option value="parody">Пародии</option>
-                    <option value="behind">Закулисье</option>
-                    <option value="dembel">Дембель</option>
-                </select>
-                <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
-                    <input type="checkbox" id="newVideo18Plus">
-                    <span>Контент 18+</span>
-                </label>
-                <button onclick="addNewVideo()"><i class="fas fa-save"></i> Добавить видео</button>
+                <div id="thumbPreview" class="image-preview" style="display: none;">
+                    <img id="thumbPreviewImg" src="" alt="Preview">
+                </div>
             </div>
-            <div>
-                <h4><i class="fas fa-info-circle"></i> Инструкция</h4>
-                <p style="color: #ccc; font-size: 14px;">
-                    <strong>Как получить YouTube ID:</strong><br>
-                    Из ссылки https://youtu.be/<strong>SKgkjpOmSQ8</strong>
-                </p>
-                <p style="color: #ffd700; font-size: 14px;">
-                    <i class="fas fa-magic"></i> Введите YouTube ID и нажмите <strong>"Определить"</strong> — длительность подставится автоматически!<br>
-                    <i class="fas fa-upload"></i> <strong>Превью:</strong> загрузите своё фото или возьмите из YouTube.<br>
-                    <i class="fas fa-edit"></i> Наведите на карточку → ✏️ Редактировать или 🗑️ Удалить.
-                </p>
+            
+            <div class="upload-method">
+                <h3><i class="fas fa-link"></i> Ссылка на превью</h3>
+                <input type="url" id="newVideoUrlInput" class="url-input" placeholder="https://example.com/preview.jpg">
+                <div id="urlPreview" class="image-preview" style="display: none;">
+                    <img id="urlPreviewImg" src="" alt="Preview">
+                </div>
+                <button type="button" class="generate-thumb-btn" onclick="generateThumbnailFromYouTube()" style="margin-top: 10px; width: 100%;">
+                    <i class="fab fa-youtube"></i> Из YouTube
+                </button>
             </div>
         </div>
+        
+        <input type="hidden" id="newVideoThumb" value="">
+        
+        <input type="text" id="newVideoTitle" placeholder="Название видео *">
+        <input type="text" id="newVideoYoutubeId" placeholder="YouTube ID (например, SKgkjpOmSQ8) *">
+        <textarea id="newVideoDesc" placeholder="Описание видео"></textarea>
+        
+        <div class="duration-input-wrapper">
+            <input type="text" id="newVideoDuration" placeholder="Длительность">
+            <button type="button" class="fetch-duration-btn" onclick="fetchVideoDuration()">
+                <i class="fas fa-magic"></i> Определить
+            </button>
+        </div>
+        
+        <input type="text" id="newVideoYear" placeholder="Год">
+        
+        <select id="newVideoCategory">
+            <option value="trailer">Трейлеры и анонсы</option>
+            <option value="clip">Клипы и нарезки</option>
+            <option value="parody">Пародии</option>
+            <option value="behind">Закулисье</option>
+            <option value="dembel">Дембель</option>
+        </select>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+            <input type="checkbox" id="newVideo18Plus">
+            <span>Контент 18+</span>
+        </label>
+        
+        <button onclick="addNewVideo(event)" class="submit-btn">
+            <i class="fas fa-save"></i> Добавить видео
+        </button>
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
@@ -171,30 +161,33 @@
                 </button>
             </div>
             
-            <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 8px; color: #ffd966; font-size: 14px;">
-                    <i class="fas fa-image"></i> Превью для видео:
-                </label>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
-                    <button type="button" class="generate-thumb-btn upload-thumb-btn" onclick="document.getElementById('editThumbFileInput').click()">
-                        <i class="fas fa-upload"></i> Загрузить новое фото
-                    </button>
-                    <button type="button" class="generate-thumb-btn" onclick="generateEditThumbnailFromYouTube()" style="background: #ff5722;">
-                        <i class="fab fa-youtube"></i> Из YouTube
-                    </button>
+            <div class="upload-methods" style="margin-top: 10px;">
+                <div class="upload-method">
+                    <h3><i class="fas fa-upload"></i> Загрузить новое фото</h3>
+                    <div class="file-input-wrapper">
+                        <label class="file-input-label">
+                            <i class="fas fa-folder-open"></i> Выбрать файл
+                            <input type="file" id="editThumbFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none" onchange="uploadEditThumbnailFile(event)">
+                        </label>
+                    </div>
+                    <div id="editThumbPreview" class="image-preview" style="display: none;">
+                        <img id="editThumbPreviewImg" src="" alt="Preview">
+                    </div>
                 </div>
-                <input type="file" id="editThumbFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none" onchange="uploadEditThumbnailFile(event)">
-                <input type="hidden" id="editVideoThumb" value="">
                 
-                <div id="editThumbPreview" class="thumb-preview" style="display: none;">
-                    <img id="editThumbPreviewImg" src="" alt="Превью">
-                    <span class="thumb-hint"><i class="fas fa-check-circle"></i> Превью загружено</span>
-                    <button type="button" class="clear-thumb-btn" onclick="clearEditThumbnail()">
-                        <i class="fas fa-times"></i> Удалить
+                <div class="upload-method">
+                    <h3><i class="fas fa-link"></i> Ссылка на превью</h3>
+                    <input type="url" id="editVideoUrlInput" class="url-input" placeholder="https://example.com/preview.jpg">
+                    <div id="editUrlPreview" class="image-preview" style="display: none;">
+                        <img id="editUrlPreviewImg" src="" alt="Preview">
+                    </div>
+                    <button type="button" class="generate-thumb-btn" onclick="generateEditThumbnailFromYouTube()" style="margin-top: 10px; width: 100%;">
+                        <i class="fab fa-youtube"></i> Из YouTube
                     </button>
                 </div>
             </div>
             
+            <input type="hidden" id="editVideoThumb" value="">
             <input type="text" id="editVideoYear" placeholder="Год">
             <select id="editVideoCategory">
                 <option value="trailer">Трейлеры и анонсы</option>
@@ -208,7 +201,7 @@
                 <span>Контент 18+</span>
             </label>
             <div class="edit-buttons">
-                <button class="save-edit-btn" onclick="saveEditedVideo()"><i class="fas fa-save"></i> Сохранить</button>
+                <button class="save-edit-btn" onclick="saveEditedVideo(event)"><i class="fas fa-save"></i> Сохранить</button>
                 <button class="cancel-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i> Отмена</button>
             </div>
         </div>
@@ -229,6 +222,7 @@
         <div class="description-content"><p>Трейлеры, анонсы и лучшие клипы по мотивам сериала «Солдаты».</p></div>
     </div>
 
+    <!-- ОСНОВНАЯ ЧАСТЬ С БОКОВОЙ ПАНЕЛЬЮ -->
     <div class="videos-page-layout">
         <aside class="videos-sidebar">
             <div class="sidebar-header">
@@ -262,7 +256,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="js/firebase-auth.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
