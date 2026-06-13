@@ -14,7 +14,6 @@ let videosData = [];
 let currentCategory = "all";
 let currentVideoPlayer = null;
 
-// АДМИН EMAIL
 const ADMIN_EMAIL = 'twinkjjjjkmnb@gmail.com';
 
 function isAdmin() {
@@ -23,7 +22,7 @@ function isAdmin() {
 }
 
 // ==============================================
-// FIREBASE ФУНКЦИИ
+// FIREBASE REALTIME DATABASE
 // ==============================================
 async function loadVideosFromFirebase() {
     try {
@@ -44,7 +43,7 @@ async function loadVideosFromFirebase() {
         renderCategories();
         renderVideos();
     } catch (error) {
-        console.error('Ошибка загрузки видео:', error);
+        console.error('Ошибка загрузки:', error);
         showToastMessage('❌ Ошибка загрузки видео');
     }
 }
@@ -99,43 +98,52 @@ async function deleteVideoFromFirebase(video) {
 }
 
 // ==============================================
-// ЗАГРУЗКА ПРЕВЬЮ В FIREBASE STORAGE
+// ПРЕОБРАЗОВАНИЕ В BASE64
 // ==============================================
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+// ==============================================
+// ЗАГРУЗКА ПРЕВЬЮ - ЛИМИТ 5 МБ
+// ==============================================
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 МБ
+
 async function uploadThumbnailFile(event) {
     const file = event.target.files[0];
     if (!file) return;
     
     if (!file.type.match('image.*')) {
-        showToastMessage('❌ Пожалуйста, выберите изображение (JPG, PNG, WEBP, GIF)');
+        showToastMessage('❌ Выберите изображение (JPG, PNG, WEBP, GIF)');
         return;
     }
     
-    if (file.size > 2 * 1024 * 1024) {
-        showToastMessage('❌ Файл слишком большой (максимум 2 МБ)');
+    if (file.size > MAX_FILE_SIZE) {
+        showToastMessage('❌ Файл больше 5 МБ');
         return;
     }
     
-    showToastMessage('⏳ Загрузка превью...');
+    showToastMessage('⏳ Конвертация...');
     
     try {
-        const timestamp = Date.now();
-        const fileName = `thumbnails/${timestamp}_${file.name}`;
-        const storageRef = firebase.storage().ref(fileName);
-        
-        const snapshot = await storageRef.put(file);
-        const downloadUrl = await snapshot.ref.getDownloadURL();
-        
-        document.getElementById('newVideoThumb').value = downloadUrl;
+        const base64 = await fileToBase64(file);
+        document.getElementById('newVideoThumb').value = base64;
         
         const previewDiv = document.getElementById('thumbPreview');
         const previewImg = document.getElementById('thumbPreviewImg');
-        previewImg.src = downloadUrl;
+        previewImg.src = base64;
         previewDiv.style.display = 'flex';
         
-        showToastMessage('✅ Превью загружено!');
+        const sizeKB = (base64.length / 1024).toFixed(1);
+        showToastMessage(`✅ Превью готово (${sizeKB} КБ)`);
     } catch (error) {
-        console.error('Ошибка загрузки:', error);
-        showToastMessage('❌ Ошибка загрузки изображения');
+        console.error('Ошибка:', error);
+        showToastMessage('❌ Ошибка');
     }
 }
 
@@ -144,36 +152,59 @@ async function uploadEditThumbnailFile(event) {
     if (!file) return;
     
     if (!file.type.match('image.*')) {
-        showToastMessage('❌ Пожалуйста, выберите изображение');
+        showToastMessage('❌ Выберите изображение');
         return;
     }
     
-    if (file.size > 2 * 1024 * 1024) {
-        showToastMessage('❌ Файл слишком большой (максимум 2 МБ)');
+    if (file.size > MAX_FILE_SIZE) {
+        showToastMessage('❌ Файл больше 5 МБ');
         return;
     }
     
-    showToastMessage('⏳ Загрузка превью...');
+    showToastMessage('⏳ Конвертация...');
     
     try {
-        const timestamp = Date.now();
-        const fileName = `thumbnails/${timestamp}_${file.name}`;
-        const storageRef = firebase.storage().ref(fileName);
-        
-        const snapshot = await storageRef.put(file);
-        const downloadUrl = await snapshot.ref.getDownloadURL();
-        
-        document.getElementById('editVideoThumb').value = downloadUrl;
+        const base64 = await fileToBase64(file);
+        document.getElementById('editVideoThumb').value = base64;
         
         const previewDiv = document.getElementById('editThumbPreview');
         const previewImg = document.getElementById('editThumbPreviewImg');
-        previewImg.src = downloadUrl;
+        previewImg.src = base64;
         previewDiv.style.display = 'flex';
         
-        showToastMessage('✅ Превью обновлено!');
+        showToastMessage('✅ Превью обновлено');
     } catch (error) {
-        console.error('Ошибка загрузки:', error);
-        showToastMessage('❌ Ошибка загрузки изображения');
+        console.error('Ошибка:', error);
+        showToastMessage('❌ Ошибка');
+    }
+}
+
+// ==============================================
+// ПРЕДПРОСМОТР
+// ==============================================
+function previewThumbnailFromUrl() {
+    const val = document.getElementById('newVideoThumb').value.trim();
+    const previewDiv = document.getElementById('thumbPreview');
+    const previewImg = document.getElementById('thumbPreviewImg');
+    
+    if (val) {
+        previewImg.src = val;
+        previewDiv.style.display = 'flex';
+    } else {
+        previewDiv.style.display = 'none';
+    }
+}
+
+function previewEditThumbnailFromUrl() {
+    const val = document.getElementById('editVideoThumb').value.trim();
+    const previewDiv = document.getElementById('editThumbPreview');
+    const previewImg = document.getElementById('editThumbPreviewImg');
+    
+    if (val) {
+        previewImg.src = val;
+        previewDiv.style.display = 'flex';
+    } else {
+        previewDiv.style.display = 'none';
     }
 }
 
@@ -182,7 +213,7 @@ function clearThumbnail() {
     document.getElementById('thumbPreview').style.display = 'none';
     document.getElementById('thumbPreviewImg').src = '';
     document.getElementById('thumbFileInput').value = '';
-    showToastMessage('🗑️ Превью удалено, будет из YouTube');
+    showToastMessage('🗑️ Превью удалено');
 }
 
 function clearEditThumbnail() {
@@ -194,7 +225,176 @@ function clearEditThumbnail() {
 }
 
 // ==============================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// YOUTUBE ПРЕВЬЮ
+// ==============================================
+function generateThumbnailFromYouTube() {
+    const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
+    if (!youtubeId) {
+        showToastMessage('❌ Введите YouTube ID');
+        return;
+    }
+    const thumbUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+    document.getElementById('newVideoThumb').value = thumbUrl;
+    
+    const previewDiv = document.getElementById('thumbPreview');
+    document.getElementById('thumbPreviewImg').src = thumbUrl;
+    previewDiv.style.display = 'flex';
+    showToastMessage('✅ Превью из YouTube');
+}
+
+function generateEditThumbnailFromYouTube() {
+    const youtubeId = document.getElementById('editVideoYoutubeId').value.trim();
+    if (!youtubeId) {
+        showToastMessage('❌ Введите YouTube ID');
+        return;
+    }
+    const thumbUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+    document.getElementById('editVideoThumb').value = thumbUrl;
+    
+    const previewDiv = document.getElementById('editThumbPreview');
+    document.getElementById('editThumbPreviewImg').src = thumbUrl;
+    previewDiv.style.display = 'flex';
+    showToastMessage('✅ Превью из YouTube');
+}
+
+// ==============================================
+// ДЛИТЕЛЬНОСТЬ
+// ==============================================
+async function fetchVideoDuration() {
+    const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
+    const durationInput = document.getElementById('newVideoDuration');
+    if (!youtubeId) { showToastMessage('❌ Введите YouTube ID'); return; }
+    
+    durationInput.placeholder = '⏳...';
+    try {
+        const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
+        const data = await response.json();
+        if (data && data.duration) {
+            durationInput.value = formatDuration(data.duration);
+            showToastMessage(`✅ Длительность: ${durationInput.value}`);
+        }
+    } catch (error) {}
+    durationInput.placeholder = 'Длительность';
+}
+
+async function fetchEditVideoDuration() {
+    const youtubeId = document.getElementById('editVideoYoutubeId').value.trim();
+    const durationInput = document.getElementById('editVideoDuration');
+    if (!youtubeId) { showToastMessage('❌ Введите YouTube ID'); return; }
+    
+    try {
+        const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
+        const data = await response.json();
+        if (data && data.duration) {
+            durationInput.value = formatDuration(data.duration);
+            showToastMessage(`✅ Длительность: ${durationInput.value}`);
+        }
+    } catch (error) {}
+}
+
+function formatDuration(isoDuration) {
+    const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return '0:00';
+    const hours = parseInt(match[1]) || 0;
+    const minutes = parseInt(match[2]) || 0;
+    const seconds = parseInt(match[3]) || 0;
+    if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// ==============================================
+// ДОБАВЛЕНИЕ
+// ==============================================
+async function addNewVideo() {
+    if (!isAdmin()) { showToastMessage('⛔ Нет прав'); return; }
+    
+    const title = document.getElementById('newVideoTitle').value.trim();
+    const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
+    if (!title || !youtubeId) { showToastMessage('❌ Заполните название и YouTube ID'); return; }
+    
+    let duration = document.getElementById('newVideoDuration').value.trim();
+    if (!duration) duration = "0:00";
+    
+    const videoData = {
+        title, youtubeId,
+        desc: document.getElementById('newVideoDesc').value.trim() || "",
+        duration,
+        thumb: document.getElementById('newVideoThumb').value.trim() || "",
+        year: document.getElementById('newVideoYear').value.trim() || new Date().getFullYear().toString(),
+        category: document.getElementById('newVideoCategory').value,
+        is18Plus: document.getElementById('newVideo18Plus').checked
+    };
+    
+    await addVideoToFirebase(videoData);
+    
+    document.getElementById('newVideoTitle').value = '';
+    document.getElementById('newVideoYoutubeId').value = '';
+    document.getElementById('newVideoDesc').value = '';
+    document.getElementById('newVideoDuration').value = '';
+    document.getElementById('newVideoThumb').value = '';
+    document.getElementById('newVideoYear').value = '';
+    document.getElementById('newVideo18Plus').checked = false;
+    document.getElementById('thumbPreview').style.display = 'none';
+    document.getElementById('thumbFileInput').value = '';
+}
+
+// ==============================================
+// РЕДАКТИРОВАНИЕ
+// ==============================================
+let currentEditVideo = null;
+
+function openEditModal(video) {
+    currentEditVideo = video;
+    document.getElementById('editVideoId').value = video.id;
+    document.getElementById('editVideoTitle').value = video.title || '';
+    document.getElementById('editVideoYoutubeId').value = video.youtubeId || '';
+    document.getElementById('editVideoDesc').value = video.desc || '';
+    document.getElementById('editVideoDuration').value = video.duration || '';
+    document.getElementById('editVideoThumb').value = video.thumb || '';
+    document.getElementById('editVideoYear').value = video.year || '';
+    document.getElementById('editVideoCategory').value = video.category || 'trailer';
+    document.getElementById('editVideo18Plus').checked = video.is18Plus || false;
+    
+    if (video.thumb) {
+        document.getElementById('editThumbPreviewImg').src = video.thumb;
+        document.getElementById('editThumbPreview').style.display = 'flex';
+    } else {
+        document.getElementById('editThumbPreview').style.display = 'none';
+    }
+    
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    currentEditVideo = null;
+}
+
+async function saveEditedVideo() {
+    if (!isAdmin() || !currentEditVideo) return;
+    
+    const updatedData = {
+        title: document.getElementById('editVideoTitle').value.trim(),
+        youtubeId: document.getElementById('editVideoYoutubeId').value.trim(),
+        desc: document.getElementById('editVideoDesc').value.trim(),
+        duration: document.getElementById('editVideoDuration').value.trim() || "0:00",
+        thumb: document.getElementById('editVideoThumb').value.trim(),
+        year: document.getElementById('editVideoYear').value.trim(),
+        category: document.getElementById('editVideoCategory').value,
+        is18Plus: document.getElementById('editVideo18Plus').checked
+    };
+    
+    if (!updatedData.title || !updatedData.youtubeId) {
+        showToastMessage('❌ Название и YouTube ID обязательны');
+        return;
+    }
+    
+    await updateVideoInFirebase(currentEditVideo.firebaseKey, updatedData);
+    closeEditModal();
+}
+
+// ==============================================
+// ВСПОМОГАТЕЛЬНЫЕ
 // ==============================================
 function showToastMessage(message) {
     let toast = document.getElementById('toast');
@@ -225,49 +425,6 @@ function closeVideoModal() {
     if (container) container.innerHTML = '';
 }
 
-// ==============================================
-// ПРОВЕРКА ВОЗРАСТА
-// ==============================================
-function showAgeVerificationModal(video, callback) {
-    let ageModal = document.getElementById('ageVerificationModal');
-    if (!ageModal) {
-        ageModal = document.createElement('div');
-        ageModal.id = 'ageVerificationModal';
-        ageModal.className = 'modal age-verification-modal';
-        ageModal.innerHTML = `
-            <div class="modal-content age-verification-content">
-                <div class="age-verification-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                <h3>Внимание! Контент 18+</h3>
-                <p>Это видео содержит сцены, которые могут быть неуместны для лиц младше 18 лет.</p>
-                <div class="age-verification-buttons">
-                    <button id="ageConfirmBtn" class="age-confirm-btn"><i class="fas fa-check-circle"></i> Мне есть 18 лет</button>
-                    <button id="ageCancelBtn" class="age-cancel-btn"><i class="fas fa-times-circle"></i> Меньше 18 лет</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(ageModal);
-    }
-    ageModal.style.display = 'flex';
-    
-    const onConfirm = () => {
-        ageModal.style.display = 'none';
-        if (callback) callback();
-    };
-    const onCancel = () => {
-        ageModal.style.display = 'none';
-        showToastMessage('⛔ Доступ запрещён. Контент 18+');
-    };
-    
-    const confirmBtn = document.getElementById('ageConfirmBtn');
-    const cancelBtn = document.getElementById('ageCancelBtn');
-    const newConfirm = confirmBtn.cloneNode(true);
-    const newCancel = cancelBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
-    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-    newConfirm.addEventListener('click', onConfirm);
-    newCancel.addEventListener('click', onCancel);
-}
-
 function playVideoAfterCheck(video) {
     const modal = document.getElementById('videoModal');
     const container = document.getElementById('videoPlayer');
@@ -290,12 +447,8 @@ function playVideoAfterCheck(video) {
         videoId: video.youtubeId,
         playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
         events: {
-            onError: (event) => {
-                if (event.data === 150 || event.data === 101) {
-                    container.innerHTML = `<iframe src="https://corsproxy.io/?url=https://www.youtube.com/embed/${video.youtubeId}" style="width:100%;height:100%;border:none;" allowfullscreen></iframe>`;
-                } else {
-                    showToastMessage('❌ Ошибка загрузки видео');
-                }
+            onError: () => {
+                container.innerHTML = `<iframe src="https://corsproxy.io/?url=https://www.youtube.com/embed/${video.youtubeId}" style="width:100%;height:100%;border:none;" allowfullscreen></iframe>`;
             }
         }
     });
@@ -305,10 +458,6 @@ function playVideoAfterCheck(video) {
 function playVideo(video) {
     if (!video || !video.youtubeId) {
         showToastMessage('❌ Видео недоступно');
-        return;
-    }
-    if (video.is18Plus === true) {
-        showAgeVerificationModal(video, () => playVideoAfterCheck(video));
         return;
     }
     playVideoAfterCheck(video);
@@ -364,7 +513,7 @@ function renderVideos() {
         const blurClass = video.is18Plus ? 'blurred-thumb' : '';
         const blurOverlay = video.is18Plus ? '<div class="blur-overlay"><i class="fas fa-lock"></i> Подтвердите возраст</div>' : '';
         
-        const thumbUrl = video.thumb && video.thumb !== '' 
+        let thumbUrl = video.thumb && video.thumb !== '' 
             ? video.thumb 
             : `https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`;
         
@@ -404,17 +553,15 @@ function renderVideos() {
 }
 
 // ==============================================
-// АДМИН-ПАНЕЛЬ
+// АДМИНКА И ПАСХАЛКА
 // ==============================================
 function showAdminPanel() {
     const panel = document.getElementById('adminPanel');
-    if (panel) {
-        if (isAdmin()) {
-            panel.style.display = 'block';
-            showToastMessage('🔐 Админ-панель активирована');
-        } else {
-            showToastMessage('⛔ Доступ только для администратора');
-        }
+    if (panel && isAdmin()) {
+        panel.style.display = 'block';
+        showToastMessage('🔐 Админ-панель активирована');
+    } else if (!isAdmin()) {
+        showToastMessage('⛔ Доступ только для администратора');
     }
 }
 
@@ -423,221 +570,6 @@ function hideAdminPanel() {
     if (panel) panel.style.display = 'none';
 }
 
-// Генерация превью из YouTube
-function generateThumbnailFromYouTube() {
-    const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
-    if (!youtubeId) {
-        showToastMessage('❌ Сначала введите YouTube ID');
-        return;
-    }
-    const thumbUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
-    const previewDiv = document.getElementById('thumbPreview');
-    const previewImg = document.getElementById('thumbPreviewImg');
-    const thumbInput = document.getElementById('newVideoThumb');
-    
-    thumbInput.value = thumbUrl;
-    previewImg.src = thumbUrl;
-    previewDiv.style.display = 'flex';
-    showToastMessage('✅ Превью из YouTube (можно заменить своим URL)');
-}
-
-function generateEditThumbnailFromYouTube() {
-    const youtubeId = document.getElementById('editVideoYoutubeId').value.trim();
-    if (!youtubeId) {
-        showToastMessage('❌ Сначала введите YouTube ID');
-        return;
-    }
-    const thumbUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
-    const previewDiv = document.getElementById('editThumbPreview');
-    const previewImg = document.getElementById('editThumbPreviewImg');
-    const thumbInput = document.getElementById('editVideoThumb');
-    
-    thumbInput.value = thumbUrl;
-    previewImg.src = thumbUrl;
-    previewDiv.style.display = 'flex';
-    showToastMessage('✅ Превью из YouTube');
-}
-
-// Определение длительности
-async function fetchVideoDuration() {
-    const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
-    const durationInput = document.getElementById('newVideoDuration');
-    if (!youtubeId) { showToastMessage('❌ Введите YouTube ID'); return; }
-    
-    durationInput.placeholder = '⏳ Определяем...';
-    try {
-        const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
-        const data = await response.json();
-        if (data && data.duration) {
-            const formatted = formatDuration(data.duration);
-            durationInput.value = formatted;
-            durationInput.classList.add('duration-auto');
-            showToastMessage(`✅ Длительность: ${formatted}`);
-            setTimeout(() => durationInput.classList.remove('duration-auto'), 2000);
-        } else {
-            await fetchDurationViaIframe(youtubeId, durationInput);
-        }
-    } catch (error) {
-        await fetchDurationViaIframe(youtubeId, durationInput);
-    }
-    durationInput.placeholder = 'Длительность (авто)';
-}
-
-async function fetchEditVideoDuration() {
-    const youtubeId = document.getElementById('editVideoYoutubeId').value.trim();
-    const durationInput = document.getElementById('editVideoDuration');
-    if (!youtubeId) { showToastMessage('❌ Введите YouTube ID'); return; }
-    
-    durationInput.placeholder = '⏳ Определяем...';
-    try {
-        const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
-        const data = await response.json();
-        if (data && data.duration) {
-            durationInput.value = formatDuration(data.duration);
-            showToastMessage(`✅ Длительность обновлена`);
-        }
-    } catch (error) {}
-    durationInput.placeholder = 'Длительность';
-}
-
-function fetchDurationViaIframe(youtubeId, durationInput) {
-    return new Promise((resolve) => {
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1`;
-        iframe.onload = () => {
-            try {
-                new YT.Player(iframe, {
-                    events: {
-                        onReady: (event) => {
-                            const duration = event.target.getDuration();
-                            if (duration > 0) {
-                                const minutes = Math.floor(duration / 60);
-                                const seconds = Math.floor(duration % 60);
-                                durationInput.value = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                                showToastMessage(`✅ Длительность определена`);
-                            }
-                            iframe.remove();
-                            resolve();
-                        }
-                    }
-                });
-            } catch(e) { iframe.remove(); resolve(); }
-        };
-        iframe.onerror = () => { iframe.remove(); resolve(); };
-        document.body.appendChild(iframe);
-        setTimeout(() => { if (iframe.parentNode) iframe.remove(); resolve(); }, 5000);
-    });
-}
-
-function formatDuration(isoDuration) {
-    const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!match) return '0:00';
-    const hours = parseInt(match[1]) || 0;
-    const minutes = parseInt(match[2]) || 0;
-    const seconds = parseInt(match[3]) || 0;
-    if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
-// Добавление видео
-async function addNewVideo() {
-    if (!isAdmin()) { showToastMessage('⛔ Нет прав'); return; }
-    
-    const title = document.getElementById('newVideoTitle').value.trim();
-    const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
-    if (!title || !youtubeId) { showToastMessage('❌ Заполните название и YouTube ID'); return; }
-    
-    let duration = document.getElementById('newVideoDuration').value.trim();
-    if (!duration) { await fetchVideoDuration(); duration = document.getElementById('newVideoDuration').value.trim(); }
-    if (!duration) duration = "0:00";
-    
-    const thumb = document.getElementById('newVideoThumb').value.trim() || '';
-    
-    const videoData = {
-        title, youtubeId,
-        desc: document.getElementById('newVideoDesc').value.trim() || "Новое видео",
-        duration,
-        thumb: thumb,
-        year: document.getElementById('newVideoYear').value.trim() || new Date().getFullYear().toString(),
-        category: document.getElementById('newVideoCategory').value,
-        is18Plus: document.getElementById('newVideo18Plus').checked
-    };
-    
-    const success = await addVideoToFirebase(videoData);
-    if (success) {
-        document.getElementById('newVideoTitle').value = '';
-        document.getElementById('newVideoYoutubeId').value = '';
-        document.getElementById('newVideoDesc').value = '';
-        document.getElementById('newVideoDuration').value = '';
-        document.getElementById('newVideoThumb').value = '';
-        document.getElementById('newVideoYear').value = '';
-        document.getElementById('newVideo18Plus').checked = false;
-        document.getElementById('thumbPreview').style.display = 'none';
-        document.getElementById('thumbPreviewImg').src = '';
-        document.getElementById('thumbFileInput').value = '';
-    }
-}
-
-// Редактирование видео
-let currentEditVideo = null;
-
-function openEditModal(video) {
-    currentEditVideo = video;
-    document.getElementById('editVideoId').value = video.id;
-    document.getElementById('editVideoTitle').value = video.title || '';
-    document.getElementById('editVideoYoutubeId').value = video.youtubeId || '';
-    document.getElementById('editVideoDesc').value = video.desc || '';
-    document.getElementById('editVideoDuration').value = video.duration || '';
-    document.getElementById('editVideoThumb').value = video.thumb || '';
-    document.getElementById('editVideoYear').value = video.year || '';
-    document.getElementById('editVideoCategory').value = video.category || 'trailer';
-    document.getElementById('editVideo18Plus').checked = video.is18Plus || false;
-    
-    if (video.thumb) {
-        document.getElementById('editThumbPreviewImg').src = video.thumb;
-        document.getElementById('editThumbPreview').style.display = 'flex';
-    } else {
-        document.getElementById('editThumbPreview').style.display = 'none';
-    }
-    
-    document.getElementById('editModal').style.display = 'flex';
-}
-
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-    currentEditVideo = null;
-}
-
-async function saveEditedVideo() {
-    if (!isAdmin() || !currentEditVideo) return;
-    
-    const updatedData = {
-        title: document.getElementById('editVideoTitle').value.trim(),
-        youtubeId: document.getElementById('editVideoYoutubeId').value.trim(),
-        desc: document.getElementById('editVideoDesc').value.trim(),
-        duration: document.getElementById('editVideoDuration').value.trim(),
-        thumb: document.getElementById('editVideoThumb').value.trim(),
-        year: document.getElementById('editVideoYear').value.trim(),
-        category: document.getElementById('editVideoCategory').value,
-        is18Plus: document.getElementById('editVideo18Plus').checked
-    };
-    
-    if (!updatedData.title || !updatedData.youtubeId) {
-        showToastMessage('❌ Название и YouTube ID обязательны');
-        return;
-    }
-    if (!updatedData.duration) {
-        updatedData.duration = "0:00";
-    }
-    
-    const success = await updateVideoInFirebase(currentEditVideo.firebaseKey, updatedData);
-    if (success) {
-        closeEditModal();
-    }
-}
-
-// Пасхалка
 let clickCount = 0;
 let clickTimer = null;
 
@@ -654,7 +586,7 @@ function initSecretAdminButton() {
             clearTimeout(clickTimer);
             const user = firebase.auth().currentUser;
             if (!user) { 
-                showToastMessage('🔐 Сначала войдите в аккаунт');
+                showToastMessage('🔐 Сначала войдите');
                 if (typeof showAuthModal === 'function') showAuthModal();
                 return; 
             }
@@ -664,7 +596,7 @@ function initSecretAdminButton() {
 }
 
 // ==============================================
-// ИНИЦИАЛИЗАЦИЯ
+// ЗАПУСК
 // ==============================================
 document.addEventListener('DOMContentLoaded', () => {
     loadVideosFromFirebase();
@@ -683,13 +615,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    const thumbInput = document.getElementById('newVideoThumb');
+    if (thumbInput) thumbInput.addEventListener('input', previewThumbnailFromUrl);
+    const editThumbInput = document.getElementById('editVideoThumb');
+    if (editThumbInput) editThumbInput.addEventListener('input', previewEditThumbnailFromUrl);
 });
 
-window.onYouTubeIframeAPIReady = function() {
-    console.log("✅ YouTube API готов");
-};
+window.onYouTubeIframeAPIReady = function() {};
 
-// Экспорт функций
+// ЭКСПОРТ
 window.addVideoToFirebase = addVideoToFirebase;
 window.updateVideoInFirebase = updateVideoInFirebase;
 window.deleteVideoFromFirebase = deleteVideoFromFirebase;
@@ -708,4 +643,3 @@ window.uploadThumbnailFile = uploadThumbnailFile;
 window.uploadEditThumbnailFile = uploadEditThumbnailFile;
 window.clearThumbnail = clearThumbnail;
 window.clearEditThumbnail = clearEditThumbnail;
-window.initSecretAdminButton = initSecretAdminButton;
