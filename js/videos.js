@@ -657,7 +657,7 @@ function renderAdminSortList() {
                     <div class="admin-sort-title">${escapeHtml(video.title)}</div>
                     <div class="admin-sort-meta">${video.duration} • ${video.year || '—'}</div>
                 </div>
-                <div class="admin-sort-order">#${index + 1}</div>
+                <div class="admin-sort-order">${index + 1}</div>
             </div>
         `;
     });
