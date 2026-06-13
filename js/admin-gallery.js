@@ -54,7 +54,7 @@ async function loadAdminPanel() {
     
     container.innerHTML = `
         <div class="admin-header">
-            <h1 class="admin-title"><i class="fas fa-camera"></i> Управление фотоальбомом</h1>
+            <h1 class="admin-title">УПРАВЛЕНИЕ ФОТОАЛБЬОМОМ</h1>
             <div class="admin-actions">
                 <button onclick="window.location.href='gallery.html'" class="admin-btn">
                     <i class="fas fa-eye"></i> Смотреть галерею
