@@ -31,7 +31,6 @@ function initAuth() {
 // Загрузить данные пользователя в Realtime Database
 async function loadUserData() {
     if (!window.currentUser) return;
-    
     const userRef = db.ref(`users/${window.currentUser.uid}`);
     const snapshot = await userRef.get();
     
