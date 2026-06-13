@@ -5626,6 +5626,7 @@ button,
     font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
     font-size: 1.6rem;
     font-weight: normal;
+    font-style: italic;
     color: #ffd966;
     letter-spacing: 2px;
 }
@@ -5654,6 +5655,7 @@ button,
     font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
     font-size: 1.5rem;
     font-weight: normal;
+    font-style: italic;
     color: #ffd966;
 }
 
