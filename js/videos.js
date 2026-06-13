@@ -1,3 +1,7 @@
+// ==============================================
+// ВИДЕОТЕКА - С ХРАНЕНИЕМ ТОЛЬКО ССЫЛОК (КАК В ГАЛЕРЕЕ)
+// ==============================================
+
 let videosData = [];
 let currentCategory = "all";
 let currentVideoPlayer = null;
@@ -59,8 +63,6 @@ async function addVideoToFirebase(videoData) {
             createdAt: Date.now(),
             views: 0
         });
-        await loadVideosFromFirebase();
-        showToastMessage('✅ Видео добавлено');
         return true;
     } catch (error) {
         console.error('Ошибка добавления:', error);
@@ -75,8 +77,6 @@ async function updateVideoInFirebase(videoKey, updatedData) {
             ...updatedData,
             updatedAt: Date.now()
         });
-        await loadVideosFromFirebase();
-        showToastMessage('✅ Видео обновлено');
         return true;
     } catch (error) {
         console.error('Ошибка обновления:', error);
@@ -84,7 +84,6 @@ async function updateVideoInFirebase(videoKey, updatedData) {
         return false;
     }
 }
-
 async function deleteVideoFromFirebase(video) {
     if (!video.firebaseKey) return false;
     try {
@@ -313,17 +312,38 @@ async function addNewVideo() {
         is18Plus: document.getElementById('newVideo18Plus').checked
     };
     
-    await addVideoToFirebase(videoData);
+    // Показываем индикатор загрузки
+    const saveBtn = event.target;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Сохранение...';
+    saveBtn.disabled = true;
     
-    document.getElementById('newVideoTitle').value = '';
-    document.getElementById('newVideoYoutubeId').value = '';
-    document.getElementById('newVideoDesc').value = '';
-    document.getElementById('newVideoDuration').value = '';
-    document.getElementById('newVideoThumb').value = '';
-    document.getElementById('newVideoYear').value = '';
-    document.getElementById('newVideo18Plus').checked = false;
-    document.getElementById('thumbPreview').style.display = 'none';
-    document.getElementById('thumbFileInput').value = '';
+    try {
+        const success = await addVideoToFirebase(videoData);
+        if (success) {
+            // Очищаем форму
+            document.getElementById('newVideoTitle').value = '';
+            document.getElementById('newVideoYoutubeId').value = '';
+            document.getElementById('newVideoDesc').value = '';
+            document.getElementById('newVideoDuration').value = '';
+            document.getElementById('newVideoThumb').value = '';
+            document.getElementById('newVideoYear').value = '';
+            document.getElementById('newVideo18Plus').checked = false;
+            document.getElementById('thumbPreview').style.display = 'none';
+            document.getElementById('thumbPreviewImg').src = '';
+            document.getElementById('thumbFileInput').value = '';
+            
+            // Перезагружаем список видео
+            await loadVideosFromFirebase();
+            showToastMessage('✅ Видео добавлено');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showToastMessage('❌ Ошибка сохранения');
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
 }
 
 // ==============================================
@@ -375,9 +395,30 @@ async function saveEditedVideo() {
         return;
     }
     
-    await updateVideoInFirebase(currentEditVideo.firebaseKey, updatedData);
-    closeEditModal();
+    // Показываем индикатор
+    const saveBtn = event.target;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Сохранение...';
+    saveBtn.disabled = true;
+    
+    try {
+        const success = await updateVideoInFirebase(currentEditVideo.firebaseKey, updatedData);
+        if (success) {
+            // Закрываем модальное окно
+            closeEditModal();
+            // Перезагружаем список видео
+            await loadVideosFromFirebase();
+            showToastMessage('✅ Видео обновлено');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showToastMessage('❌ Ошибка обновления');
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
 }
+
 
 // ==============================================
 // ВСПОМОГАТЕЛЬНЫЕ
