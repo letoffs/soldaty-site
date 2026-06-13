@@ -1,7 +1,3 @@
-// ==============================================
-// ВИДЕОТЕКА - С ПОИСКОМ И СОРТИРОВКОЙ
-// ==============================================
-
 let videosData = [];
 let currentCategory = "all";
 let currentVideoPlayer = null;
@@ -57,6 +53,7 @@ async function addVideoToFirebase(videoData) {
         await firebase.database().ref('videos').push({
             ...videoData,
             id: newId,
+            order: Date.now(),
             createdAt: Date.now(),
             views: 0
         });
@@ -137,6 +134,7 @@ function getFilteredAndSortedVideos() {
         );
     }
     
+    // ВАЖНО: order должен иметь приоритет при сортировке
     switch (sortOrder) {
         case "newest":
             filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -151,7 +149,13 @@ function getFilteredAndSortedVideos() {
             filtered.sort((a, b) => b.title.localeCompare(a.title, 'ru'));
             break;
         default:
-            filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            // 🔥 СОРТИРОВКА ПО ПОРЯДКУ (ПО УМОЛЧАНИЮ)
+            // Сначала видео с order, потом без order, но createdAt тоже участвует
+            filtered.sort((a, b) => {
+                const orderA = a.order !== undefined ? a.order : a.createdAt;
+                const orderB = b.order !== undefined ? b.order : b.createdAt;
+                return (orderA || 0) - (orderB || 0);
+            });
     }
     
     return filtered;
@@ -578,6 +582,159 @@ function playVideo(video) {
     playVideoAfterCheck(video);
 }
 
+async function moveVideoUp(video) {
+    if (!isAdmin()) return;
+    
+    const currentIndex = videosData.findIndex(v => v.id === video.id);
+    if (currentIndex <= 0) return;
+    
+    const prevVideo = videosData[currentIndex - 1];
+    
+    // Меняем порядок (используем поле order, если есть, или createdAt)
+    const currentOrder = video.order || video.createdAt;
+    const prevOrder = prevVideo.order || prevVideo.createdAt;
+    
+    try {
+        await firebase.database().ref(`videos/${video.firebaseKey}`).update({ order: prevOrder });
+        await firebase.database().ref(`videos/${prevVideo.firebaseKey}`).update({ order: currentOrder });
+        await loadVideosFromFirebase();
+        showToastMessage('⬆️ Видео перемещено вверх');
+    } catch (error) {
+        console.error('Ошибка перемещения:', error);
+        showToastMessage('❌ Ошибка перемещения');
+    }
+}
+
+async function moveVideoDown(video) {
+    if (!isAdmin()) return;
+    
+    const currentIndex = videosData.findIndex(v => v.id === video.id);
+    if (currentIndex >= videosData.length - 1) return;
+    
+    const nextVideo = videosData[currentIndex + 1];
+    
+    const currentOrder = video.order || video.createdAt;
+    const nextOrder = nextVideo.order || nextVideo.createdAt;
+    
+    try {
+        await firebase.database().ref(`videos/${video.firebaseKey}`).update({ order: nextOrder });
+        await firebase.database().ref(`videos/${nextVideo.firebaseKey}`).update({ order: currentOrder });
+        await loadVideosFromFirebase();
+        showToastMessage('⬇️ Видео перемещено вниз');
+    } catch (error) {
+        console.error('Ошибка перемещения:', error);
+        showToastMessage('❌ Ошибка перемещения');
+    }
+}
+
+function renderAdminSortList() {
+    const container = document.getElementById('adminVideosSortList');
+    if (!container) return;
+    
+    if (videosData.length === 0) {
+        container.innerHTML = '<div class="empty-videos" style="padding: 20px;">Нет видео для сортировки</div>';
+        return;
+    }
+    
+    // Сортируем по order или createdAt
+    const sorted = [...videosData].sort((a, b) => {
+        const orderA = a.order !== undefined ? a.order : a.createdAt;
+        const orderB = b.order !== undefined ? b.order : b.createdAt;
+        return (orderA || 0) - (orderB || 0);
+    });
+    
+    let html = '';
+    sorted.forEach((video, index) => {
+        const thumbUrl = video.thumb && video.thumb !== '' 
+            ? video.thumb 
+            : `https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`;
+        
+        html += `
+            <div class="admin-sort-item" data-id="${video.id}" data-firebase-key="${video.firebaseKey}" data-index="${index}">
+                <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                <img class="admin-sort-thumb" src="${thumbUrl}" alt="${escapeHtml(video.title)}" onerror="this.src='https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg'">
+                <div class="admin-sort-info">
+                    <div class="admin-sort-title">${escapeHtml(video.title)}</div>
+                    <div class="admin-sort-meta">${video.duration} • ${video.year || '—'}</div>
+                </div>
+                <div class="admin-sort-order">#${index + 1}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+    
+    initDragAndDrop();
+}
+
+function initDragAndDrop() {
+    const items = document.querySelectorAll('.admin-sort-item');
+    let draggedItem = null;
+    
+    items.forEach(item => {
+        item.setAttribute('draggable', 'true');
+        
+        item.addEventListener('dragstart', (e) => {
+            draggedItem = item;
+            e.dataTransfer.effectAllowed = 'move';
+            item.classList.add('dragging');
+        });
+        
+        item.addEventListener('dragend', (e) => {
+            item.classList.remove('dragging');
+            draggedItem = null;
+        });
+        
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+        
+        item.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            if (!draggedItem || draggedItem === item) return;
+            
+            const container = document.getElementById('adminVideosSortList');
+            const itemsArray = Array.from(container.querySelectorAll('.admin-sort-item'));
+            const fromIndex = itemsArray.indexOf(draggedItem);
+            const toIndex = itemsArray.indexOf(item);
+            
+            if (fromIndex < toIndex) {
+                item.parentNode.insertBefore(draggedItem, item.nextSibling);
+            } else {
+                item.parentNode.insertBefore(draggedItem, item);
+            }
+            
+            // Обновляем порядок в Firebase
+            const newItems = Array.from(container.querySelectorAll('.admin-sort-item'));
+            const updates = [];
+            
+            for (let i = 0; i < newItems.length; i++) {
+                const firebaseKey = newItems[i].dataset.firebaseKey;
+                const newOrder = i;
+                updates.push(firebase.database().ref(`videos/${firebaseKey}`).update({ order: newOrder }));
+            }
+            
+            await Promise.all(updates);
+            await loadVideosFromFirebase();
+            showToastMessage('✅ Порядок видео сохранён');
+            
+            // Обновляем номера
+            newItems.forEach((el, idx) => {
+                const orderSpan = el.querySelector('.admin-sort-order');
+                if (orderSpan) orderSpan.textContent = `#${idx + 1}`;
+            });
+        });
+    });
+}
+
+const originalShowAdminPanel = showAdminPanel;
+showAdminPanel = function() {
+    originalShowAdminPanel();
+    if (isAdmin() && document.getElementById('adminVideosSortList')) {
+        renderAdminSortList();
+    }
+};
+
 // ==============================================
 // ОТРИСОВКА
 // ==============================================
@@ -650,6 +807,8 @@ function renderVideos() {
             : `https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`;
         
         const adminControls = isAdmin() ? `<div class="video-admin-controls">
+            <button class="admin-move-up" onclick="event.stopPropagation(); moveVideoUp(${JSON.stringify(video).replace(/"/g, '&quot;')})" title="Переместить выше"><i class="fas fa-arrow-up"></i></button>
+            <button class="admin-move-down" onclick="event.stopPropagation(); moveVideoDown(${JSON.stringify(video).replace(/"/g, '&quot;')})" title="Переместить ниже"><i class="fas fa-arrow-down"></i></button>
             <button class="admin-edit-btn" onclick="event.stopPropagation(); openEditModal(${JSON.stringify(video).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
             <button class="admin-delete-btn" onclick="event.stopPropagation(); deleteVideoFromFirebase(${JSON.stringify(video).replace(/"/g, '&quot;')})"><i class="fas fa-trash"></i></button>
         </div>` : '';
@@ -795,3 +954,5 @@ window.setSortOrder = setSortOrder;
 window.clearUrlInput = clearUrlInput;
 window.clearEditUrlInput = clearEditUrlInput;
 window.clearEditThumb = clearEditThumb;
+window.moveVideoUp = moveVideoUp;
+window.moveVideoDown = moveVideoDown;
