@@ -5624,10 +5624,8 @@ button,
 
 .time-display {
     font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
-    font-weight: medium;
-    font-style: italic;
-    font-size: 1.4rem;
-    font-weight: bold;
+    font-size: 1.6rem;
+    font-weight: normal;
     color: #ffd966;
     letter-spacing: 2px;
 }
@@ -5654,10 +5652,8 @@ button,
 
 .weather-temp {
     font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
-    font-weight: medium;
-    font-style: italic;
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: normal;
     color: #ffd966;
 }
 
