@@ -1,4 +1,21 @@
 // ==============================================
+// ВИДЕОТЕКА - С ХРАНЕНИЕМ ТОЛЬКО ССЫЛОК (КАК В ГАЛЕРЕЕ)
+// ==============================================
+
+let videosData = [];
+let currentCategory = "all";
+let currentVideoPlayer = null;
+let currentEditVideo = null;
+
+// АДМИН EMAIL
+const ADMIN_EMAIL = 'twinkjjjjkmnb@gmail.com';
+
+function isAdmin() {
+    const user = firebase.auth().currentUser;
+    return user && user.email === ADMIN_EMAIL;
+}
+
+// ==============================================
 // КАТЕГОРИИ
 // ==============================================
 const categories = [
@@ -9,17 +26,6 @@ const categories = [
     { id: "behind", name: "Закулисье", icon: "fas fa-users", filter: v => v.category === "behind" },
     { id: "dembel", name: "Дембель", icon: "fas fa-flag-checkered", filter: v => v.category === "dembel" },
 ];
-
-let videosData = [];
-let currentCategory = "all";
-let currentVideoPlayer = null;
-
-const ADMIN_EMAIL = 'twinkjjjjkmnb@gmail.com';
-
-function isAdmin() {
-    const user = firebase.auth().currentUser;
-    return user && user.email === ADMIN_EMAIL;
-}
 
 // ==============================================
 // FIREBASE REALTIME DATABASE
@@ -98,7 +104,7 @@ async function deleteVideoFromFirebase(video) {
 }
 
 // ==============================================
-// ПРЕОБРАЗОВАНИЕ В BASE64
+// ЗАГРУЗКА ПРЕВЬЮ (КАК В ГАЛЕРЕЕ - ЧЕРЕЗ FileReader В Base64)
 // ==============================================
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
@@ -109,22 +115,12 @@ function fileToBase64(file) {
     });
 }
 
-// ==============================================
-// ЗАГРУЗКА ПРЕВЬЮ - ЛИМИТ 5 МБ
-// ==============================================
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 МБ
-
 async function uploadThumbnailFile(event) {
     const file = event.target.files[0];
     if (!file) return;
     
     if (!file.type.match('image.*')) {
         showToastMessage('❌ Выберите изображение (JPG, PNG, WEBP, GIF)');
-        return;
-    }
-    
-    if (file.size > MAX_FILE_SIZE) {
-        showToastMessage('❌ Файл больше 5 МБ');
         return;
     }
     
@@ -143,7 +139,7 @@ async function uploadThumbnailFile(event) {
         showToastMessage(`✅ Превью готово (${sizeKB} КБ)`);
     } catch (error) {
         console.error('Ошибка:', error);
-        showToastMessage('❌ Ошибка');
+        showToastMessage('❌ Ошибка обработки');
     }
 }
 
@@ -153,11 +149,6 @@ async function uploadEditThumbnailFile(event) {
     
     if (!file.type.match('image.*')) {
         showToastMessage('❌ Выберите изображение');
-        return;
-    }
-    
-    if (file.size > MAX_FILE_SIZE) {
-        showToastMessage('❌ Файл больше 5 МБ');
         return;
     }
     
@@ -225,7 +216,7 @@ function clearEditThumbnail() {
 }
 
 // ==============================================
-// YOUTUBE ПРЕВЬЮ
+// YOUTUBE ПРЕВЬЮ (ССЫЛКА)
 // ==============================================
 function generateThumbnailFromYouTube() {
     const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
@@ -258,7 +249,7 @@ function generateEditThumbnailFromYouTube() {
 }
 
 // ==============================================
-// ДЛИТЕЛЬНОСТЬ
+// ОПРЕДЕЛЕНИЕ ДЛИТЕЛЬНОСТИ
 // ==============================================
 async function fetchVideoDuration() {
     const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
@@ -270,8 +261,9 @@ async function fetchVideoDuration() {
         const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
         const data = await response.json();
         if (data && data.duration) {
-            durationInput.value = formatDuration(data.duration);
-            showToastMessage(`✅ Длительность: ${durationInput.value}`);
+            const formatted = formatDuration(data.duration);
+            durationInput.value = formatted;
+            showToastMessage(`✅ Длительность: ${formatted}`);
         }
     } catch (error) {}
     durationInput.placeholder = 'Длительность';
@@ -303,7 +295,7 @@ function formatDuration(isoDuration) {
 }
 
 // ==============================================
-// ДОБАВЛЕНИЕ
+// ДОБАВЛЕНИЕ ВИДЕО
 // ==============================================
 async function addNewVideo() {
     if (!isAdmin()) { showToastMessage('⛔ Нет прав'); return; }
@@ -341,8 +333,6 @@ async function addNewVideo() {
 // ==============================================
 // РЕДАКТИРОВАНИЕ
 // ==============================================
-let currentEditVideo = null;
-
 function openEditModal(video) {
     currentEditVideo = video;
     document.getElementById('editVideoId').value = video.id;
