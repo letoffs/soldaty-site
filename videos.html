@@ -9,13 +9,27 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/videos.css">
     <link rel="icon" type="image/png" href="Resources/soldaty_icon.png">
+    <style>
+        /* Секретная кнопка в футере */
+        .secret-admin-btn {
+            width: 100%;
+            height: 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            opacity: 0.2;
+            transition: opacity 0.3s;
+        }
+        .secret-admin-btn:hover {
+            opacity: 0.5;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
         <a href="index.html" class="logo-link"><img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image"></a>
         <p>Все сезоны и серии культового сериала про армию, дружбу и... прапорщика Шматко!</p>
-        <div class="badge"><i class="fas fa-shield-alt"></i> 16+ · YouTube-плеер</div>
+        <div class="badge"><i class="fas fa-shield-alt"></i> 16+ · Видеоплеер</div>
     </div>
 
     <div class="nav-menu">
@@ -79,6 +93,49 @@
         </div>
     </div>
 
+    <!-- АДМИН-ПАНЕЛЬ (только по пасхалке) -->
+    <div id="adminPanel" class="admin-panel" style="display: none;">
+        <div class="admin-header">
+            <h3><i class="fas fa-crown"></i> Админ-панель — Управление видео</h3>
+            <button onclick="hideAdminPanel()" class="close-admin"><i class="fas fa-times"></i> Закрыть</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <h4><i class="fas fa-plus-circle"></i> Добавить новое видео</h4>
+                <input type="text" id="newVideoTitle" placeholder="Название видео *">
+                <input type="text" id="newVideoYoutubeId" placeholder="YouTube ID (например, SKgkjpOmSQ8) *">
+                <textarea id="newVideoDesc" placeholder="Описание видео"></textarea>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newVideoDuration" placeholder="Длительность (4:16)" style="flex: 1;">
+                    <input type="text" id="newVideoYear" placeholder="Год" style="flex: 1;">
+                </div>
+                <select id="newVideoCategory">
+                    <option value="trailer">Трейлеры и анонсы</option>
+                    <option value="clip">Клипы и нарезки</option>
+                    <option value="parody">Пародии</option>
+                    <option value="behind">Закулисье</option>
+                    <option value="dembel">Дембель</option>
+                </select>
+                <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                    <input type="checkbox" id="newVideo18Plus">
+                    <span>Контент 18+</span>
+                </label>
+                <button onclick="addNewVideo()"><i class="fas fa-save"></i> Добавить видео</button>
+            </div>
+            <div>
+                <h4><i class="fas fa-info-circle"></i> Инструкция</h4>
+                <p style="color: #ccc; font-size: 14px;">
+                    <strong>Как получить YouTube ID:</strong><br>
+                    Из ссылки https://youtu.be/<strong>SKgkjpOmSQ8</strong>
+                </p>
+                <p style="color: #ffd700; font-size: 14px;">
+                    <i class="fas fa-shield-alt"></i> Видео добавляются в реальном времени.<br>
+                    <i class="fas fa-trash-alt"></i> Наведите на карточку для удаления.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- МОДАЛЬНОЕ ОКНО ПРОСМОТРА ВИДЕО -->
     <div id="videoModal" class="modal video-modal">
         <div class="modal-content">
@@ -96,7 +153,6 @@
 
     <!-- ОСНОВНАЯ ЧАСТЬ С БОКОВОЙ ПАНЕЛЬЮ -->
     <div class="videos-page-layout">
-        <!-- Боковая панель с категориями -->
         <aside class="videos-sidebar">
             <div class="sidebar-header">
                 <h3><i class="fas fa-folder-tree"></i> Категории</h3>
@@ -104,7 +160,6 @@
             <div class="category-list" id="categoryList"></div>
         </aside>
 
-        <!-- Основной контент -->
         <main class="videos-main">
             <div class="current-category-header">
                 <div class="current-category-title" id="currentCategoryTitle">
@@ -118,11 +173,10 @@
     </div>
 
     <div class="footer">
-        <i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · 2004-2014
-        <div class="copyright">
-            © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
-            Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
-        </div>
+        <i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · 2004-2013
+        <div class="copyright">© 2026 Фан-сайт сериала «Солдаты»</div>
+        <!-- СЕКРЕТНАЯ КНОПКА ДЛЯ АДМИНКИ (3 клика) -->
+        <div id="secretAdminBtn" class="secret-admin-btn" title="⚡ Кликните 3 раза для доступа к админ-панели"></div>
     </div>
 </div>
 
@@ -133,5 +187,115 @@
 <script src="js/firebase-auth.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="js/videos.js"></script>
+
+<script>
+    // АДМИН EMAIL
+    const ADMIN_EMAIL = 'twinkjjjjkmnb@gmail.com';
+    
+    function isAdmin() {
+        const user = firebase.auth().currentUser;
+        return user && user.email === ADMIN_EMAIL;
+    }
+
+    function showAdminPanel() {
+        if (isAdmin()) {
+            document.getElementById('adminPanel').style.display = 'block';
+            if (typeof showToastMessage === 'function') {
+                showToastMessage('🔐 Админ-панель активирована');
+            }
+        } else {
+            if (typeof showToastMessage === 'function') {
+                showToastMessage('⛔ Доступ только для администратора');
+            }
+        }
+    }
+
+    function hideAdminPanel() {
+        document.getElementById('adminPanel').style.display = 'none';
+    }
+
+    async function addNewVideo() {
+        if (!isAdmin()) {
+            if (typeof showToastMessage === 'function') showToastMessage('⛔ Нет прав');
+            return;
+        }
+
+        const title = document.getElementById('newVideoTitle').value.trim();
+        const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
+        const desc = document.getElementById('newVideoDesc').value.trim();
+        const duration = document.getElementById('newVideoDuration').value.trim() || "0:00";
+        const year = document.getElementById('newVideoYear').value.trim() || new Date().getFullYear().toString();
+        const category = document.getElementById('newVideoCategory').value;
+        const is18Plus = document.getElementById('newVideo18Plus').checked;
+
+        if (!title || !youtubeId) {
+            if (typeof showToastMessage === 'function') showToastMessage('❌ Заполните название и YouTube ID');
+            return;
+        }
+
+        if (typeof window.addVideoToFirebase === 'function') {
+            const success = await window.addVideoToFirebase({
+                title, youtubeId, desc: desc || "Новое видео",
+                duration, year, category, is18Plus
+            });
+            
+            if (success) {
+                document.getElementById('newVideoTitle').value = '';
+                document.getElementById('newVideoYoutubeId').value = '';
+                document.getElementById('newVideoDesc').value = '';
+                document.getElementById('newVideoDuration').value = '';
+                document.getElementById('newVideoYear').value = '';
+                document.getElementById('newVideo18Plus').checked = false;
+            }
+        }
+    }
+
+    // ==============================================
+    // ПАСХАЛКА: 3 клика по секретной кнопке в футере
+    // ==============================================
+    let clickCount = 0;
+    let clickTimer = null;
+    
+    function initSecretAdminButton() {
+        const secretBtn = document.getElementById('secretAdminBtn');
+        if (!secretBtn) return;
+        
+        secretBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            clickCount++;
+            
+            if (clickTimer) clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => {
+                clickCount = 0;
+            }, 1000);
+            
+            if (clickCount === 3) {
+                clickCount = 0;
+                clearTimeout(clickTimer);
+                
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    if (typeof showToastMessage === 'function') {
+                        showToastMessage('🔐 Сначала войдите в аккаунт');
+                    }
+                    if (typeof showAuthModal === 'function') showAuthModal();
+                    return;
+                }
+                
+                if (isAdmin()) {
+                    showAdminPanel();
+                } else {
+                    if (typeof showToastMessage === 'function') {
+                        showToastMessage('⛔ Доступ только для администратора');
+                    }
+                }
+            }
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initSecretAdminButton();
+    });
+</script>
 </body>
 </html>
