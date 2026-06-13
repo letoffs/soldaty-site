@@ -14,6 +14,16 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'Magistral-BoldItalic';
+    src: url('../fonts/Magistral-BoldItalic.woff2') format('woff2'),
+         url('../fonts/Magistral-BoldItalic.woff') format('woff'),
+         url('../fonts/Magistral-BoldItalic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 body {
     font-family: 'Gotham Pro', 'Montserrat', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #1a2a1a 0%, #0e1a0e 100%);
@@ -422,6 +432,9 @@ body::before {
 }
 
 .description-title {
+    font-family: 'Magistral-BoldItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-style: italic;
     font-size: 1.6rem;
     color: #ffd966;
     margin-bottom: 20px;
