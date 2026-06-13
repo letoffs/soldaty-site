@@ -1075,3 +1075,107 @@
         font-size: 0.8rem;
     }
 }
+
+/* Кнопки перемещения */
+.admin-move-up, .admin-move-down {
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.admin-move-up:hover {
+    background: #1976d2;
+    transform: scale(1.05);
+}
+
+.admin-move-down:hover {
+    background: #1976d2;
+    transform: scale(1.05);
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 700px) {
+    .admin-move-up, .admin-move-down {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+}
+
+/* Список для сортировки в админ-панели */
+.admin-sort-list {
+    background: #0f1a0f;
+    border-radius: 16px;
+    border: 1px solid #3e5a3e;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.admin-sort-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    background: #1e2a1e;
+    border-bottom: 1px solid #3e5a3e;
+    cursor: grab;
+    transition: all 0.2s;
+}
+
+.admin-sort-item:active {
+    cursor: grabbing;
+}
+
+.admin-sort-item:hover {
+    background: #2c3e2c;
+    transform: translateX(5px);
+}
+
+.admin-sort-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #bd8a3e;
+    font-size: 1.2rem;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.admin-sort-thumb {
+    width: 50px;
+    height: 35px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #000;
+    border: 1px solid #bd8a3e;
+}
+
+.admin-sort-info {
+    flex: 1;
+}
+
+.admin-sort-title {
+    font-size: 0.85rem;
+    color: #ffd966;
+}
+
+.admin-sort-meta {
+    font-size: 0.7rem;
+    color: #8aa07a;
+}
+
+.admin-sort-order {
+    font-size: 0.8rem;
+    color: #bd8a3e;
+    font-weight: bold;
+    min-width: 40px;
+}
