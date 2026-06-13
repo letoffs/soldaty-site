@@ -248,43 +248,199 @@ function generateEditThumbnailFromYouTube() {
 async function fetchVideoDuration() {
     const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
     const durationInput = document.getElementById('newVideoDuration');
-    if (!youtubeId) { showToastMessage('❌ Введите YouTube ID'); return; }
+    if (!youtubeId) { 
+        showToastMessage('❌ Введите YouTube ID'); 
+        return;
+    }
     
-    durationInput.placeholder = '⏳...';
+    durationInput.placeholder = '⏳ Определяем...';
+    durationInput.disabled = true;
+    
     try {
-        const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
-        const data = await response.json();
-        if (data && data.duration) {
-            const formatted = formatDuration(data.duration);
-            durationInput.value = formatted;
-            showToastMessage(`✅ Длительность: ${formatted}`);
+        // Способ 1: noembed.com
+        let duration = await getDurationFromNoEmbed(youtubeId);
+        
+        // Способ 2: через YouTube oEmbed API
+        if (!duration) {
+            duration = await getDurationFromYouTubeOEmbed(youtubeId);
         }
-    } catch (error) {}
-    durationInput.placeholder = 'Длительность';
+        
+        // Способ 3: через скрытый iframe (самый надёжный)
+        if (!duration) {
+            duration = await getDurationFromIframe(youtubeId);
+        }
+        
+        if (duration) {
+            durationInput.value = duration;
+            durationInput.classList.add('duration-auto');
+            showToastMessage(`✅ Длительность: ${duration}`);
+            setTimeout(() => durationInput.classList.remove('duration-auto'), 2000);
+        } else {
+            showToastMessage('⚠️ Не удалось определить длительность, введите вручную');
+        }
+    } catch (error) {
+        console.error('Ошибка определения длительности:', error);
+        showToastMessage('⚠️ Ошибка, введите длительность вручную');
+    } finally {
+        durationInput.disabled = false;
+        durationInput.placeholder = 'Длительность';
+    }
 }
 
 async function fetchEditVideoDuration() {
     const youtubeId = document.getElementById('editVideoYoutubeId').value.trim();
     const durationInput = document.getElementById('editVideoDuration');
-    if (!youtubeId) { showToastMessage('❌ Введите YouTube ID'); return; }
+    if (!youtubeId) { 
+        showToastMessage('❌ Введите YouTube ID'); 
+        return;
+    }
     
+    durationInput.placeholder = '⏳ Определяем...';
+    durationInput.disabled = true;
+    
+    try {
+        let duration = await getDurationFromNoEmbed(youtubeId);
+        
+        if (!duration) {
+            duration = await getDurationFromYouTubeOEmbed(youtubeId);
+        }
+        
+        if (!duration) {
+            duration = await getDurationFromIframe(youtubeId);
+        }
+        
+        if (duration) {
+            durationInput.value = duration;
+            showToastMessage(`✅ Длительность: ${duration}`);
+        } else {
+            showToastMessage('⚠️ Не удалось определить длительность');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+    } finally {
+        durationInput.disabled = false;
+        durationInput.placeholder = 'Длительность';
+    }
+}
+
+// Получение длительности через noembed.com
+async function getDurationFromNoEmbed(youtubeId) {
     try {
         const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
         const data = await response.json();
         if (data && data.duration) {
-            durationInput.value = formatDuration(data.duration);
-            showToastMessage(`✅ Длительность: ${durationInput.value}`);
+            return formatDuration(data.duration);
         }
-    } catch (error) {}
+    } catch (error) {
+        console.log('noembed.com не доступен');
+    }
+    return null;
+}
+
+// Получение длительности через YouTube oEmbed API
+async function getDurationFromYouTubeOEmbed(youtubeId) {
+    try {
+        const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
+        const data = await response.json();
+        // oEmbed не даёт длительность напрямую, но иногда есть в html
+        if (data && data.html) {
+            // Пробуем получить из iframe через другой метод
+            return await getDurationFromIframe(youtubeId);
+        }
+    } catch (error) {
+        console.log('YouTube oEmbed не доступен');
+    }
+    return null;
+}
+
+// Получение длительности через скрытый iframe (самый надёжный)
+function getDurationFromIframe(youtubeId) {
+    return new Promise((resolve) => {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1`;
+        
+        const timeout = setTimeout(() => {
+            if (iframe.parentNode) iframe.remove();
+            resolve(null);
+        }, 8000);
+        
+        iframe.onload = () => {
+            try {
+                // Ждём загрузки YouTube API
+                let checkCount = 0;
+                const checkPlayer = setInterval(() => {
+                    checkCount++;
+                    if (typeof YT !== 'undefined' && YT.Player) {
+                        clearInterval(checkPlayer);
+                        try {
+                            const player = new YT.Player(iframe, {
+                                events: {
+                                    onReady: (event) => {
+                                        const duration = event.target.getDuration();
+                                        if (duration && duration > 0) {
+                                            const minutes = Math.floor(duration / 60);
+                                            const seconds = Math.floor(duration % 60);
+                                            const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                                            clearTimeout(timeout);
+                                            iframe.remove();
+                                            resolve(formatted);
+                                        } else {
+                                            clearTimeout(timeout);
+                                            iframe.remove();
+                                            resolve(null);
+                                        }
+                                    },
+                                    onError: () => {
+                                        clearTimeout(timeout);
+                                        iframe.remove();
+                                        resolve(null);
+                                    }
+                                }
+                            });
+                        } catch(e) {
+                            clearTimeout(timeout);
+                            iframe.remove();
+                            resolve(null);
+                        }
+                    } else if (checkCount > 50) { // 5 секунд максимум
+                        clearInterval(checkPlayer);
+                        clearTimeout(timeout);
+                        iframe.remove();
+                        resolve(null);
+                    }
+                }, 100);
+            } catch(e) {
+                clearTimeout(timeout);
+                iframe.remove();
+                resolve(null);
+            }
+        };
+        
+        iframe.onerror = () => {
+            clearTimeout(timeout);
+            iframe.remove();
+            resolve(null);
+        };
+        
+        document.body.appendChild(iframe);
+    });
 }
 
 function formatDuration(isoDuration) {
+    if (!isoDuration) return null;
+    
+    // Формат PT1M30S или PT1H2M30S
     const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!match) return '0:00';
+    if (!match) return null;
+    
     const hours = parseInt(match[1]) || 0;
     const minutes = parseInt(match[2]) || 0;
     const seconds = parseInt(match[3]) || 0;
-    if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
