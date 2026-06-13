@@ -124,13 +124,11 @@ function setSortOrder(order) {
 function getFilteredAndSortedVideos() {
     let filtered = [...videosData];
     
-    // Фильтрация по категории
     const cat = categories.find(c => c.id === currentCategory);
     if (cat && cat.filter) {
         filtered = filtered.filter(cat.filter);
     }
     
-    // Поиск по названию и описанию
     if (searchQuery && searchQuery.trim() !== "") {
         const query = searchQuery.toLowerCase().trim();
         filtered = filtered.filter(video => 
@@ -139,7 +137,6 @@ function getFilteredAndSortedVideos() {
         );
     }
     
-    // Сортировка
     switch (sortOrder) {
         case "newest":
             filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -161,7 +158,7 @@ function getFilteredAndSortedVideos() {
 }
 
 // ==============================================
-// ЗАГРУЗКА ПРЕВЬЮ (ТОЛЬКО ССЫЛКИ, БЕЗ BASE64)
+// ЗАГРУЗКА ПРЕВЬЮ (ТОЛЬКО ССЫЛКИ)
 // ==============================================
 function initUrlPreview() {
     const urlInput = document.getElementById('newVideoUrlInput');
@@ -227,7 +224,63 @@ function generateEditThumbnailFromYouTube() {
     document.getElementById('editVideoThumb').value = thumbUrl;
     document.getElementById('editThumbPreviewImg').src = thumbUrl;
     document.getElementById('editThumbPreview').style.display = 'block';
+    document.getElementById('editVideoUrlInput').value = thumbUrl;
     showToastMessage('✅ Превью из YouTube');
+}
+
+// ==============================================
+// ЗАГРУЗКА ФАЙЛОВ С КОМПЬЮТЕРА
+// ==============================================
+function uploadThumbnailFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        showToastMessage('❌ Выберите изображение');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        showToastMessage('❌ Файл больше 5MB');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const imageUrl = e.target.result;
+        document.getElementById('newVideoThumb').value = imageUrl;
+        const previewDiv = document.getElementById('thumbPreview');
+        const previewImg = document.getElementById('thumbPreviewImg');
+        previewImg.src = imageUrl;
+        previewDiv.style.display = 'block';
+        document.getElementById('newVideoUrlInput').value = '';
+        document.getElementById('urlPreview').style.display = 'none';
+        showToastMessage('✅ Превью загружено');
+    };
+    reader.readAsDataURL(file);
+}
+
+function uploadEditThumbnailFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        showToastMessage('❌ Выберите изображение');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        showToastMessage('❌ Файл больше 5MB');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const imageUrl = e.target.result;
+        document.getElementById('editVideoThumb').value = imageUrl;
+        const previewDiv = document.getElementById('editThumbPreview');
+        const previewImg = document.getElementById('editThumbPreviewImg');
+        previewImg.src = imageUrl;
+        previewDiv.style.display = 'block';
+        document.getElementById('editVideoUrlInput').value = '';
+        document.getElementById('editUrlPreview').style.display = 'none';
+        showToastMessage('✅ Превью обновлено');
+    };
+    reader.readAsDataURL(file);
 }
 
 // ==============================================
@@ -266,6 +319,7 @@ async function fetchEditVideoDuration() {
     const durationInput = document.getElementById('editVideoDuration');
     if (!youtubeId) return;
     
+    durationInput.disabled = true;
     try {
         const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
         const data = await response.json();
@@ -274,6 +328,7 @@ async function fetchEditVideoDuration() {
             showToastMessage(`✅ Длительность: ${durationInput.value}`);
         }
     } catch (error) {}
+    durationInput.disabled = false;
 }
 
 function formatDuration(isoDuration) {
@@ -327,6 +382,7 @@ async function addNewVideo(event) {
             document.getElementById('newVideo18Plus').checked = false;
             document.getElementById('thumbPreview').style.display = 'none';
             document.getElementById('urlPreview').style.display = 'none';
+            document.getElementById('thumbFileInput').value = '';
             await loadVideosFromFirebase();
             showToastMessage('✅ Видео добавлено');
         }
@@ -343,6 +399,10 @@ async function addNewVideo(event) {
 // ==============================================
 function openEditModal(video) {
     currentEditVideo = video;
+    document.getElementById('editThumbPreview').style.display = 'none';
+    document.getElementById('editThumbPreviewImg').src = '';
+    document.getElementById('editUrlPreview').style.display = 'none';
+    document.getElementById('editUrlPreviewImg').src = '';
     document.getElementById('editVideoId').value = video.id;
     document.getElementById('editVideoTitle').value = video.title || '';
     document.getElementById('editVideoYoutubeId').value = video.youtubeId || '';
@@ -354,15 +414,22 @@ function openEditModal(video) {
     document.getElementById('editVideoCategory').value = video.category || 'trailer';
     document.getElementById('editVideo18Plus').checked = video.is18Plus || false;
     
-    if (video.thumb) {
+    if (video.thumb && video.thumb !== '') {
         document.getElementById('editThumbPreviewImg').src = video.thumb;
         document.getElementById('editThumbPreview').style.display = 'block';
+    } else {
+        document.getElementById('editThumbPreview').style.display = 'none';
     }
     
     document.getElementById('editModal').style.display = 'flex';
 }
 
 function closeEditModal() {
+    document.getElementById('editThumbPreview').style.display = 'none';
+    document.getElementById('editThumbPreviewImg').src = '';
+    document.getElementById('editUrlPreview').style.display = 'none';
+    document.getElementById('editUrlPreviewImg').src = '';
+    document.getElementById('editVideoUrlInput').value = '';
     document.getElementById('editModal').style.display = 'none';
     currentEditVideo = null;
 }
@@ -404,6 +471,41 @@ async function saveEditedVideo(event) {
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
     }
+}
+
+// ==============================================
+// ОЧИСТКА ПРЕВЬЮ
+// ==============================================
+function clearUrlInput() {
+    const urlInput = document.getElementById('newVideoUrlInput');
+    const preview = document.getElementById('urlPreview');
+    const thumbInput = document.getElementById('newVideoThumb');
+    const thumbPreview = document.getElementById('thumbPreview');
+    
+    if (urlInput) urlInput.value = '';
+    if (preview) preview.style.display = 'none';
+    if (thumbInput) thumbInput.value = '';
+    if (thumbPreview) thumbPreview.style.display = 'none';
+    
+    showToastMessage('🗑️ Превью удалено, будет из YouTube');
+}
+
+function clearEditUrlInput() {
+    const urlInput = document.getElementById('editVideoUrlInput');
+    const preview = document.getElementById('editUrlPreview');
+    const thumbInput = document.getElementById('editVideoThumb');
+    const thumbPreview = document.getElementById('editThumbPreview');
+    
+    if (urlInput) urlInput.value = '';
+    if (preview) preview.style.display = 'none';
+    if (thumbInput) thumbInput.value = '';
+    if (thumbPreview) thumbPreview.style.display = 'none';
+    
+    showToastMessage('🗑️ Превью удалено, будет из YouTube');
+}
+
+function clearEditThumb() {
+    clearEditUrlInput();
 }
 
 // ==============================================
@@ -636,13 +738,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initUrlPreview();
     initEditUrlPreview();
     
-    // Поиск по кнопке
     const searchBtn = document.getElementById('searchBtn');
     if (searchBtn) {
         searchBtn.addEventListener('click', searchVideos);
     }
     
-    // Поиск по Enter
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('keypress', (e) => {
@@ -670,7 +770,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.onYouTubeIframeAPIReady = function() {};
 
-// ЭКСПОРТ
+// ==============================================
+// ЭКСПОРТ ФУНКЦИЙ
+// ==============================================
 window.addVideoToFirebase = addVideoToFirebase;
 window.updateVideoInFirebase = updateVideoInFirebase;
 window.deleteVideoFromFirebase = deleteVideoFromFirebase;
@@ -685,6 +787,11 @@ window.generateThumbnailFromYouTube = generateThumbnailFromYouTube;
 window.generateEditThumbnailFromYouTube = generateEditThumbnailFromYouTube;
 window.fetchVideoDuration = fetchVideoDuration;
 window.fetchEditVideoDuration = fetchEditVideoDuration;
+window.uploadThumbnailFile = uploadThumbnailFile;
+window.uploadEditThumbnailFile = uploadEditThumbnailFile;
 window.searchVideos = searchVideos;
 window.clearSearch = clearSearch;
 window.setSortOrder = setSortOrder;
+window.clearUrlInput = clearUrlInput;
+window.clearEditUrlInput = clearEditUrlInput;
+window.clearEditThumb = clearEditThumb;
