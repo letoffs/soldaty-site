@@ -248,43 +248,6 @@
     display: none;
 }
 
-/* Страница описания */
-.page-description {
-    background: #0f1a0f;
-    border-radius: 16px;
-    padding: 20px;
-    margin: 20px 0;
-    text-align: center;
-}
-
-.description-title {
-    color: #ffd966;
-    font-size: 20px;
-    margin-bottom: 10px;
-}
-
-.description-content p {
-    color: #8aa07a;
-    font-size: 14px;
-}
-
-.description-features {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-}
-
-.feature {
-    color: #bd8a3e;
-    font-size: 14px;
-}
-
-.feature i {
-    margin-right: 8px;
-}
-
 /* Секретная кнопка */
 .secret-admin-btn {
     width: 100%;
