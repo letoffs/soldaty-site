@@ -156,6 +156,18 @@
             <input type="checkbox" id="newVideo18Plus">
             <span>Контент 18+</span>
         </label>
+
+        <div style="margin: 20px 0;">
+            <h4 style="color: #ffd966; margin-bottom: 15px;">
+                <i class="fas fa-arrows-alt"></i> Порядок видео (перетащите мышкой)
+            </h4>
+            <div id="adminVideosSortList" class="admin-sort-list">
+                <div class="loading-spinner">Загрузка...</div>
+            </div>
+            <div class="thumb-hint" style="font-size: 12px; color: #8aa07a; margin-top: 10px;">
+                <i class="fas fa-info-circle"></i> Перетаскивайте видео мышкой для изменения порядка
+            </div>
+        </div>
         
         <button onclick="addNewVideo(event)" class="submit-btn" style="background: #ffd700; color: #1a472a; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
             <i class="fas fa-save"></i> Добавить видео
@@ -259,6 +271,7 @@
         <div class="sort-container">
             <label><i class="fas fa-sort"></i> Сортировать:</label>
             <select id="sortSelect" onchange="setSortOrder(this.value)">
+                <option value="default">По порядку (по умолчанию)</option>
                 <option value="newest">Сначала новые</option>
                 <option value="oldest">Сначала старые</option>
                 <option value="title-asc">Название (А-Я)</option>
