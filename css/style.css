@@ -24,6 +24,36 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'Magistral-MediumItalic';
+    src: url('../fonts/Magistral-MediumItalic.woff2') format('woff2'),
+         url('../fonts/Magistral-MediumItalic.woff') format('woff'),
+         url('../fonts/Magistral-MediumItalic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Magistral-BookItalic';
+    src: url('../fonts/Magistral-BookItalic.woff2') format('woff2'),
+         url('../fonts/Magistral-BookItalic.woff') format('woff'),
+         url('../fonts/Magistral-BookItalic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Magistral-Book';
+    src: url('../fonts/Magistral-Book.woff2') format('woff2'),
+         url('../fonts/Magistral-Book.woff') format('woff'),
+         url('../fonts/Magistral-Book.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 body {
     font-family: 'Gotham Pro', 'Montserrat', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #1a2a1a 0%, #0e1a0e 100%);
@@ -5593,14 +5623,18 @@ button,
 }
 
 .time-display {
+    font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: medium;
+    font-style: italic;
     font-size: 1.4rem;
     font-weight: bold;
     color: #ffd966;
-    font-family: 'Courier New', monospace;
     letter-spacing: 2px;
 }
 
 .date-display {
+    font-family: 'Magistral-Book', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: medium;
     font-size: 0.7rem;
     color: #aaa;
     margin-top: 2px;
@@ -5619,7 +5653,10 @@ button,
 }
 
 .weather-temp {
-    font-size: 1.1rem;
+    font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: medium;
+    font-style: italic;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #ffd966;
 }
