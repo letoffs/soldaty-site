@@ -25,6 +25,7 @@
     border: 1px solid #3e5a3e;
     transition: all 0.2s;
     cursor: pointer;
+    position: relative;
 }
 
 .video-card:hover {
@@ -109,6 +110,43 @@
     display: flex;
     align-items: center;
     gap: 5px;
+}
+
+/* ===== АДМИН-КОНТРОЛЫ НА КАРТОЧКЕ ВИДЕО ===== */
+.video-admin-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: none;
+    gap: 8px;
+    z-index: 20;
+}
+
+.video-card:hover .video-admin-controls {
+    display: flex;
+}
+
+.admin-delete-btn, .admin-edit-btn {
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    backdrop-filter: blur(4px);
+}
+
+.admin-delete-btn:hover {
+    background: #dc3545;
+    transform: scale(1.05);
+}
+
+.admin-edit-btn:hover {
+    background: #ffc107;
+    color: #000;
+    transform: scale(1.05);
 }
 
 /* ===== МОДАЛЬНОЕ ОКНО ВИДЕО ===== */
@@ -235,7 +273,7 @@
 .age-badge-18 {
     position: absolute;
     top: 10px;
-    right: 10px;
+    left: 10px;
     background: #f44336;
     color: white;
     font-size: 0.7rem;
@@ -294,7 +332,6 @@
 }
 
 /* ===== БОКОВАЯ ПАНЕЛЬ С КАТЕГОРИЯМИ ===== */
-/* ===== БОКОВАЯ ПАНЕЛЬ С КАТЕГОРИЯМИ ===== */
 .videos-page-layout {
     display: flex;
     gap: 30px;
@@ -331,7 +368,7 @@
     color: #bd8a3e;
 }
 
-/* ===== УНИФИЦИРОВАННЫЕ КАТЕГОРИИ (как в галерее) ===== */
+/* ===== КАТЕГОРИИ (единый стиль) ===== */
 .category-list {
     display: flex;
     flex-direction: column;
@@ -429,6 +466,78 @@
     color: #8aa07a;
 }
 
+/* ===== АДМИН-ПАНЕЛЬ ===== */
+.admin-panel {
+    background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+    border-radius: 20px;
+    padding: 25px;
+    margin: 20px 0;
+    border: 2px solid #ffd700;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.admin-panel h3 {
+    color: #ffd700;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.admin-panel h4 {
+    color: #ffd966;
+    margin-bottom: 15px;
+}
+
+.admin-panel input,
+.admin-panel textarea,
+.admin-panel select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 1px solid #ffd700;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.admin-panel textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.admin-panel button {
+    background: #ffd700;
+    color: #1a472a;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 10px;
+    transition: all 0.2s;
+}
+
+.admin-panel button:hover {
+    background: #ffed4a;
+    transform: scale(1.02);
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-admin {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.close-admin:hover {
+    background: #c82333 !important;
+}
+
 /* ===== ТОСТ УВЕДОМЛЕНИЕ ===== */
 .toast-message {
     position: fixed;
@@ -446,6 +555,7 @@
     transition: all 0.3s;
     white-space: nowrap;
     font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .toast-message.show {
@@ -487,6 +597,14 @@
     .sidebar-header {
         display: none;
     }
+
+    .admin-panel {
+        padding: 15px;
+    }
+
+    .admin-panel > div {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 @media (max-width: 700px) {
@@ -526,5 +644,19 @@
         white-space: normal;
         max-width: 90%;
         text-align: center;
+        font-size: 0.8rem;
     }
+}
+
+.secret-admin-btn {
+    width: 100%;
+    height: 20px;
+    margin-top: 10px;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.3s;
+}
+
+.secret-admin-btn:hover {
+    opacity: 0.7;
 }
