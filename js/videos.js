@@ -1,7 +1,13 @@
+// ==============================================
+// ВИДЕОТЕКА - С ПОИСКОМ И СОРТИРОВКОЙ
+// ==============================================
+
 let videosData = [];
 let currentCategory = "all";
 let currentVideoPlayer = null;
 let currentEditVideo = null;
+let searchQuery = "";
+let sortOrder = "newest";
 
 const ADMIN_EMAIL = 'twinkjjjjkmnb@gmail.com';
 
@@ -10,9 +16,6 @@ function isAdmin() {
     return user && user.email === ADMIN_EMAIL;
 }
 
-// ==============================================
-// КАТЕГОРИИ
-// ==============================================
 const categories = [
     { id: "all", name: "Все видео", icon: "fas fa-video", filter: null },
     { id: "trailer", name: "Трейлеры и анонсы", icon: "fas fa-film", filter: v => v.category === "trailer" },
@@ -23,7 +26,7 @@ const categories = [
 ];
 
 // ==============================================
-// FIREBASE REALTIME DATABASE
+// FIREBASE
 // ==============================================
 async function loadVideosFromFirebase() {
     try {
@@ -36,7 +39,6 @@ async function loadVideosFromFirebase() {
                 id: video.id || parseInt(key),
                 ...video
             }));
-            videosData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         } else {
             videosData = [];
         }
@@ -95,72 +97,71 @@ async function deleteVideoFromFirebase(video) {
 }
 
 // ==============================================
-// ЗАГРУЗКА ПРЕВЬЮ (ТОЧНО КАК В ГАЛЕРЕЕ)
+// ФУНКЦИИ ПОИСКА И СОРТИРОВКИ
 // ==============================================
-function uploadThumbnailFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-        showToastMessage('❌ Пожалуйста, выберите изображение');
-        return;
+function searchVideos() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchQuery = searchInput.value;
+        renderVideos();
     }
-    
-    if (file.size > 5 * 1024 * 1024) {
-        showToastMessage('❌ Размер файла не должен превышать 5MB');
-        return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const imageUrl = e.target.result;
-        document.getElementById('newVideoThumb').value = imageUrl;
-        
-        const previewDiv = document.getElementById('thumbPreview');
-        const previewImg = document.getElementById('thumbPreviewImg');
-        previewImg.src = imageUrl;
-        previewDiv.style.display = 'block';
-        
-        const urlInput = document.getElementById('newVideoUrlInput');
-        if (urlInput) urlInput.value = '';
-        document.getElementById('urlPreview').style.display = 'none';
-        
-        showToastMessage('✅ Превью загружено');
-    };
-    reader.readAsDataURL(file);
 }
 
-function uploadEditThumbnailFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+function clearSearch() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        searchQuery = '';
+        renderVideos();
+    }
+}
+
+function setSortOrder(order) {
+    sortOrder = order;
+    renderVideos();
+}
+
+function getFilteredAndSortedVideos() {
+    let filtered = [...videosData];
     
-    if (!file.type.startsWith('image/')) {
-        showToastMessage('❌ Пожалуйста, выберите изображение');
-        return;
+    // Фильтрация по категории
+    const cat = categories.find(c => c.id === currentCategory);
+    if (cat && cat.filter) {
+        filtered = filtered.filter(cat.filter);
     }
     
-    if (file.size > 5 * 1024 * 1024) {
-        showToastMessage('❌ Размер файла не должен превышать 5MB');
-        return;
+    // Поиск по названию и описанию
+    if (searchQuery && searchQuery.trim() !== "") {
+        const query = searchQuery.toLowerCase().trim();
+        filtered = filtered.filter(video => 
+            video.title.toLowerCase().includes(query) ||
+            (video.desc && video.desc.toLowerCase().includes(query))
+        );
     }
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const imageUrl = e.target.result;
-        document.getElementById('editVideoThumb').value = imageUrl;
-        
-        const previewDiv = document.getElementById('editThumbPreview');
-        const previewImg = document.getElementById('editThumbPreviewImg');
-        previewImg.src = imageUrl;
-        previewDiv.style.display = 'block';
-        
-        showToastMessage('✅ Превью обновлено');
-    };
-    reader.readAsDataURL(file);
+    // Сортировка
+    switch (sortOrder) {
+        case "newest":
+            filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            break;
+        case "oldest":
+            filtered.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+            break;
+        case "title-asc":
+            filtered.sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+            break;
+        case "title-desc":
+            filtered.sort((a, b) => b.title.localeCompare(a.title, 'ru'));
+            break;
+        default:
+            filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+    
+    return filtered;
 }
 
 // ==============================================
-// ПРЕДПРОСМОТР URL (КАК В ГАЛЕРЕЕ)
+// ЗАГРУЗКА ПРЕВЬЮ (ТОЛЬКО ССЫЛКИ, БЕЗ BASE64)
 // ==============================================
 function initUrlPreview() {
     const urlInput = document.getElementById('newVideoUrlInput');
@@ -202,9 +203,6 @@ function initEditUrlPreview() {
     });
 }
 
-// ==============================================
-// YOUTUBE ПРЕВЬЮ
-// ==============================================
 function generateThumbnailFromYouTube() {
     const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
     if (!youtubeId) {
@@ -213,15 +211,9 @@ function generateThumbnailFromYouTube() {
     }
     const thumbUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
     document.getElementById('newVideoThumb').value = thumbUrl;
-    
-    const previewDiv = document.getElementById('thumbPreview');
-    const previewImg = document.getElementById('thumbPreviewImg');
-    previewImg.src = thumbUrl;
-    previewDiv.style.display = 'block';
-    
-    const urlInput = document.getElementById('newVideoUrlInput');
-    if (urlInput) urlInput.value = thumbUrl;
-    
+    document.getElementById('thumbPreviewImg').src = thumbUrl;
+    document.getElementById('thumbPreview').style.display = 'block';
+    document.getElementById('newVideoUrlInput').value = thumbUrl;
     showToastMessage('✅ Превью из YouTube');
 }
 
@@ -233,12 +225,8 @@ function generateEditThumbnailFromYouTube() {
     }
     const thumbUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
     document.getElementById('editVideoThumb').value = thumbUrl;
-    
-    const previewDiv = document.getElementById('editThumbPreview');
-    const previewImg = document.getElementById('editThumbPreviewImg');
-    previewImg.src = thumbUrl;
-    previewDiv.style.display = 'block';
-    
+    document.getElementById('editThumbPreviewImg').src = thumbUrl;
+    document.getElementById('editThumbPreview').style.display = 'block';
     showToastMessage('✅ Превью из YouTube');
 }
 
@@ -248,39 +236,25 @@ function generateEditThumbnailFromYouTube() {
 async function fetchVideoDuration() {
     const youtubeId = document.getElementById('newVideoYoutubeId').value.trim();
     const durationInput = document.getElementById('newVideoDuration');
-    if (!youtubeId) { 
-        showToastMessage('❌ Введите YouTube ID'); 
-        return;
-    }
+    if (!youtubeId) { showToastMessage('❌ Введите YouTube ID'); return; }
     
-    durationInput.placeholder = '⏳ Определяем...';
+    durationInput.placeholder = '⏳...';
     durationInput.disabled = true;
     
     try {
-        // Способ 1: noembed.com
-        let duration = await getDurationFromNoEmbed(youtubeId);
-        
-        // Способ 2: через YouTube oEmbed API
-        if (!duration) {
-            duration = await getDurationFromYouTubeOEmbed(youtubeId);
-        }
-        
-        // Способ 3: через скрытый iframe (самый надёжный)
-        if (!duration) {
-            duration = await getDurationFromIframe(youtubeId);
-        }
-        
-        if (duration) {
-            durationInput.value = duration;
+        const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
+        const data = await response.json();
+        if (data && data.duration) {
+            const formatted = formatDuration(data.duration);
+            durationInput.value = formatted;
             durationInput.classList.add('duration-auto');
-            showToastMessage(`✅ Длительность: ${duration}`);
+            showToastMessage(`✅ Длительность: ${formatted}`);
             setTimeout(() => durationInput.classList.remove('duration-auto'), 2000);
         } else {
-            showToastMessage('⚠️ Не удалось определить длительность, введите вручную');
+            showToastMessage('⚠️ Не удалось определить, введите вручную');
         }
     } catch (error) {
-        console.error('Ошибка определения длительности:', error);
-        showToastMessage('⚠️ Ошибка, введите длительность вручную');
+        showToastMessage('⚠️ Ошибка, введите вручную');
     } finally {
         durationInput.disabled = false;
         durationInput.placeholder = 'Длительность';
@@ -290,157 +264,25 @@ async function fetchVideoDuration() {
 async function fetchEditVideoDuration() {
     const youtubeId = document.getElementById('editVideoYoutubeId').value.trim();
     const durationInput = document.getElementById('editVideoDuration');
-    if (!youtubeId) { 
-        showToastMessage('❌ Введите YouTube ID'); 
-        return;
-    }
+    if (!youtubeId) return;
     
-    durationInput.placeholder = '⏳ Определяем...';
-    durationInput.disabled = true;
-    
-    try {
-        let duration = await getDurationFromNoEmbed(youtubeId);
-        
-        if (!duration) {
-            duration = await getDurationFromYouTubeOEmbed(youtubeId);
-        }
-        
-        if (!duration) {
-            duration = await getDurationFromIframe(youtubeId);
-        }
-        
-        if (duration) {
-            durationInput.value = duration;
-            showToastMessage(`✅ Длительность: ${duration}`);
-        } else {
-            showToastMessage('⚠️ Не удалось определить длительность');
-        }
-    } catch (error) {
-        console.error('Ошибка:', error);
-    } finally {
-        durationInput.disabled = false;
-        durationInput.placeholder = 'Длительность';
-    }
-}
-
-// Получение длительности через noembed.com
-async function getDurationFromNoEmbed(youtubeId) {
     try {
         const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeId}`);
         const data = await response.json();
         if (data && data.duration) {
-            return formatDuration(data.duration);
+            durationInput.value = formatDuration(data.duration);
+            showToastMessage(`✅ Длительность: ${durationInput.value}`);
         }
-    } catch (error) {
-        console.log('noembed.com не доступен');
-    }
-    return null;
-}
-
-// Получение длительности через YouTube oEmbed API
-async function getDurationFromYouTubeOEmbed(youtubeId) {
-    try {
-        const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
-        const data = await response.json();
-        // oEmbed не даёт длительность напрямую, но иногда есть в html
-        if (data && data.html) {
-            // Пробуем получить из iframe через другой метод
-            return await getDurationFromIframe(youtubeId);
-        }
-    } catch (error) {
-        console.log('YouTube oEmbed не доступен');
-    }
-    return null;
-}
-
-// Получение длительности через скрытый iframe (самый надёжный)
-function getDurationFromIframe(youtubeId) {
-    return new Promise((resolve) => {
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1`;
-        
-        const timeout = setTimeout(() => {
-            if (iframe.parentNode) iframe.remove();
-            resolve(null);
-        }, 8000);
-        
-        iframe.onload = () => {
-            try {
-                // Ждём загрузки YouTube API
-                let checkCount = 0;
-                const checkPlayer = setInterval(() => {
-                    checkCount++;
-                    if (typeof YT !== 'undefined' && YT.Player) {
-                        clearInterval(checkPlayer);
-                        try {
-                            const player = new YT.Player(iframe, {
-                                events: {
-                                    onReady: (event) => {
-                                        const duration = event.target.getDuration();
-                                        if (duration && duration > 0) {
-                                            const minutes = Math.floor(duration / 60);
-                                            const seconds = Math.floor(duration % 60);
-                                            const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                                            clearTimeout(timeout);
-                                            iframe.remove();
-                                            resolve(formatted);
-                                        } else {
-                                            clearTimeout(timeout);
-                                            iframe.remove();
-                                            resolve(null);
-                                        }
-                                    },
-                                    onError: () => {
-                                        clearTimeout(timeout);
-                                        iframe.remove();
-                                        resolve(null);
-                                    }
-                                }
-                            });
-                        } catch(e) {
-                            clearTimeout(timeout);
-                            iframe.remove();
-                            resolve(null);
-                        }
-                    } else if (checkCount > 50) { // 5 секунд максимум
-                        clearInterval(checkPlayer);
-                        clearTimeout(timeout);
-                        iframe.remove();
-                        resolve(null);
-                    }
-                }, 100);
-            } catch(e) {
-                clearTimeout(timeout);
-                iframe.remove();
-                resolve(null);
-            }
-        };
-        
-        iframe.onerror = () => {
-            clearTimeout(timeout);
-            iframe.remove();
-            resolve(null);
-        };
-        
-        document.body.appendChild(iframe);
-    });
+    } catch (error) {}
 }
 
 function formatDuration(isoDuration) {
-    if (!isoDuration) return null;
-    
-    // Формат PT1M30S или PT1H2M30S
     const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!match) return null;
-    
+    if (!match) return '0:00';
     const hours = parseInt(match[1]) || 0;
     const minutes = parseInt(match[2]) || 0;
     const seconds = parseInt(match[3]) || 0;
-    
-    if (hours > 0) {
-        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
+    if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
@@ -485,13 +327,10 @@ async function addNewVideo(event) {
             document.getElementById('newVideo18Plus').checked = false;
             document.getElementById('thumbPreview').style.display = 'none';
             document.getElementById('urlPreview').style.display = 'none';
-            document.getElementById('thumbFileInput').value = '';
-            
             await loadVideosFromFirebase();
             showToastMessage('✅ Видео добавлено');
         }
     } catch (error) {
-        console.error('Ошибка:', error);
         showToastMessage('❌ Ошибка сохранения');
     } finally {
         saveBtn.innerHTML = originalText;
@@ -515,11 +354,9 @@ function openEditModal(video) {
     document.getElementById('editVideoCategory').value = video.category || 'trailer';
     document.getElementById('editVideo18Plus').checked = video.is18Plus || false;
     
-    if (video.thumb && video.thumb !== '') {
+    if (video.thumb) {
         document.getElementById('editThumbPreviewImg').src = video.thumb;
         document.getElementById('editThumbPreview').style.display = 'block';
-    } else {
-        document.getElementById('editThumbPreview').style.display = 'none';
     }
     
     document.getElementById('editModal').style.display = 'flex';
@@ -562,7 +399,6 @@ async function saveEditedVideo(event) {
             showToastMessage('✅ Видео обновлено');
         }
     } catch (error) {
-        console.error('Ошибка:', error);
         showToastMessage('❌ Ошибка обновления');
     } finally {
         saveBtn.innerHTML = originalText;
@@ -649,7 +485,13 @@ function renderCategories() {
     
     let html = '';
     categories.forEach(cat => {
-        const count = cat.filter ? videosData.filter(cat.filter).length : videosData.length;
+        let count = 0;
+        if (cat.filter) {
+            count = videosData.filter(cat.filter).length;
+        } else {
+            count = videosData.length;
+        }
+        
         html += `<div class="category-item ${currentCategory === cat.id ? 'active' : ''}" data-category="${cat.id}">
                     <i class="${cat.icon}"></i>
                     <span class="category-name">${cat.name}</span>
@@ -674,13 +516,24 @@ function renderVideos() {
     const currentCat = categories.find(c => c.id === currentCategory);
     if (titleSpan && currentCat) titleSpan.innerText = currentCat.name;
     
-    let filtered = videosData;
-    const cat = categories.find(c => c.id === currentCategory);
-    if (cat && cat.filter) filtered = videosData.filter(cat.filter);
-    if (countSpan) countSpan.innerText = `${filtered.length} видео`;
+    const filtered = getFilteredAndSortedVideos();
+    
+    if (countSpan) {
+        let countText = `${filtered.length} видео`;
+        if (searchQuery && searchQuery.trim()) countText += ` (найдено)`;
+        countSpan.innerText = countText;
+    }
     
     if (filtered.length === 0) {
-        container.innerHTML = '<div class="empty-videos"><i class="fas fa-video-slash"></i> Видео в этой категории временно отсутствуют</div>';
+        let emptyMessage = '<div class="empty-videos"><i class="fas fa-video-slash"></i>';
+        if (searchQuery && searchQuery.trim()) {
+            emptyMessage += `<p>Ничего не найдено по запросу "${escapeHtml(searchQuery)}"</p>
+                            <button onclick="clearSearch()" class="clear-search-btn" style="margin-top: 10px; padding: 8px 20px; background: #bd8a3e; border: none; border-radius: 20px; cursor: pointer;">Очистить поиск</button>`;
+        } else {
+            emptyMessage += '<p>Видео в этой категории временно отсутствуют</p>';
+        }
+        emptyMessage += '</div>';
+        container.innerHTML = emptyMessage;
         return;
     }
     
@@ -723,7 +576,7 @@ function renderVideos() {
     document.querySelectorAll('.video-card').forEach(card => {
         card.addEventListener('click', (e) => {
             if (e.target.closest('.admin-delete-btn') || e.target.closest('.admin-edit-btn')) return;
-            const video = videosData.find(v => v.id == card.dataset.id);
+            const video = filtered.find(v => v.id == card.dataset.id);
             if (video) playVideo(video);
         });
     });
@@ -753,11 +606,13 @@ let clickTimer = null;
 function initSecretAdminButton() {
     const secretBtn = document.getElementById('secretAdminBtn');
     if (!secretBtn) return;
+    
     secretBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         clickCount++;
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = setTimeout(() => clickCount = 0, 1000);
+        
         if (clickCount === 3) {
             clickCount = 0;
             clearTimeout(clickTimer);
@@ -781,8 +636,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initUrlPreview();
     initEditUrlPreview();
     
+    // Поиск по кнопке
+    const searchBtn = document.getElementById('searchBtn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', searchVideos);
+    }
+    
+    // Поиск по Enter
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchVideos();
+            }
+        });
+    }
+    
     const modal = document.getElementById('videoModal');
     if (modal) modal.onclick = (e) => { if (e.target === modal) closeVideoModal(); };
+    
     const closeBtn = document.querySelector('#videoModal .modal-close');
     if (closeBtn) closeBtn.onclick = closeVideoModal;
     
@@ -813,5 +685,6 @@ window.generateThumbnailFromYouTube = generateThumbnailFromYouTube;
 window.generateEditThumbnailFromYouTube = generateEditThumbnailFromYouTube;
 window.fetchVideoDuration = fetchVideoDuration;
 window.fetchEditVideoDuration = fetchEditVideoDuration;
-window.uploadThumbnailFile = uploadThumbnailFile;
-window.uploadEditThumbnailFile = uploadEditThumbnailFile;
+window.searchVideos = searchVideos;
+window.clearSearch = clearSearch;
+window.setSortOrder = setSortOrder;
