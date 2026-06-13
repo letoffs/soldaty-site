@@ -222,6 +222,23 @@
         <div class="description-content"><p>Трейлеры, анонсы и лучшие клипы по мотивам сериала «Солдаты».</p></div>
     </div>
 
+    <div class="search-sort-bar">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Поиск по названию видео..." value="">
+            <button id="searchBtn" class="search-btn">Найти</button>
+            <button class="clear-search" onclick="clearSearch()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sort-container">
+            <label><i class="fas fa-sort"></i> Сортировать:</label>
+            <select id="sortSelect" onchange="setSortOrder(this.value)">
+                <option value="newest">Сначала новые</option>
+                <option value="oldest">Сначала старые</option>
+                <option value="title-asc">Название (А-Я)</option>
+                <option value="title-desc">Название (Я-А)</option>
+            </select>
+        </div>
+    </div>
+
     <!-- ОСНОВНАЯ ЧАСТЬ С БОКОВОЙ ПАНЕЛЬЮ -->
     <div class="videos-page-layout">
         <aside class="videos-sidebar">
@@ -262,3 +279,43 @@
 <script src="js/videos.js"></script>
 </body>
 </html>
+<script>
+    // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ПОЛЯ ПОИСКА
+    (function() {
+        // Очищаем сразу после загрузки DOM
+        const clearSearchField = () => {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                console.log('✅ Поле поиска очищено');
+            }
+        };
+        
+        // Запускаем сразу
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', clearSearchField);
+        } else {
+            clearSearchField();
+        }
+        
+        // Также очищаем через небольшую задержку (на случай, если какой-то скрипт позже заполняет)
+        setTimeout(clearSearchField, 100);
+        setTimeout(clearSearchField, 500);
+        
+        // Наблюдатель за изменениями (если кто-то меняет поле после загрузки)
+        const observer = new MutationObserver(() => {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && searchInput.value && searchInput.value.includes('@')) {
+                searchInput.value = '';
+                console.log('🛡️ Обнаружен email в поиске, очищено');
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                observer.observe(searchInput, { attributes: true, attributeFilter: ['value'] });
+            }
+        });
+    })();
+</script>
