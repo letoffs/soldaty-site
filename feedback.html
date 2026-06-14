@@ -111,11 +111,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label><i class="fas fa-envelope"></i> Email (для ответа)</label>
-                    <input type="email" id="userEmail" placeholder="example@mail.ru" required>
-                </div>
-
-                <div class="form-group">
                     <label><i class="fas fa-tag"></i> Тип обращения</label>
                     <select id="feedbackType" required>
                         <option value="suggestion">💡 Предложение</option>
@@ -135,9 +130,31 @@
                     <textarea id="feedbackMessage" placeholder="Подробно опишите ваше предложение, проблему или вопрос..." required></textarea>
                 </div>
 
+                <!-- ВЫБОР СПОСОБА СВЯЗИ -->
+                <div class="form-group">
+                    <label><i class="fas fa-comment-dots"></i> Способ связи для ответа</label>
+                    <select id="contactMethod" required>
+                        <option value="email">📧 Email</option>
+                        <option value="telegram">💬 Telegram</option>
+                    </select>
+                </div>
+
+                <!-- ПОЛЕ ДЛЯ EMAIL (показывается по умолчанию) -->
+                <div class="form-group" id="emailGroup">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="userEmail" placeholder="example@mail.ru">
+                </div>
+
+                <!-- ПОЛЕ ДЛЯ TELEGRAM (скрыто по умолчанию) -->
+                <div class="form-group" id="telegramGroup" style="display: none;">
+                    <label><i class="fab fa-telegram"></i> Telegram</label>
+                    <input type="text" id="userTelegram" placeholder="@username или +79123456789">
+                    <small style="color: #8aa07a;">Укажите ваш ник в Telegram или номер телефона</small>
+                </div>
+
                 <!-- БЛОК ДЛЯ ВЛОЖЕНИЙ -->
                 <div class="file-attachment">
-                    <label><i class="fas fa-paperclip"></i> Прикрепить вложения</label>
+                    <label><i class="fas fa-paperclip"></i> Прикрепить файл (необязательно)</label>
                     <div class="file-input-wrapper">
                         <label class="file-input-label">
                             <i class="fas fa-upload"></i> Выбрать файл
@@ -214,6 +231,27 @@
 
     let selectedFile = null;
 
+    // Переключение между Email и Telegram
+    const contactMethod = document.getElementById('contactMethod');
+    const emailGroup = document.getElementById('emailGroup');
+    const telegramGroup = document.getElementById('telegramGroup');
+    const userEmail = document.getElementById('userEmail');
+    const userTelegram = document.getElementById('userTelegram');
+
+    contactMethod.addEventListener('change', function() {
+        if (this.value === 'email') {
+            emailGroup.style.display = 'block';
+            telegramGroup.style.display = 'none';
+            userEmail.required = true;
+            userTelegram.required = false;
+        } else {
+            emailGroup.style.display = 'none';
+            telegramGroup.style.display = 'block';
+            userEmail.required = false;
+            userTelegram.required = true;
+        }
+    });
+
     // Обработка выбора файла
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -231,7 +269,6 @@
         fileNameDiv.innerHTML = `<i class="fas fa-paperclip"></i> ${file.name} <span class="remove-file" onclick="removeFile()">✖</span>`;
         fileNameDiv.style.display = 'block';
         
-        // Превью для изображений
         const previewDiv = document.getElementById('filePreview');
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
@@ -245,13 +282,13 @@
         }
     });
     
-    function removeFile() {
+    window.removeFile = function() {
         selectedFile = null;
         document.getElementById('fileInput').value = '';
         document.getElementById('fileName').style.display = 'none';
         document.getElementById('filePreview').style.display = 'none';
         document.getElementById('filePreview').innerHTML = '';
-    }
+    };
 
     function showToast(message, isError = false) {
         let toast = document.getElementById('feedbackToast');
@@ -288,9 +325,18 @@
             'other': '📝 Другое'
         };
         
+        const contactMethodValue = contactMethod.value;
+        let contactValue = '';
+        if (contactMethodValue === 'email') {
+            contactValue = userEmail.value;
+        } else {
+            contactValue = userTelegram.value;
+        }
+        
         const templateParams = {
             name: document.getElementById('feedbackUserName').value,
-            email: document.getElementById('userEmail').value,
+            contact_method: contactMethodValue === 'email' ? 'Email' : 'Telegram',
+            contact: contactValue,
             type: typeMap[document.getElementById('feedbackType').value],
             subject: document.getElementById('feedbackSubject').value,
             message: document.getElementById('feedbackMessage').value,
@@ -299,7 +345,6 @@
         
         try {
             if (selectedFile) {
-                // Если есть файл, преобразуем в base64
                 const reader = new FileReader();
                 reader.readAsDataURL(selectedFile);
                 await new Promise((resolve) => {
@@ -314,12 +359,16 @@
                 await emailjs.send('service_fx7rnbc', 'template_3yd9s6n', templateParams);
             }
             
-            showToast('✅ Сообщение отправлено! Мы ответим на soldaty.site@mail.ru в ближайшее время.');
+            showToast('✅ Сообщение отправлено! Мы ответим вам в ближайшее время.');
             document.getElementById('feedbackForm').reset();
             removeFile();
+            emailGroup.style.display = 'block';
+            telegramGroup.style.display = 'none';
+            userEmail.required = true;
+            userTelegram.required = false;
         } catch (error) {
             console.error('Ошибка:', error);
-            showToast('❌ Ошибка отправки. Попробуйте позже или напишите напрямую на soldaty.site@mail.ru', true);
+            showToast('❌ Ошибка отправки. Попробуйте позже.', true);
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
