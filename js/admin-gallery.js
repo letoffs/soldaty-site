@@ -6,6 +6,9 @@ let currentEditId = null;
 let currentUserEmail = null;
 let batchFiles = [];
 let batchImageUrls = [];
+let batchSelectMode = false;
+let selectedPhotoIds = new Set();
+let currentPhotosList = [];
 
 const ADMIN_EMAILS = ['twinkjjjjkmnb@gmail.com'];
 
@@ -56,13 +59,38 @@ async function loadAdminPanel() {
     
     container.innerHTML = `
         <div class="admin-header">
-            <h1 class="admin-title"><i class="fas fa-crown"></i> УПРАВЛЕНИЕ ФОТОАЛЬБОМОМ</h1>
+            <h1 class="admin-title"> УПРАВЛЕНИЕ ФОТОАЛЬБОМОМ</h1>
             <div class="admin-actions">
+                <button id="batchModeBtn" class="admin-btn">
+                    <i class="fas fa-check-double"></i> Выбрать несколько
+                </button>
                 <button onclick="window.location.href='gallery.html'" class="admin-btn">
                     <i class="fas fa-eye"></i> Смотреть галерею
                 </button>
                 <button onclick="logoutAndRedirect()" class="admin-btn danger">
                     <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
+            </div>
+        </div>
+
+        <!-- Панель групповых действий -->
+        <div id="batchActionsBar" class="batch-actions-bar">
+            <div>
+                <i class="fas fa-check-circle"></i>
+                Выбрано: <span id="selectedCount" class="batch-selected-count">0</span> фото
+                <button id="selectAllBtn" class="batch-select-all">
+                    <i class="fas fa-square"></i> Выбрать все
+                </button>
+            </div>
+            <div class="batch-actions-buttons">
+                <button class="batch-action-btn edit" id="batchEditBtn">
+                    <i class="fas fa-edit"></i> Редактировать
+                </button>
+                <button class="batch-action-btn delete" id="batchDeleteBtn">
+                    <i class="fas fa-trash-alt"></i> Удалить
+                </button>
+                <button class="batch-action-btn cancel" id="batchCancelBtn">
+                    <i class="fas fa-times"></i> Отменить
                 </button>
             </div>
         </div>
@@ -122,7 +150,7 @@ async function loadAdminPanel() {
                 </button>
                 <div id="optionalContent" class="optional-content">
                     <div class="form-group">
-                        <label><i class="fas fa-tag"></i> Название (для массовой загрузки добавится номер)</label>
+                        <label><i class="fas fa-tag"></i> Название</label>
                         <input type="text" id="photoTitle" class="form-input" placeholder="Например: Шматко на съёмках">
                     </div>
                     <div class="form-group">
@@ -166,6 +194,13 @@ async function loadAdminPanel() {
             <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
         </div>
     `;
+    
+    // Назначаем обработчики
+    document.getElementById('batchModeBtn')?.addEventListener('click', toggleBatchSelectMode);
+    document.getElementById('selectAllBtn')?.addEventListener('click', selectAllPhotos);
+    document.getElementById('batchEditBtn')?.addEventListener('click', batchEditSelected);
+    document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSelected);
+    document.getElementById('batchCancelBtn')?.addEventListener('click', toggleBatchSelectMode);
     
     initFileUpload();
     initUrlPreview();
@@ -433,6 +468,247 @@ function resetBatchUpload() {
 }
 
 // ==============================================
+// ГРУППОВОЕ ВЫДЕЛЕНИЕ
+// ==============================================
+
+function toggleBatchSelectMode() {
+    batchSelectMode = !batchSelectMode;
+    
+    if (!batchSelectMode) {
+        selectedPhotoIds.clear();
+        const grid = document.getElementById('photosList');
+        if (grid) grid.classList.remove('select-mode');
+        document.getElementById('batchActionsBar')?.classList.remove('show');
+        const batchBtn = document.getElementById('batchModeBtn');
+        if (batchBtn) batchBtn.classList.remove('active');
+    } else {
+        const grid = document.getElementById('photosList');
+        if (grid) grid.classList.add('select-mode');
+        updateBatchActionsBar();
+        const batchBtn = document.getElementById('batchModeBtn');
+        if (batchBtn) batchBtn.classList.add('active');
+    }
+    
+    renderPhotosList(currentPhotosList);
+}
+
+function toggleSelectPhoto(photoId) {
+    if (!batchSelectMode) return;
+    
+    if (selectedPhotoIds.has(photoId)) {
+        selectedPhotoIds.delete(photoId);
+    } else {
+        selectedPhotoIds.add(photoId);
+    }
+    
+    updateBatchActionsBar();
+    
+    const card = document.querySelector(`.admin-photo-card[data-id="${photoId}"]`);
+    if (card) {
+        if (selectedPhotoIds.has(photoId)) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    }
+}
+
+function selectAllPhotos() {
+    if (selectedPhotoIds.size === currentPhotosList.length && currentPhotosList.length > 0) {
+        selectedPhotoIds.clear();
+    } else {
+        currentPhotosList.forEach(photo => {
+            selectedPhotoIds.add(photo.id);
+        });
+    }
+    
+    updateBatchActionsBar();
+    renderPhotosList(currentPhotosList);
+}
+
+function updateBatchActionsBar() {
+    const bar = document.getElementById('batchActionsBar');
+    const countSpan = document.getElementById('selectedCount');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    
+    if (!bar) return;
+    
+    const count = selectedPhotoIds.size;
+    
+    if (count > 0 && batchSelectMode) {
+        bar.classList.add('show');
+        if (countSpan) countSpan.textContent = count;
+        if (selectAllBtn) {
+            const allSelected = count === currentPhotosList.length && currentPhotosList.length > 0;
+            selectAllBtn.innerHTML = allSelected ? 
+                '<i class="fas fa-check-square"></i> Снять все' : 
+                '<i class="fas fa-square"></i> Выбрать все';
+        }
+    } else {
+        bar.classList.remove('show');
+    }
+}
+
+// ==============================================
+// МАССОВОЕ РЕДАКТИРОВАНИЕ
+// ==============================================
+
+function batchEditSelected() {
+    if (selectedPhotoIds.size === 0) {
+        showToast('❌ Не выбрано ни одного фото');
+        return;
+    }
+    
+    const modalHtml = `
+        <div id="batchEditModal" class="batch-edit-modal">
+            <div class="modal-content">
+                <h3 style="color: #ffd966; margin-bottom: 20px;">
+                    <i class="fas fa-edit"></i> Массовое редактирование
+                </h3>
+                <p style="margin-bottom: 20px;">Выбрано фото: <strong>${selectedPhotoIds.size}</strong></p>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Название</label>
+                    <input type="text" id="batchTitle" class="form-input" placeholder="Оставить без изменений">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Описание</label>
+                    <textarea id="batchDesc" class="form-textarea" placeholder="Оставить без изменений"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-folder"></i> Категория</label>
+                    <select id="batchCategory" class="form-select">
+                        <option value="">Не изменять</option>
+                        <option value="behind">Со съёмок</option>
+                        <option value="actors">Актёры вне ролей</option>
+                        <option value="spinoff">Спин-оффы</option>
+                        <option value="iconic">Культовые моменты</option>
+                        <option value="rare">Раритеты</option>
+                        <option value="memes">Приколы</option>
+                        <option value="adult">18+</option>
+                        <option value="characters">Персонажи</option>
+                        <option value="weapons">Оружие</option>
+                        <option value="locations">Локации</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> Год</label>
+                    <input type="number" id="batchYear" class="form-input" placeholder="Оставить без изменений">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Место съёмки</label>
+                    <input type="text" id="batchLocation" class="form-input" placeholder="Оставить без изменений">
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="confirmBatchEdit()" class="submit-btn" style="margin: 0;">
+                        <i class="fas fa-save"></i> Применить ко всем
+                    </button>
+                    <button onclick="closeBatchEditModal()" class="admin-btn">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById('batchEditModal');
+    if (oldModal) oldModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeBatchEditModal() {
+    const modal = document.getElementById('batchEditModal');
+    if (modal) modal.remove();
+}
+
+async function confirmBatchEdit() {
+    const batchTitle = document.getElementById('batchTitle')?.value.trim();
+    const batchDesc = document.getElementById('batchDesc')?.value.trim();
+    const batchCategory = document.getElementById('batchCategory')?.value;
+    const batchYear = document.getElementById('batchYear')?.value;
+    const batchLocation = document.getElementById('batchLocation')?.value.trim();
+    
+    const updateData = {};
+    if (batchTitle) updateData.title = batchTitle;
+    if (batchDesc) updateData.desc = batchDesc;
+    if (batchCategory) updateData.category = batchCategory;
+    if (batchYear) updateData.year = parseInt(batchYear);
+    if (batchLocation) updateData.location = batchLocation;
+    
+    if (Object.keys(updateData).length === 0) {
+        showToast('❌ Ни одно поле не заполнено для обновления');
+        return;
+    }
+    
+    updateData.updatedAt = Date.now();
+    updateData.updatedBy = currentUserEmail;
+    
+    closeBatchEditModal();
+    
+    showToast(`🔄 Обновление ${selectedPhotoIds.size} фото...`);
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const photoId of selectedPhotoIds) {
+        try {
+            await db.ref(`gallery/${photoId}`).update(updateData);
+            successCount++;
+        } catch (error) {
+            console.error(`Ошибка обновления ${photoId}:`, error);
+            failCount++;
+        }
+    }
+    
+    showToast(`✅ Обновлено: ${successCount}, ошибок: ${failCount}`);
+    
+    await loadPhotos();
+    await forceGalleryUpdate();
+    toggleBatchSelectMode();
+}
+
+// ==============================================
+// МАССОВОЕ УДАЛЕНИЕ
+// ==============================================
+
+async function batchDeleteSelected() {
+    if (selectedPhotoIds.size === 0) {
+        showToast('❌ Не выбрано ни одного фото');
+        return;
+    }
+    
+    const confirmed = confirm(`Вы уверены, что хотите удалить ${selectedPhotoIds.size} фото? Это действие необратимо!`);
+    if (!confirmed) return;
+    
+    showToast(`🔄 Удаление ${selectedPhotoIds.size} фото...`);
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const photoId of selectedPhotoIds) {
+        try {
+            await db.ref(`gallery/${photoId}`).remove();
+            successCount++;
+        } catch (error) {
+            console.error(`Ошибка удаления ${photoId}:`, error);
+            failCount++;
+        }
+    }
+    
+    showToast(`✅ Удалено: ${successCount}, ошибок: ${failCount}`);
+    
+    await loadPhotos();
+    await forceGalleryUpdate();
+    toggleBatchSelectMode();
+}
+
+// ==============================================
 // ОБЩИЕ ФУНКЦИИ
 // ==============================================
 
@@ -525,6 +801,10 @@ async function forceGalleryUpdate() {
 }
 
 async function editPhoto(id) {
+    if (batchSelectMode) {
+        toggleBatchSelectMode();
+    }
+    
     try {
         const snapshot = await db.ref(`gallery/${id}`).once('value');
         const photo = snapshot.val();
@@ -595,40 +875,53 @@ async function loadPhotos() {
         const snapshot = await db.ref('gallery').once('value');
         const photos = snapshot.val() || {};
         
-        const photosArray = Object.entries(photos).map(([id, data]) => ({ id, ...data })).reverse();
+        currentPhotosList = Object.entries(photos).map(([id, data]) => ({ id, ...data })).reverse();
         
-        if (photosArray.length === 0) {
-            container.innerHTML = '<div class="empty-state"><i class="fas fa-camera"></i><p>Нет фотографий. Добавьте первую!</p></div>';
-            return;
-        }
-        
-        let html = '';
-        photosArray.forEach(photo => {
-            html += `
-                <div class="admin-photo-card">
-                    <img src="${photo.image}" alt="Фото" onerror="this.src='https://via.placeholder.com/200x200?text=Error'">
-                    <div class="admin-photo-actions">
-                        <button class="edit-btn" onclick="editPhoto('${photo.id}')" title="Редактировать">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="delete-btn" onclick="deletePhoto('${photo.id}')" title="Удалить">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                    <div class="admin-photo-info">
-                        ${photo.title ? `<span style="color:#ffd966">${escapeHtml(photo.title.substring(0, 30))}</span><br>` : ''}
-                        ${photo.year ? `<span><i class="far fa-calendar-alt"></i> ${photo.year}</span>` : ''}
-                        ${!photo.title && !photo.year ? '<span style="color:#8aa07a">Нет данных</span>' : ''}
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
+        renderPhotosList(currentPhotosList);
         
     } catch (error) {
         console.error('Ошибка:', error);
         container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки</p></div>';
     }
+}
+
+function renderPhotosList(photosArray) {
+    const container = document.getElementById('photosList');
+    if (!container) return;
+    
+    if (photosArray.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-camera"></i><p>Нет фотографий. Добавьте первую!</p></div>';
+        return;
+    }
+    
+    let html = '';
+    photosArray.forEach(photo => {
+        const isSelected = selectedPhotoIds.has(photo.id);
+        const selectedClass = isSelected ? 'selected' : '';
+        const selectModeAttr = batchSelectMode ? `onclick="toggleSelectPhoto('${photo.id}')"` : '';
+        
+        html += `
+            <div class="admin-photo-card ${selectedClass}" data-id="${photo.id}" ${selectModeAttr}>
+                ${batchSelectMode ? `<div class="checkbox-indicator"><i class="fas ${isSelected ? 'fa-check-circle' : 'fa-circle'}"></i></div>` : ''}
+                <img src="${photo.image}" alt="Фото" onerror="this.src='https://via.placeholder.com/200x200?text=Error'">
+                <div class="admin-photo-actions">
+                    <button class="edit-btn" onclick="event.stopPropagation(); editPhoto('${photo.id}')" title="Редактировать">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn" onclick="event.stopPropagation(); deletePhoto('${photo.id}')" title="Удалить">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="admin-photo-info">
+                    ${photo.title ? `<span style="color:#ffd966">${escapeHtml(photo.title.substring(0, 30))}</span><br>` : ''}
+                    ${photo.category ? `<span style="color:#8aa07a"><i class="fas fa-folder"></i> ${escapeHtml(photo.category)}</span><br>` : ''}
+                    ${photo.year ? `<span><i class="far fa-calendar-alt"></i> ${photo.year}</span>` : ''}
+                    ${!photo.title && !photo.year && !photo.category ? '<span style="color:#8aa07a">Нет данных</span>' : ''}
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
 }
 
 function resetForm() {
@@ -682,3 +975,10 @@ function showToast(message) {
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2500);
 }
+
+// Выход из режима выделения по Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && batchSelectMode) {
+        toggleBatchSelectMode();
+    }
+});
