@@ -5476,13 +5476,13 @@ button,
     position: absolute;
     top: 20px;
     right: 35px;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #E32636;
     border: none;
     color: white;
-    font-size: 40px;
+    font-size: 18px;
     font-weight: bold;
     cursor: pointer;
     transition: 0.3s;
@@ -5495,6 +5495,7 @@ button,
 .photo-modal-close:hover {
     background: #E32636;
     transform: scale(1.05);
+    font-size: 22px;
 }
 
 /* Адаптация для мобильных */
