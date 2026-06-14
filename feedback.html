@@ -135,6 +135,19 @@
                     <textarea id="feedbackMessage" placeholder="Подробно опишите ваше предложение, проблему или вопрос..." required></textarea>
                 </div>
 
+                <!-- БЛОК ДЛЯ ВЛОЖЕНИЙ -->
+                <div class="file-attachment">
+                    <label><i class="fas fa-paperclip"></i> Прикрепить вложения</label>
+                    <div class="file-input-wrapper">
+                        <label class="file-input-label">
+                            <i class="fas fa-upload"></i> Выбрать файл
+                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp,.txt,.pdf">
+                        </label>
+                    </div>
+                    <div id="fileName" class="file-name" style="display: none;"></div>
+                    <div id="filePreview" class="file-preview" style="display: none;"></div>
+                </div>
+
                 <div class="checkbox-group">
                     <input type="checkbox" id="agreeRules" required>
                     <label for="agreeRules">Я ознакомлен(а) с правилами и согласен(на) на обработку данных</label>
@@ -162,14 +175,13 @@
             </a>
         </div>
         
-        <!-- Баннер поддержки -->
         <div class="banner-card">
             <div class="banner-icon">
                 <i class="fas fa-heart"></i>
             </div>
             <div class="banner-content">
                 <h4><i class="fas fa-coffee"></i> Поддержать проект</h4>
-                <p>На продвижение и развитие</p>
+                <p>Помочь с развитием и хостингом</p>
             </div>
             <a href="https://yoomoney.ru/to/4100119553580481" target="_blank" class="banner-btn donate">
                 Поддержать <i class="fas fa-external-link-alt"></i>
@@ -199,6 +211,47 @@
     (function() {
         emailjs.init("wwpSIKmXHKT9zAmZ3");
     })();
+
+    let selectedFile = null;
+
+    // Обработка выбора файла
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('❌ Файл не должен превышать 5MB', true);
+            this.value = '';
+            return;
+        }
+        
+        selectedFile = file;
+        
+        const fileNameDiv = document.getElementById('fileName');
+        fileNameDiv.innerHTML = `<i class="fas fa-paperclip"></i> ${file.name} <span class="remove-file" onclick="removeFile()">✖</span>`;
+        fileNameDiv.style.display = 'block';
+        
+        // Превью для изображений
+        const previewDiv = document.getElementById('filePreview');
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewDiv.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                previewDiv.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewDiv.style.display = 'none';
+        }
+    });
+    
+    function removeFile() {
+        selectedFile = null;
+        document.getElementById('fileInput').value = '';
+        document.getElementById('fileName').style.display = 'none';
+        document.getElementById('filePreview').style.display = 'none';
+        document.getElementById('filePreview').innerHTML = '';
+    }
 
     function showToast(message, isError = false) {
         let toast = document.getElementById('feedbackToast');
@@ -245,10 +298,25 @@
         };
         
         try {
-            // Service ID и Template ID исправлены!
-            await emailjs.send('service_fx7rnbc', 'template_3yd9s6n', templateParams);
+            if (selectedFile) {
+                // Если есть файл, преобразуем в base64
+                const reader = new FileReader();
+                reader.readAsDataURL(selectedFile);
+                await new Promise((resolve) => {
+                    reader.onload = async function() {
+                        templateParams.attachment = reader.result;
+                        templateParams.filename = selectedFile.name;
+                        await emailjs.send('service_fx7rnbc', 'template_3yd9s6n', templateParams);
+                        resolve();
+                    };
+                });
+            } else {
+                await emailjs.send('service_fx7rnbc', 'template_3yd9s6n', templateParams);
+            }
+            
             showToast('✅ Сообщение отправлено! Мы ответим на soldaty.site@mail.ru в ближайшее время.');
             document.getElementById('feedbackForm').reset();
+            removeFile();
         } catch (error) {
             console.error('Ошибка:', error);
             showToast('❌ Ошибка отправки. Попробуйте позже или напишите напрямую на soldaty.site@mail.ru', true);
