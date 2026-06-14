@@ -633,9 +633,6 @@ function batchEditSelected() {
                         <option value="rare">Раритеты</option>
                         <option value="memes">Приколы</option>
                         <option value="adult">18+</option>
-                        <option value="characters">Персонажи</option>
-                        <option value="weapons">Оружие</option>
-                        <option value="locations">Локации</option>
                     </select>
                 </div>
                 
