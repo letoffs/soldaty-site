@@ -64,6 +64,9 @@ async function loadAdminPanel() {
                 <button id="batchModeBtn" class="admin-btn">
                     <i class="fas fa-check-double"></i> Выбрать несколько
                 </button>
+                <button onclick="window.location.href='migrate_to_imgbb.html'" class="admin-btn" style="background: #2c3e2c; border-color: #ffc107;">
+                    <i class="fas fa-exchange-alt"></i> Миграция в ImgBB
+                </button>
                 <button onclick="window.location.href='gallery.html'" class="admin-btn">
                     <i class="fas fa-eye"></i> Смотреть галерею
                 </button>
