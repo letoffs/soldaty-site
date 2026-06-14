@@ -235,8 +235,8 @@
         };
         
         const templateParams = {
-            from_name: document.getElementById('userName').value,
-            from_email: document.getElementById('userEmail').value,
+            name: document.getElementById('userName').value,
+            email: document.getElementById('userEmail').value,
             type: typeMap[document.getElementById('feedbackType').value],
             subject: document.getElementById('feedbackSubject').value,
             message: document.getElementById('feedbackMessage').value,
@@ -244,8 +244,8 @@
         };
         
         try {
-            // ВНИМАНИЕ: ИСПРАВЛЕН SERVICE ID
-            await emailjs.send('service_fx7nbc', 'template_9c2lhu8', templateParams);
+            // Service ID и Template ID исправлены!
+            await emailjs.send('service_fx7nbc', 'template_3yd9s6n', templateParams);
             showToast('✅ Сообщение отправлено! Мы ответим на soldaty.site@mail.ru в ближайшее время.');
             document.getElementById('feedbackForm').reset();
         } catch (error) {
