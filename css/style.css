@@ -5797,8 +5797,6 @@ button,
     background: #0f1a0f;
 }
 
-
-
 /* Модальное окно для просмотра фото */
 .photo-modal {
     display: none;
@@ -5852,4 +5850,320 @@ button,
         right: 20px;
         font-size: 30px;
     }
+}
+
+/* ===== СТРАНИЦА ОБРАТНОЙ СВЯЗИ ===== */
+.feedback-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Заголовок обратной связи */
+.feedback-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.feedback-header h1 {
+    color: #ffd966;
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.feedback-header p {
+    color: #aaa;
+}
+
+@media (max-width: 700px) {
+    .back-link {
+        margin-bottom: 20px;
+    }
+}
+
+.feedback-card {
+    background: #0f1a0f;
+    border-radius: 24px;
+    padding: 30px;
+    border: 1px solid #3e5a3e;
+    margin-bottom: 30px;
+}
+
+.feedback-card .form-group {
+    margin-bottom: 20px;
+}
+
+.feedback-card .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ffd966;
+    font-weight: bold;
+}
+
+.feedback-card .form-group label i {
+    margin-right: 8px;
+    color: #bd8a3e;
+}
+
+.feedback-card .form-group input,
+.feedback-card .form-group select,
+.feedback-card .form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    border-radius: 12px;
+    color: #eee;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.feedback-card .form-group input:focus,
+.feedback-card .form-group select:focus,
+.feedback-card .form-group textarea:focus {
+    outline: none;
+    border-color: #bd8a3e;
+}
+
+.feedback-card .form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.rules-card {
+    background: #0a120a;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-left: 4px solid #bd8a3e;
+}
+
+.rules-card h3 {
+    color: #ffd966;
+    margin-bottom: 15px;
+}
+
+.rules-card ul {
+    list-style: disc;
+    padding-left: 20px;
+}
+
+.rules-card li {
+    margin-bottom: 10px;
+    color: #ccc;
+}
+
+.rules-card li i {
+    display: none;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.checkbox-group input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    margin: 0;
+    color: #aaa;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.submit-feedback-btn {
+    background: #bd8a3e;
+    border: none;
+    padding: 14px 30px;
+    border-radius: 40px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.submit-feedback-btn:hover {
+    background: #ffb347;
+    transform: scale(1.02);
+}
+
+.submit-feedback-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    margin-left: 10px;
+}
+
+.type-badge.suggestion { background: #1e3a1e; color: #4caf50; }
+.type-badge.complaint { background: #3a1e1e; color: #f44336; }
+.type-badge.bug { background: #3a3a1e; color: #ffc107; }
+.type-badge.other { background: #1e2a3a; color: #64b5f6; }
+
+@media (max-width: 700px) {
+    .feedback-card {
+        padding: 20px;
+    }
+    .feedback-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ===== МИНИ-БАННЕРЫ (УМЕНЬШЕННЫЕ, ПО ЦЕНТРУ) ===== */
+.feedback-banners {
+    display: flex;
+    gap: 20px;
+    margin: 40px auto 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1000px;
+}
+
+.banner-card {
+    flex: 0 1 auto;
+    width: 380px;
+    background: linear-gradient(135deg, #0f1a0f 0%, #0a120a 100%);
+    border-radius: 14px;
+    padding: 10px 16px;
+    border: 1px solid #3e5a3e;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.banner-card:hover {
+    border-color: #bd8a3e;
+    transform: translateY(-2px);
+}
+
+.banner-icon {
+    width: 36px;
+    height: 36px;
+    background: #1e2a1e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #bd8a3e;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.banner-card:hover .banner-icon {
+    background: #bd8a3e;
+    color: #0f1a0f;
+}
+
+.banner-content {
+    flex: 1;
+}
+
+.banner-content h4 {
+    color: #ffd966;
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+}
+
+.banner-content p {
+    color: #aaa;
+    font-size: 0.65rem;
+    line-height: 1.2;
+}
+
+.banner-btn {
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #ddd;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.banner-btn:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    border-color: #bd8a3e;
+    transform: scale(1.02);
+}
+
+.banner-btn.donate {
+    background: #2c3e2c;
+    border-color: #bd8a3e;
+}
+
+.banner-btn.donate:hover {
+    background: #ffb347;
+}
+
+@media (max-width: 700px) {
+    .feedback-banners {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        max-width: 100%;
+    }
+    .banner-card {
+        width: 100%;
+        max-width: 320px;
+        padding: 8px 14px;
+    }
+    .banner-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    .banner-content h4 {
+        font-size: 0.8rem;
+    }
+    .banner-content p {
+        font-size: 0.6rem;
+    }
+    .banner-btn {
+        padding: 3px 8px;
+        font-size: 0.6rem;
+    }
+}
+
+/* Кнопка "Назад" */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    padding: 8px 20px;
+    border-radius: 40px;
+    color: #ddd;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.2s;
+    margin-bottom: 30px;
+}
+
+.back-link:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: translateX(-3px);
 }
