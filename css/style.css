@@ -5474,26 +5474,27 @@ button,
 
 .photo-modal-close {
     position: absolute;
-    top: -15px;
-    right: -15px;
+    top: 20px;
+    right: 35px;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #bd8a3e;
+    background: #E32636;
     border: none;
-    color: #0f1a0f;
-    font-size: 1.2rem;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s;
-    z-index: 10;
+    transition: 0.3s;
+    z-index: 2101;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .photo-modal-close:hover {
-    background: #ffb347;
-    transform: scale(1.1);
+    background: #E32636;
+    transform: scale(1.05);
 }
 
 /* Адаптация для мобильных */
@@ -5626,7 +5627,6 @@ button,
     font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
     font-size: 1.8rem;
     font-weight: normal;
-    font-style: italic;
     color: #ffd966;
     letter-spacing: 2px;
 }
@@ -5655,7 +5655,6 @@ button,
     font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
     font-size: 1.5rem;
     font-weight: normal;
-    font-style: italic;
     color: #ffd966;
 }
 
@@ -5681,7 +5680,7 @@ button,
     }
     
     .time-display {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
     }
     
     .weather-icon {
@@ -5689,7 +5688,7 @@ button,
     }
     
     .weather-temp {
-        font-size: 1.4rem;
+        font-size: 0.9rem;
     }
     
     .weather-location {
@@ -5709,7 +5708,7 @@ button,
     }
     
     .time-display {
-        font-size: 1.2rem;
+        font-size: 1rem;
     }
     
     .date-display {
@@ -5721,7 +5720,7 @@ button,
     }
     
     .weather-temp {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 }
 
@@ -5826,22 +5825,6 @@ button,
 @keyframes zoomIn {
     from { transform: scale(0.9); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
-}
-
-.photo-modal-close {
-    position: absolute;
-    top: 20px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
-    transition: 0.3s;
-    cursor: pointer;
-    z-index: 2101;
-}
-
-.photo-modal-close:hover {
-    color: #bd8a3e;
 }
 
 .photo-modal-caption {
