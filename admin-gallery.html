@@ -37,6 +37,7 @@
         .admin-actions {
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
         }
         .admin-btn {
             background: #1e2a1e;
@@ -61,6 +62,10 @@
         .admin-btn.danger:hover {
             background: #f44336;
             color: white;
+        }
+        .admin-btn.active {
+            background: #bd8a3e;
+            color: #0f1a0f;
         }
         .add-photo-form {
             background: #0f1a0f;
@@ -154,28 +159,29 @@
         }
         .batch-preview {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 10px;
             margin-top: 15px;
-            max-height: 250px;
+            max-height: 300px;
             overflow-y: auto;
             padding: 5px;
         }
         .batch-preview-item {
             position: relative;
-            cursor: pointer;
+            background: #0f1a0f;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #3e5a3e;
         }
         .batch-preview-item img {
             width: 100%;
             aspect-ratio: 1 / 1;
             object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #3e5a3e;
         }
         .batch-preview-item .remove-preview {
             position: absolute;
-            top: -8px;
-            right: -8px;
+            top: 5px;
+            right: 5px;
             background: #f44336;
             color: white;
             border-radius: 50%;
@@ -184,12 +190,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 10px;
             cursor: pointer;
             transition: transform 0.2s;
+            z-index: 10;
         }
         .batch-preview-item .remove-preview:hover {
             transform: scale(1.1);
+        }
+        .batch-preview-item .batch-title-input {
+            width: 100%;
+            padding: 4px 6px;
+            font-size: 9px;
+            background: #1e2a1e;
+            border: none;
+            border-top: 1px solid #3e5a3e;
+            color: #ddd;
+            text-align: center;
+        }
+        .batch-preview-item .batch-title-input:focus {
+            outline: none;
+            background: #2c3e2c;
         }
         .upload-progress {
             margin-top: 15px;
@@ -237,6 +258,19 @@
         .batch-upload-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+        .batch-info-badge {
+            margin-top: 12px;
+            padding: 8px;
+            background: #2c3e2c;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #8aa07a;
+        }
+        .batch-info-badge i {
+            color: #bd8a3e;
+            margin-right: 5px;
         }
         .optional-fields {
             margin-top: 20px;
@@ -309,11 +343,99 @@
             background: #ffb347;
             transform: scale(1.02);
         }
+        
+        /* Групповое выделение */
+        .batch-actions-bar {
+            background: #1e2a1e;
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid #bd8a3e;
+        }
+        .batch-actions-bar.show {
+            display: flex;
+        }
+        .batch-selected-count {
+            color: #ffd966;
+            font-weight: bold;
+        }
+        .batch-actions-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .batch-action-btn {
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        .batch-action-btn.edit {
+            background: #ffc107;
+            color: #1a2a1a;
+        }
+        .batch-action-btn.delete {
+            background: #f44336;
+            color: white;
+        }
+        .batch-action-btn.cancel {
+            background: #3e5a3e;
+            color: #ddd;
+        }
+        .batch-select-all {
+            margin-left: 10px;
+            padding: 6px 12px;
+            background: #2c3e2c;
+            border: none;
+            border-radius: 20px;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .batch-select-all:hover {
+            background: #bd8a3e;
+            color: #0f1a0f;
+        }
+        
         .photos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 20px;
             margin-top: 20px;
+        }
+        .photos-grid.select-mode .admin-photo-card {
+            cursor: pointer;
+        }
+        .photos-grid.select-mode .admin-photo-card.selected {
+            border: 3px solid #ffc107;
+            transform: scale(0.98);
+        }
+        .checkbox-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 28px;
+            height: 28px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            z-index: 5;
+        }
+        .admin-photo-card.selected .checkbox-indicator {
+            background: #ffc107;
+            color: #1a2a1a;
         }
         .admin-photo-card {
             background: #0f1a0f;
@@ -322,6 +444,7 @@
             border: 1px solid #3e5a3e;
             position: relative;
             transition: all 0.2s;
+            cursor: default;
         }
         .admin-photo-card:hover {
             border-color: #bd8a3e;
@@ -340,6 +463,7 @@
             gap: 8px;
             opacity: 0;
             transition: opacity 0.2s;
+            z-index: 10;
         }
         .admin-photo-card:hover .admin-photo-actions {
             opacity: 1;
@@ -372,6 +496,29 @@
             padding: 40px;
             color: #8aa07a;
         }
+        
+        /* Модальное окно массового редактирования */
+        .batch-edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .batch-edit-modal .modal-content {
+            background: #0f1a0f;
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid #bd8a3e;
+        }
+        
         .toast-message {
             position: fixed;
             bottom: 30px;
@@ -391,6 +538,7 @@
             opacity: 1;
             visibility: visible;
         }
+        
         @media (max-width: 900px) {
             .upload-methods {
                 grid-template-columns: 1fr;
