@@ -139,30 +139,17 @@
                     </select>
                 </div>
 
-                <!-- ПОЛЕ ДЛЯ EMAIL (показывается по умолчанию) -->
+                <!-- ПОЛЕ ДЛЯ EMAIL -->
                 <div class="form-group" id="emailGroup">
                     <label><i class="fas fa-envelope"></i> Email</label>
                     <input type="email" id="userEmail" placeholder="example@mail.ru">
                 </div>
 
-                <!-- ПОЛЕ ДЛЯ TELEGRAM (скрыто по умолчанию) -->
+                <!-- ПОЛЕ ДЛЯ TELEGRAM -->
                 <div class="form-group" id="telegramGroup" style="display: none;">
                     <label><i class="fab fa-telegram"></i> Telegram</label>
                     <input type="text" id="userTelegram" placeholder="@username или +79123456789">
                     <small style="color: #8aa07a;">Укажите ваш ник в Telegram или номер телефона</small>
-                </div>
-
-                <!-- БЛОК ДЛЯ ВЛОЖЕНИЙ -->
-                <div class="file-attachment">
-                    <label><i class="fas fa-paperclip"></i> Прикрепить файл (необязательно)</label>
-                    <div class="file-input-wrapper">
-                        <label class="file-input-label">
-                            <i class="fas fa-upload"></i> Выбрать файл
-                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp,.txt,.pdf">
-                        </label>
-                    </div>
-                    <div id="fileName" class="file-name" style="display: none;"></div>
-                    <div id="filePreview" class="file-preview" style="display: none;"></div>
                 </div>
 
                 <div class="checkbox-group">
@@ -177,7 +164,7 @@
         </div>
     </div>
 
-    <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
+    <!-- БАННЕРЫ -->
     <div class="feedback-banners">
         <div class="banner-card">
             <div class="banner-icon">
@@ -229,8 +216,6 @@
         emailjs.init("wwpSIKmXHKT9zAmZ3");
     })();
 
-    let selectedFile = null;
-
     // Переключение между Email и Telegram
     const contactMethod = document.getElementById('contactMethod');
     const emailGroup = document.getElementById('emailGroup');
@@ -251,44 +236,6 @@
             userTelegram.required = true;
         }
     });
-
-    // Обработка выбора файла
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('❌ Файл не должен превышать 5MB', true);
-            this.value = '';
-            return;
-        }
-        
-        selectedFile = file;
-        
-        const fileNameDiv = document.getElementById('fileName');
-        fileNameDiv.innerHTML = `<i class="fas fa-paperclip"></i> ${file.name} <span class="remove-file" onclick="removeFile()">✖</span>`;
-        fileNameDiv.style.display = 'block';
-        
-        const previewDiv = document.getElementById('filePreview');
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewDiv.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-                previewDiv.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            previewDiv.style.display = 'none';
-        }
-    });
-    
-    window.removeFile = function() {
-        selectedFile = null;
-        document.getElementById('fileInput').value = '';
-        document.getElementById('fileName').style.display = 'none';
-        document.getElementById('filePreview').style.display = 'none';
-        document.getElementById('filePreview').innerHTML = '';
-    };
 
     function showToast(message, isError = false) {
         let toast = document.getElementById('feedbackToast');
@@ -344,24 +291,9 @@
         };
         
         try {
-            if (selectedFile) {
-                const reader = new FileReader();
-                reader.readAsDataURL(selectedFile);
-                await new Promise((resolve) => {
-                    reader.onload = async function() {
-                        templateParams.attachment = reader.result;
-                        templateParams.filename = selectedFile.name;
-                        await emailjs.send('service_fx7rnbc', 'template_3yd9s6n', templateParams);
-                        resolve();
-                    };
-                });
-            } else {
-                await emailjs.send('service_fx7rnbc', 'template_3yd9s6n', templateParams);
-            }
-            
+            await emailjs.send('service_fx7rnbc', 'template_3yd9s6n', templateParams);
             showToast('✅ Сообщение отправлено! Мы ответим вам в ближайшее время.');
             document.getElementById('feedbackForm').reset();
-            removeFile();
             emailGroup.style.display = 'block';
             telegramGroup.style.display = 'none';
             userEmail.required = true;
