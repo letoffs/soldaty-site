@@ -2,22 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Миграция ТОЛЬКО галереи из Firebase в ImgBB</title>
+    <title>Миграция галереи из Firebase в ImgBB</title>
     <style>
         body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
         .container { max-width: 800px; margin: 0 auto; }
-        input, button { padding: 10px; margin: 10px 0; width: 100%; }
-        button { background: #bd8a3e; color: #1a1a2e; font-weight: bold; cursor: pointer; }
-        .log { background: #0f0f1a; padding: 15px; height: 400px; overflow-y: auto; font-size: 12px; }
+        input, button, .back-btn { padding: 10px; margin: 10px 0; width: 100%; }
+        button, .back-btn { background: #bd8a3e; color: #1a1a2e; font-weight: bold; cursor: pointer; border: none; border-radius: 4px; }
+        .back-btn { background: #3e5a3e; text-align: center; display: inline-block; text-decoration: none; }
+        .back-btn:hover { background: #5a7a5a; }
+        button:hover { background: #ffb347; }
+        .log { background: #0f0f1a; padding: 15px; height: 400px; overflow-y: auto; font-size: 12px; border-radius: 4px; }
         .success { color: #0f0; }
         .error { color: #f00; }
         .info { color: #ffd966; }
+        .button-group { display: flex; gap: 10px; }
+        .button-group .back-btn, .button-group button { flex: 1; margin: 10px 0; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Миграция ТОЛЬКО галереи из Firebase в ImgBB</h1>
-    <p>1. Получи API ключ на <a href="https://api.imgbb.com" target="_blank">https://api.imgbb.com</a></p>
+    <h1>Миграция галереи из Firebase в ImgBB</h1>
+    
+    <div class="button-group">
+        <a href="admin-gallery.html" class="back-btn">
+            <i class="fas fa-arrow-left"></i> ← Назад в админ-панель
+        </a>
+    </div>
+    
+    <hr style="border-color: #3e5a3e; margin: 15px 0;">
+    
+    <p>1. Получи API ключ на <a href="https://api.imgbb.com" target="_blank" style="color: #ffd966;">https://api.imgbb.com</a></p>
     <input type="text" id="apiKey" placeholder="Введите API ключ ImgBB">
     <p>2. Вставь JSON, экспортированный из Firebase (весь проект)</p>
     <textarea id="jsonData" rows="10" placeholder='Вставь сюда весь экспортированный JSON'></textarea>
