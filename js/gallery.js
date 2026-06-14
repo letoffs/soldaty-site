@@ -16,7 +16,8 @@ const categories = [
     { id: "iconic", name: "Моменты", icon: "fas fa-star", filter: p => p.category === "iconic" },
     { id: "rare", name: "Раритеты", icon: "fas fa-camera-retro", filter: p => p.category === "rare" },
     { id: "memes", name: "Приколы", icon: "fas fa-laugh", filter: p => p.category === "memes" },
-    { id: "adult", name: "18+", icon: "fas fa-lock", filter: p => p.category === "adult" }
+    { id: "adult", name: "18+", icon: "fas fa-lock", filter: p => p.category === "adult" },
+    { id: "posters", name: "Постеры", icon: "fas fa-image", filter: p => p.category === "posters" }
 ];
 
 let isAdultVerified = false;
