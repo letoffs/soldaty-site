@@ -196,7 +196,7 @@
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
     (function() {
-        emailjs.init("YOUR_PUBLIC_KEY");
+        emailjs.init("wwpSIKmXHKT9zAmZ3");
     })();
 
     function showToast(message, isError = false) {
@@ -244,8 +244,9 @@
         };
         
         try {
-            await emailjs.send('service_1ntwosd', 'template_9c2lhu8', templateParams);
-            showToast('✅ Сообщение отправлено! Мы ответим в ближайшее время.');
+            // ВНИМАНИЕ: ИСПРАВЛЕН SERVICE ID
+            await emailjs.send('service_fx7nbc', 'template_9c2lhu8', templateParams);
+            showToast('✅ Сообщение отправлено! Мы ответим на soldaty.site@mail.ru в ближайшее время.');
             document.getElementById('feedbackForm').reset();
         } catch (error) {
             console.error('Ошибка:', error);
