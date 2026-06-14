@@ -4,6 +4,8 @@
 
 let currentEditId = null;
 let currentUserEmail = null;
+let batchFiles = [];
+let batchImageUrls = [];
 
 const ADMIN_EMAILS = ['twinkjjjjkmnb@gmail.com'];
 
@@ -54,7 +56,7 @@ async function loadAdminPanel() {
     
     container.innerHTML = `
         <div class="admin-header">
-            <h1 class="admin-title">УПРАВЛЕНИЕ ФОТОАЛБЬОМОМ</h1>
+            <h1 class="admin-title"><i class="fas fa-crown"></i> УПРАВЛЕНИЕ ФОТОАЛЬБОМОМ</h1>
             <div class="admin-actions">
                 <button onclick="window.location.href='gallery.html'" class="admin-btn">
                     <i class="fas fa-eye"></i> Смотреть галерею
@@ -72,6 +74,7 @@ async function loadAdminPanel() {
             </div>
             
             <div class="upload-methods">
+                <!-- Способ 1: Одиночная загрузка с компьютера -->
                 <div class="upload-method">
                     <h3><i class="fas fa-upload"></i> Загрузить с компьютера</h3>
                     <div class="file-input-wrapper">
@@ -83,10 +86,32 @@ async function loadAdminPanel() {
                     <div id="filePreview" class="image-preview"></div>
                 </div>
                 
+                <!-- Способ 2: Ссылка на фото -->
                 <div class="upload-method">
                     <h3><i class="fas fa-link"></i> Ссылка на фото</h3>
                     <input type="url" id="urlInput" class="url-input" placeholder="https://example.com/photo.jpg">
                     <div id="urlPreview" class="image-preview"></div>
+                </div>
+
+                <!-- Способ 3: Массовая загрузка -->
+                <div class="upload-method">
+                    <h3><i class="fas fa-layer-group"></i> Массовая загрузка</h3>
+                    <div class="file-input-wrapper">
+                        <label class="file-input-label">
+                            <i class="fas fa-images"></i> Выбрать несколько фото
+                            <input type="file" id="batchFileInput" class="file-input" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                        </label>
+                    </div>
+                    <div id="batchPreview" class="batch-preview"></div>
+                    <div id="uploadProgress" class="upload-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span id="progressText" class="progress-text">0 / 0</span>
+                    </div>
+                    <button id="startBatchUpload" class="batch-upload-btn" style="display: none;">
+                        <i class="fas fa-cloud-upload-alt"></i> Загрузить все фото
+                    </button>
                 </div>
             </div>
             
@@ -97,7 +122,7 @@ async function loadAdminPanel() {
                 </button>
                 <div id="optionalContent" class="optional-content">
                     <div class="form-group">
-                        <label><i class="fas fa-tag"></i> Название</label>
+                        <label><i class="fas fa-tag"></i> Название (для массовой загрузки добавится номер)</label>
                         <input type="text" id="photoTitle" class="form-input" placeholder="Например: Шматко на съёмках">
                     </div>
                     <div class="form-group">
@@ -115,6 +140,9 @@ async function loadAdminPanel() {
                             <option value="rare">Раритеты</option>
                             <option value="memes">Приколы</option>
                             <option value="adult">18+</option>
+                            <option value="characters">Персонажи</option>
+                            <option value="weapons">Оружие</option>
+                            <option value="locations">Локации</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -141,8 +169,13 @@ async function loadAdminPanel() {
     
     initFileUpload();
     initUrlPreview();
+    initBatchUpload();
     loadPhotos();
 }
+
+// ==============================================
+// ОДИНОЧНАЯ ЗАГРУЗКА
+// ==============================================
 
 function initFileUpload() {
     const fileInput = document.getElementById('fileInput');
@@ -202,6 +235,206 @@ function initUrlPreview() {
         }
     });
 }
+
+// ==============================================
+// МАССОВАЯ ЗАГРУЗКА ФОТОГРАФИЙ
+// ==============================================
+
+function initBatchUpload() {
+    const batchInput = document.getElementById('batchFileInput');
+    if (!batchInput) return;
+    
+    batchInput.addEventListener('change', (event) => {
+        const files = Array.from(event.target.files);
+        
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+            showToast('❌ Пожалуйста, выберите изображения');
+            return;
+        }
+        
+        if (imageFiles.length > 50) {
+            showToast('⚠️ Максимум 50 фото за раз');
+            return;
+        }
+        
+        batchFiles = imageFiles;
+        batchImageUrls = [];
+        
+        const previewContainer = document.getElementById('batchPreview');
+        previewContainer.innerHTML = '';
+        
+        imageFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                batchImageUrls[index] = e.target.result;
+                
+                const previewItem = document.createElement('div');
+                previewItem.className = 'batch-preview-item';
+                previewItem.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <div class="remove-preview" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </div>
+                `;
+                previewContainer.appendChild(previewItem);
+                
+                previewItem.querySelector('.remove-preview').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeFromBatch(index);
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        const uploadBtn = document.getElementById('startBatchUpload');
+        if (uploadBtn) uploadBtn.style.display = 'flex';
+        
+        const progressDiv = document.getElementById('uploadProgress');
+        if (progressDiv) progressDiv.style.display = 'none';
+    });
+    
+    const startBtn = document.getElementById('startBatchUpload');
+    if (startBtn) {
+        startBtn.addEventListener('click', startBatchUpload);
+    }
+}
+
+function removeFromBatch(indexToRemove) {
+    batchFiles = batchFiles.filter((_, idx) => idx !== indexToRemove);
+    batchImageUrls = batchImageUrls.filter((_, idx) => idx !== indexToRemove);
+    
+    const previewContainer = document.getElementById('batchPreview');
+    previewContainer.innerHTML = '';
+    
+    batchFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'batch-preview-item';
+            previewItem.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <div class="remove-preview" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </div>
+            `;
+            previewContainer.appendChild(previewItem);
+            
+            previewItem.querySelector('.remove-preview').addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeFromBatch(index);
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    if (batchFiles.length === 0) {
+        const uploadBtn = document.getElementById('startBatchUpload');
+        if (uploadBtn) uploadBtn.style.display = 'none';
+    }
+}
+
+async function startBatchUpload() {
+    if (batchFiles.length === 0) {
+        showToast('❌ Нет фото для загрузки');
+        return;
+    }
+    
+    const commonData = {
+        title: document.getElementById('photoTitle')?.value.trim() || '',
+        desc: document.getElementById('photoDesc')?.value.trim() || '',
+        category: document.getElementById('photoCategory')?.value || '',
+        year: document.getElementById('photoYear')?.value ? parseInt(document.getElementById('photoYear').value) : null,
+        location: document.getElementById('photoLocation')?.value.trim() || ''
+    };
+    
+    const progressDiv = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const uploadBtn = document.getElementById('startBatchUpload');
+    
+    progressDiv.style.display = 'block';
+    uploadBtn.disabled = true;
+    uploadBtn.style.opacity = '0.5';
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (let i = 0; i < batchFiles.length; i++) {
+        const imageUrl = batchImageUrls[i];
+        
+        const percent = ((i + 1) / batchFiles.length) * 100;
+        progressFill.style.width = `${percent}%`;
+        progressText.innerText = `Загрузка: ${i + 1} из ${batchFiles.length}`;
+        
+        try {
+            const photoData = {
+                image: imageUrl,
+                createdAt: Date.now(),
+                createdBy: currentUserEmail,
+                updatedAt: Date.now(),
+                updatedBy: currentUserEmail
+            };
+            
+            if (commonData.title) {
+                photoData.title = `${commonData.title} (${i + 1})`;
+            }
+            if (commonData.desc) photoData.desc = commonData.desc;
+            if (commonData.category) photoData.category = commonData.category;
+            if (commonData.year) photoData.year = commonData.year;
+            if (commonData.location) photoData.location = commonData.location;
+            
+            const newRef = db.ref('gallery').push();
+            photoData.id = newRef.key;
+            await newRef.set(photoData);
+            
+            successCount++;
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+        } catch (error) {
+            console.error(`Ошибка загрузки:`, error);
+            failCount++;
+        }
+    }
+    
+    progressFill.style.width = '100%';
+    progressText.innerText = `Готово! ${successCount} загружено, ${failCount} ошибок`;
+    
+    showToast(`✅ Загружено ${successCount} фото из ${batchFiles.length}`);
+    
+    await loadPhotos();
+    await forceGalleryUpdate();
+    
+    setTimeout(() => {
+        resetBatchUpload();
+    }, 2000);
+}
+
+function resetBatchUpload() {
+    batchFiles = [];
+    batchImageUrls = [];
+    
+    const batchInput = document.getElementById('batchFileInput');
+    if (batchInput) batchInput.value = '';
+    
+    const previewContainer = document.getElementById('batchPreview');
+    if (previewContainer) previewContainer.innerHTML = '';
+    
+    const progressDiv = document.getElementById('uploadProgress');
+    if (progressDiv) progressDiv.style.display = 'none';
+    
+    const uploadBtn = document.getElementById('startBatchUpload');
+    if (uploadBtn) {
+        uploadBtn.style.display = 'none';
+        uploadBtn.disabled = false;
+        uploadBtn.style.opacity = '1';
+    }
+}
+
+// ==============================================
+// ОБЩИЕ ФУНКЦИИ
+// ==============================================
 
 function toggleOptional() {
     const content = document.getElementById('optionalContent');
@@ -418,6 +651,8 @@ function resetForm() {
     document.getElementById('photoCategory').value = '';
     document.getElementById('photoYear').value = '';
     document.getElementById('photoLocation').value = '';
+    
+    resetBatchUpload();
     
     const content = document.getElementById('optionalContent');
     if (content.classList.contains('show')) {
