@@ -1,5 +1,5 @@
 // ==============================================
-// АДМИН-ПАНЕЛЬ ДЛЯ УПРАВЛЕНИЯ ФОТОАЛЬБОМОМ
+// АДМИН-ПАНЕЛЬ ДЛЯ УПРАВЛЕНИЯ ФОТОАЛЬБОМОМ (ОПТИМИЗИРОВАННАЯ)
 // ==============================================
 
 let currentEditId = null;
@@ -73,7 +73,6 @@ async function loadAdminPanel() {
             </div>
         </div>
 
-        <!-- Панель групповых действий -->
         <div id="batchActionsBar" class="batch-actions-bar">
             <div>
                 <i class="fas fa-check-circle"></i>
@@ -102,7 +101,6 @@ async function loadAdminPanel() {
             </div>
             
             <div class="upload-methods">
-                <!-- Способ 1: Одиночная загрузка с компьютера -->
                 <div class="upload-method">
                     <h3><i class="fas fa-upload"></i> Загрузить с компьютера</h3>
                     <div class="file-input-wrapper">
@@ -114,14 +112,12 @@ async function loadAdminPanel() {
                     <div id="filePreview" class="image-preview"></div>
                 </div>
                 
-                <!-- Способ 2: Ссылка на фото -->
                 <div class="upload-method">
                     <h3><i class="fas fa-link"></i> Ссылка на фото</h3>
                     <input type="url" id="urlInput" class="url-input" placeholder="https://example.com/photo.jpg">
                     <div id="urlPreview" class="image-preview"></div>
                 </div>
 
-                <!-- Способ 3: Массовая загрузка -->
                 <div class="upload-method">
                     <h3><i class="fas fa-layer-group"></i> Массовая загрузка</h3>
                     <div class="file-input-wrapper">
@@ -150,7 +146,7 @@ async function loadAdminPanel() {
                 </button>
                 <div id="optionalContent" class="optional-content">
                     <div class="form-group">
-                        <label><i class="fas fa-tag"></i> Название</label>
+                        <label><i class="fas fa-tag"></i> Название (для массовой загрузки добавится номер)</label>
                         <input type="text" id="photoTitle" class="form-input" placeholder="Например: Шматко на съёмках">
                     </div>
                     <div class="form-group">
@@ -195,7 +191,6 @@ async function loadAdminPanel() {
         </div>
     `;
     
-    // Назначаем обработчики
     document.getElementById('batchModeBtn')?.addEventListener('click', toggleBatchSelectMode);
     document.getElementById('selectAllBtn')?.addEventListener('click', selectAllPhotos);
     document.getElementById('batchEditBtn')?.addEventListener('click', batchEditSelected);
@@ -272,7 +267,7 @@ function initUrlPreview() {
 }
 
 // ==============================================
-// МАССОВАЯ ЗАГРУЗКА ФОТОГРАФИЙ
+// МАССОВАЯ ЗАГРУЗКА ФОТОГРАФИЙ (ОПТИМИЗИРОВАННАЯ)
 // ==============================================
 
 function initBatchUpload() {
@@ -421,11 +416,19 @@ async function startBatchUpload() {
             if (commonData.location) photoData.location = commonData.location;
             
             const newRef = db.ref('gallery').push();
-            photoData.id = newRef.key;
+            const photoId = newRef.key;
+            photoData.id = photoId;
             await newRef.set(photoData);
             
+            // ОПТИМИЗАЦИЯ: добавляем фото в начало списка БЕЗ полной перерисовки
+            const newPhoto = { id: photoId, ...photoData };
+            currentPhotosList.unshift(newPhoto);
+            
+            // Добавляем карточку в DOM без перерисовки всего списка
+            addPhotoToDOM(newPhoto, true);
+            
             successCount++;
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 50));
             
         } catch (error) {
             console.error(`Ошибка загрузки:`, error);
@@ -438,12 +441,55 @@ async function startBatchUpload() {
     
     showToast(`✅ Загружено ${successCount} фото из ${batchFiles.length}`);
     
-    await loadPhotos();
+    // Обновляем галерею только один раз в конце
     await forceGalleryUpdate();
     
     setTimeout(() => {
         resetBatchUpload();
     }, 2000);
+}
+
+// Функция для добавления одного фото в DOM
+function addPhotoToDOM(photo, isNew = true) {
+    const container = document.getElementById('photosList');
+    if (!container) return;
+    
+    // Убираем сообщение "Нет фотографий" если оно есть
+    if (container.querySelector('.empty-state')) {
+        renderPhotosList(currentPhotosList);
+        return;
+    }
+    
+    const isSelected = selectedPhotoIds.has(photo.id);
+    const selectedClass = isSelected ? 'selected' : '';
+    const selectModeAttr = batchSelectMode ? `onclick="toggleSelectPhoto('${photo.id}')"` : '';
+    
+    const photoHtml = `
+        <div class="admin-photo-card ${selectedClass}" data-id="${photo.id}" ${selectModeAttr}>
+            ${batchSelectMode ? `<div class="checkbox-indicator"><i class="fas ${isSelected ? 'fa-check-circle' : 'fa-circle'}"></i></div>` : ''}
+            <img src="${photo.image}" alt="Фото" onerror="this.src='https://via.placeholder.com/200x200?text=Error'">
+            <div class="admin-photo-actions">
+                <button class="edit-btn" onclick="event.stopPropagation(); editPhoto('${photo.id}')" title="Редактировать">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="delete-btn" onclick="event.stopPropagation(); deletePhoto('${photo.id}')" title="Удалить">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+            <div class="admin-photo-info">
+                ${photo.title ? `<span style="color:#ffd966">${escapeHtml(photo.title.substring(0, 30))}</span><br>` : ''}
+                ${photo.category ? `<span style="color:#8aa07a"><i class="fas fa-folder"></i> ${escapeHtml(photo.category)}</span><br>` : ''}
+                ${photo.year ? `<span><i class="far fa-calendar-alt"></i> ${photo.year}</span>` : ''}
+                ${!photo.title && !photo.year && !photo.category ? '<span style="color:#8aa07a">Нет данных</span>' : ''}
+            </div>
+        </div>
+    `;
+    
+    if (isNew) {
+        container.insertAdjacentHTML('afterbegin', photoHtml);
+    } else {
+        container.insertAdjacentHTML('beforeend', photoHtml);
+    }
 }
 
 function resetBatchUpload() {
@@ -468,7 +514,7 @@ function resetBatchUpload() {
 }
 
 // ==============================================
-// ГРУППОВОЕ ВЫДЕЛЕНИЕ
+// ГРУППОВОЕ ВЫДЕЛЕНИЕ, РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ
 // ==============================================
 
 function toggleBatchSelectMode() {
@@ -548,10 +594,6 @@ function updateBatchActionsBar() {
         bar.classList.remove('show');
     }
 }
-
-// ==============================================
-// МАССОВОЕ РЕДАКТИРОВАНИЕ
-// ==============================================
 
 function batchEditSelected() {
     if (selectedPhotoIds.size === 0) {
@@ -673,10 +715,6 @@ async function confirmBatchEdit() {
     toggleBatchSelectMode();
 }
 
-// ==============================================
-// МАССОВОЕ УДАЛЕНИЕ
-// ==============================================
-
 async function batchDeleteSelected() {
     if (selectedPhotoIds.size === 0) {
         showToast('❌ Не выбрано ни одного фото');
@@ -761,16 +799,22 @@ async function savePhoto() {
         if (currentEditId) {
             await db.ref(`gallery/${currentEditId}`).update(photoData);
             showToast('✅ Фото обновлено');
+            await loadPhotos();
         } else {
             const newRef = db.ref('gallery').push();
             photoData.id = newRef.key;
             photoData.createdAt = Date.now();
             photoData.createdBy = currentUserEmail;
             await newRef.set(photoData);
+            
+            // Оптимизация: добавляем фото в начало списка без полной перерисовки
+            const newPhoto = { id: newRef.key, ...photoData };
+            currentPhotosList.unshift(newPhoto);
+            addPhotoToDOM(newPhoto, true);
+            
             showToast('✅ Фото добавлено');
         }
         
-        await loadPhotos();
         await forceGalleryUpdate();
         resetForm();
         
@@ -854,10 +898,23 @@ async function deletePhoto(id) {
     
     try {
         await db.ref(`gallery/${id}`).remove();
+        
+        // Оптимизация: удаляем фото из списка без перерисовки
+        currentPhotosList = currentPhotosList.filter(photo => photo.id !== id);
+        const card = document.querySelector(`.admin-photo-card[data-id="${id}"]`);
+        if (card) card.remove();
+        
         showToast('✅ Фото удалено');
-        await loadPhotos();
         await forceGalleryUpdate();
         if (currentEditId === id) resetForm();
+        
+        // Если список стал пустым, показываем сообщение
+        if (currentPhotosList.length === 0) {
+            const container = document.getElementById('photosList');
+            if (container) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-camera"></i><p>Нет фотографий. Добавьте первую!</p></div>';
+            }
+        }
         
     } catch (error) {
         console.error('Ошибка:', error);
@@ -976,7 +1033,6 @@ function showToast(message) {
     setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
-// Выход из режима выделения по Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && batchSelectMode) {
         toggleBatchSelectMode();
