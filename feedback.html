@@ -107,7 +107,7 @@
             <form id="feedbackForm">
                 <div class="form-group">
                     <label><i class="fas fa-user"></i> Ваше имя</label>
-                    <input type="text" id="userName" placeholder="Как к вам обращаться" required>
+                    <input type="text" id="feedbackUserName" placeholder="Как к вам обращаться" required>
                 </div>
 
                 <div class="form-group">
@@ -235,7 +235,7 @@
         };
         
         const templateParams = {
-            name: document.getElementById('userName').value,
+            name: document.getElementById('feedbackUserName').value,
             email: document.getElementById('userEmail').value,
             type: typeMap[document.getElementById('feedbackType').value],
             subject: document.getElementById('feedbackSubject').value,
