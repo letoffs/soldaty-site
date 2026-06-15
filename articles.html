@@ -7,7 +7,7 @@
     <meta name="description" content="Новости, статьи и интересные факты о сериале «Солдаты». Интервью с актёрами, история создания, закулисье.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" type="image/png" href="Resources/soldaty_icon.png">
+    <link rel="icon" href="favicon.png" type="image/png">
 </head>
 <body>
 
@@ -79,31 +79,44 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРОСМОТРА СТАТЬИ -->
-    <div id="articleModal" class="modal">
-        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto; background: #0f1a0f; border-radius: 24px; border: 1px solid #bd8a3e;">
-            <span class="modal-close" onclick="closeArticleModal()" style="position: sticky; top: 10px; float: right; font-size: 28px; cursor: pointer; background: #1e2a1e; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10;">&times;</span>
-            <div id="articleModalBody" style="clear: both; padding: 20px;"></div>
-        </div>
-    </div>
-
     <div class="series-description">
         <h2 class="description-title"><i class="fas fa-newspaper"></i> НОВОСТИ И СТАТЬИ</h2>
         <div class="description-content"><p>Самые свежие новости, эксклюзивные статьи и интересные факты о сериале «Солдаты».</p></div>
     </div>
 
-    <!-- ОСНОВНАЯ ЧАСТЬ -->
-    <div class="articles-container" style="margin: 30px 0;">
-        <div class="articles-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #3e5a3e;">
-            <div class="articles-title" style="font-size: 1.3rem; color: #ffd966;">
-                <i class="fas fa-newspaper"></i> Все материалы
+    <!-- ВИД: СПИСОК СТАТЕЙ -->
+    <div id="articlesListView" class="articles-list-view">
+        <div class="articles-container">
+            <div class="articles-header">
+                <div class="articles-title">
+                    <i class="fas fa-newspaper"></i> Все материалы
+                </div>
+                <div class="articles-count" id="articlesCount">0 статей</div>
             </div>
-            <div class="articles-count" id="articlesCount" style="background: #1e2a1e; padding: 6px 15px; border-radius: 30px; font-size: 0.85rem; color: #ffd966;">
-                0 статей
+            <div class="articles-grid" id="articlesGrid">
+                <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка статей...</div>
             </div>
         </div>
-        <div class="articles-grid" id="articlesGrid" style="display: flex; flex-direction: column; gap: 20px;">
-            <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка статей...</div>
+    </div>
+
+    <!-- ВИД: ПОЛНАЯ СТАТЬЯ -->
+    <div id="articleDetailView" class="article-detail-view">
+        <div class="back-link-article" onclick="backToList()">
+            <i class="fas fa-arrow-left"></i> Назад к списку статей
+        </div>
+        <div id="articleFullContent" class="article-full-content">
+            <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка статьи...</div>
+        </div>
+        <div id="commentsFullSection" class="comments-section-article-full" style="display: none;">
+            <h3><i class="fas fa-comments"></i> Комментарии <span id="commentsFullCount">0</span></h3>
+            <div class="comment-form-article">
+                <input type="text" id="commentFullAuthor" placeholder="Ваше имя" maxlength="50">
+                <textarea id="commentFullText" rows="3" placeholder="Поделитесь своим мнением..."></textarea>
+                <button onclick="submitFullComment()" class="submit-comment-btn"><i class="fas fa-paper-plane"></i> Оставить комментарий</button>
+            </div>
+            <div id="commentsFullList" class="comments-list">
+                <div class="comment-empty">💬 Нет комментариев. Будьте первым!</div>
+            </div>
         </div>
     </div>
 
@@ -148,165 +161,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="js/firebase-auth.js"></script>
-
-<script>
-    let allArticles = [];
-
-    // Загрузка статей
-    async function loadArticles() {
-        const container = document.getElementById('articlesGrid');
-        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка статей...</div>';
-        
-        try {
-            const snapshot = await db.ref('articles').once('value');
-            const articles = snapshot.val() || {};
-            allArticles = Object.entries(articles).map(([id, data]) => ({ id, ...data })).reverse();
-            
-            displayArticles();
-        } catch (error) {
-            console.error('Ошибка загрузки:', error);
-            container.innerHTML = '<div class="empty-gallery"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки статей</p></div>';
-        }
-    }
-    
-    function displayArticles() {
-        document.getElementById('articlesCount').textContent = `${allArticles.length} ${getDeclension(allArticles.length, 'статья', 'статьи', 'статей')}`;
-        
-        const container = document.getElementById('articlesGrid');
-        
-        if (allArticles.length === 0) {
-            container.innerHTML = '<div class="empty-gallery"><i class="fas fa-newspaper"></i><p>Пока нет статей. Скоро появятся!</p></div>';
-            return;
-        }
-        
-        container.innerHTML = allArticles.map(article => {
-            const date = new Date(article.createdAt).toLocaleDateString('ru-RU');
-            
-            return `
-                <div class="article-card" onclick="openArticle('${article.id}')" style="background: #0f1a0f; border-radius: 20px; padding: 20px; border: 1px solid #3e5a3e; transition: all 0.3s; cursor: pointer;">
-                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                        ${article.image ? `
-                            <div style="flex: 0 0 200px;">
-                                <img src="${article.image}" alt="${escapeHtml(article.title)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px;" onerror="this.style.display='none'">
-                            </div>
-                        ` : ''}
-                        <div style="flex: 1;">
-                            <h3 style="color: #ffd966; font-size: 1.2rem; margin-bottom: 8px;">${escapeHtml(article.title)}</h3>
-                            <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 12px; line-height: 1.5;">${escapeHtml(article.excerpt || article.content.replace(/<[^>]*>/g, '').substring(0, 150))}...</p>
-                            <div style="display: flex; gap: 15px; font-size: 0.7rem; color: #8aa07a;">
-                                <span><i class="far fa-calendar-alt"></i> ${date}</span>
-                                <span><i class="far fa-eye"></i> ${article.views || 0} просмотров</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-    
-    async function openArticle(id) {
-        try {
-            const snapshot = await db.ref(`articles/${id}`).once('value');
-            const article = snapshot.val();
-            if (!article) return;
-            
-            // Увеличиваем счётчик просмотров
-            await db.ref(`articles/${id}/views`).transaction(views => (views || 0) + 1);
-            
-            const date = new Date(article.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
-            
-            document.getElementById('articleModalBody').innerHTML = `
-                <h2 style="color: #ffd966; font-size: 1.8rem; margin-bottom: 15px;">${escapeHtml(article.title)}</h2>
-                <div style="display: flex; gap: 20px; color: #8aa07a; font-size: 0.8rem; padding-bottom: 15px; border-bottom: 1px solid #3e5a3e; margin-bottom: 20px;">
-                    <span><i class="far fa-calendar-alt"></i> ${date}</span>
-                    <span><i class="far fa-eye"></i> ${(article.views || 0) + 1} просмотров</span>
-                </div>
-                ${article.image ? `<img src="${article.image}" alt="${escapeHtml(article.title)}" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 16px; margin-bottom: 20px;" onerror="this.style.display='none'">` : ''}
-                <div style="color: #ddd; line-height: 1.7; font-size: 1rem;">
-                    ${article.content}
-                </div>
-            `;
-            
-            document.getElementById('articleModal').style.display = 'flex';
-        } catch (error) {
-            console.error('Ошибка открытия статьи:', error);
-            showToast('❌ Не удалось загрузить статью');
-        }
-    }
-    
-    function closeArticleModal() {
-        document.getElementById('articleModal').style.display = 'none';
-    }
-    
-    function getDeclension(num, one, two, five) {
-        let n = Math.abs(num) % 100;
-        if (n >= 5 && n <= 20) return five;
-        n %= 10;
-        if (n === 1) return one;
-        if (n >= 2 && n <= 4) return two;
-        return five;
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-    }
-    
-    function showToast(message) {
-        let toast = document.getElementById('toastMessage');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'toastMessage';
-            toast.className = 'toast-message';
-            document.body.appendChild(toast);
-        }
-        toast.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2500);
-    }
-    
-    // Закрытие модального окна при клике вне
-    window.onclick = function(event) {
-        const modal = document.getElementById('articleModal');
-        if (event.target === modal) {
-            closeArticleModal();
-        }
-        const authModal = document.getElementById('authModal');
-        if (event.target === authModal) {
-            closeAuthModal();
-        }
-    };
-    
-    document.addEventListener('DOMContentLoaded', loadArticles);
-    
-    // Пасхалка для админ-панели
-    (function() {
-        document.addEventListener('DOMContentLoaded', function() {
-            const secretBtn = document.getElementById('secretVersion');
-            if (secretBtn) {
-                let clickCount = 0;
-                let clickTimer = null;
-                
-                secretBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    clickCount++;
-                    
-                    if (clickTimer) clearTimeout(clickTimer);
-                    clickTimer = setTimeout(function() {
-                        clickCount = 0;
-                    }, 1000);
-                    
-                    if (clickCount >= 3) {
-                        clickCount = 0;
-                        window.location.href = 'admin-articles.html';
-                    }
-                });
-                
-                secretBtn.title = '⚡ Кликните 3 раза для доступа к админ-панели';
-            }
-        });
-    })();
-</script>
+<script src="js/articles.js"></script>
 
 </body>
 </html>
