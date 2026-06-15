@@ -79,6 +79,7 @@ body::before {
     width: 100%;
     margin: 0;
     padding: 20px;
+    overflow-x: visible;
 }
 
 /* шапка с логотипом */
@@ -459,6 +460,8 @@ body::before {
     margin-bottom: 35px;
     border: 1px solid #3e5a3e;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .description-title {
@@ -3679,9 +3682,11 @@ button,
     background: linear-gradient(135deg, #0f1a0f 0%, #0a120a 100%);
     border-radius: 24px;
     padding: 25px 30px;
-    margin-bottom: 35px;
+    margin-bottom: 0px;
     border: 1px solid #3e5a3e;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .season-description-header {
@@ -5600,12 +5605,10 @@ button,
     }
 }
 
-/* ===== БЛОК ВРЕМЕНИ И ПОГОДЫ ===== */
+/* ===== БЛОК ПОГОДЫ И ВРЕМЕНИ ===== */
+
+/* Базовые стили для всех устройств */
 .weather-time-block {
-    position: absolute;
-    left: 20px;
-    top: 18%;
-    transform: translateY(-50%);
     display: flex;
     gap: 20px;
     background: rgba(15, 26, 15, 0.7);
@@ -5613,8 +5616,45 @@ button,
     padding: 8px 18px;
     border-radius: 60px;
     border: 1px solid #bd8a3e;
-    z-index: 10;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    width: fit-content;
+}
+
+/* На мобильных и планшетах (до 1024px) - блок слева вверху */
+@media (max-width: 1024px) {
+    .weather-time-block {
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        margin: 0;
+        z-index: 10;
+    }
+    
+    /* Добавляем отступ в хедере, чтобы контент не наезжал */
+    .header {
+        padding-top: 80px;
+        position: relative;
+    }
+}
+
+/* На ноутбуках и десктопах (от 1025px) - блок слева внизу */
+@media (min-width: 1025px) {
+    /* Делаем контейнер флекс-контейнером */
+    .container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        position: relative;
+    }
+    
+    /* Блок погоды - внизу слева */
+    .weather-time-block {
+        position: fixed;
+        left: 20px;
+        bottom: 20px;
+        margin: 0;
+        z-index: 100;
+    }
 }
 
 /* Время */
@@ -5626,7 +5666,7 @@ button,
 
 .time-display {
     font-family: 'Magistral-BookItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: normal;
     color: #ffd966;
     letter-spacing: 2px;
@@ -5635,9 +5675,9 @@ button,
 .date-display {
     font-family: 'Magistral-Book', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
     font-weight: medium;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: #aaa;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 /* Погода */
@@ -5648,7 +5688,7 @@ button,
 }
 
 .weather-icon {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
@@ -5670,16 +5710,6 @@ button,
 
 /* Адаптация для мобильных */
 @media (max-width: 800px) {
-    .weather-time-block {
-        position: static;
-        transform: none;
-        justify-content: center;
-        margin-bottom: 15px;
-        width: fit-content;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
     .time-display {
         font-size: 1.4rem;
     }
@@ -5699,11 +5729,6 @@ button,
 }
 
 @media (max-width: 500px) {
-    .weather-time-block {
-        gap: 10px;
-        padding: 5px 12px;
-    }
-    
     .time-block {
         padding-right: 10px;
     }
@@ -6283,4 +6308,410 @@ button,
     max-height: 100px;
     border-radius: 8px;
     border: 1px solid #bd8a3e;
+}
+
+/* ===== ДВУХКОЛОНОЧНЫЙ МАКЕТ ТОЛЬКО ДЛЯ ВЕРХНЕЙ ЧАСТИ ===== */
+.top-two-column-layout {
+    display: flex;
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.top-main-column {
+    flex: 2;
+    min-width: 0;
+}
+
+.top-sidebar-column {
+    flex: 1;
+    min-width: 340px;
+    max-width: 460px;
+}
+
+@media (max-width: 900px) {
+    .top-two-column-layout {
+        flex-direction: column;
+    }
+    .top-sidebar-column {
+        max-width: 100%;
+    }
+}
+
+/* ===== БЛОК НОВОСТЕЙ В ПРАВОЙ КОЛОНКЕ ===== */
+.news-sidebari {
+    background: linear-gradient(135deg, #0f1a0f 0%, #0a120a 100%);
+    border-radius: 24px;
+    padding: 20px;
+    border: 1px solid #3e5a3e;
+}
+
+.news-sidebar-headeri {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #bd8a3e;
+}
+
+.news-sidebar-headeri h3 {
+    font-family: 'Magistral-BoldItalic', 'Magistral', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-style: italic;
+    font-size: 1.4rem;
+    color: #ffd966;
+    margin: 0;
+}
+
+.news-sidebar-headeri h3 i {
+    margin-right: 8px;
+    color: #bd8a3e;
+}
+
+.news-sidebar-headeri a {
+    font-family: 'Gotham Pro', 'Montserrat', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 0.7rem;
+    color: #ffd966;
+    text-decoration: none;
+    background: #1e2a1e;
+    padding: 5px 12px;
+    border-radius: 30px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #bd8a3e;
+}
+
+.news-sidebar-headeri a:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: translateX(3px);
+}
+
+.news-sidebar-listi {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.news-sidebar-itemi {
+    display: flex;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.news-sidebar-itemi:hover {
+    background: #1e2a1e;
+}
+
+.news-sidebar-imagei {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #1e2a1e;
+    flex-shrink: 0;
+}
+
+.news-sidebar-contenti {
+    flex: 1;
+    min-width: 0;
+}
+
+.news-sidebar-categoryi {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.6rem;
+    margin-bottom: 5px;
+}
+
+.news-sidebar-categoryi.news { background: #1e3a1e; color: #4caf50; }
+.news-sidebar-categoryi.article { background: #1e2a3a; color: #64b5f6; }
+.news-sidebar-categoryi.fun { background: #3a3a1e; color: #ffc107; }
+.news-sidebar-categoryi.history { background: #3a1e3a; color: #ce93d8; }
+
+.news-sidebar-titlei {
+    color: #ffd966;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    margin-bottom: 5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.news-sidebar-datei {
+    font-size: 0.65rem;
+    color: #8aa07a;
+}
+
+.news-sidebar-datei i {
+    margin-right: 3px;
+}
+
+.news-sidebar-all-linki {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px solid #3e5a3e;
+    color: #bd8a3e;
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.news-sidebar-all-linki:hover {
+    color: #ffd966;
+}
+
+/* ОСТАЛЬНОЙ КОНТЕНТ (плеер, сезоны, серии, комментарии) - НА ВСЮ ШИРИНУ */
+.full-width-content {
+    width: 100%;
+    margin-top: 30px;
+}
+
+/* ===== СТРАНИЦА СТАТЬИ ===== */
+.article-containeri {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.article-cardi {
+    background: #0f1a0f;
+    border-radius: 24px;
+    padding: 30px;
+    border: 1px solid #3e5a3e;
+    margin-bottom: 30px;
+}
+
+.article-headeri {
+    margin-bottom: 25px;
+}
+
+.article-categoryi {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin-bottom: 15px;
+}
+
+.article-categoryi.news { background: #1e3a1e; color: #4caf50; }
+.article-categoryi.article { background: #1e2a3a; color: #64b5f6; }
+.article-categoryi.fun { background: #3a3a1e; color: #ffc107; }
+.article-categoryi.history { background: #3a1e3a; color: #ce93d8; }
+
+.article-titlei {
+    color: #ffd966;
+    font-size: 2rem;
+    margin-bottom: 15px;
+    line-height: 1.3;
+}
+
+.article-metai {
+    display: flex;
+    gap: 20px;
+    color: #8aa07a;
+    font-size: 0.8rem;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #3e5a3e;
+    flex-wrap: wrap;
+}
+
+.article-imagei {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin: 20px 0;
+}
+
+.article-contenti {
+    color: #ddd;
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.article-contenti p {
+    margin-bottom: 15px;
+}
+
+.article-contenti h2 {
+    color: #ffd966;
+    margin: 20px 0 10px;
+}
+
+.article-contenti h3 {
+    color: #bd8a3e;
+    margin: 15px 0 10px;
+}
+
+.article-contenti ul,
+.article-contenti ol {
+    margin: 10px 0 15px 25px;
+}
+
+.article-contenti li {
+    margin: 5px 0;
+}
+
+.comments-section-articlei {
+    background: #0f1a0f;
+    border-radius: 24px;
+    padding: 25px;
+    border: 1px solid #3e5a3e;
+    margin-top: 30px;
+}
+
+.comments-section-articlei h3 {
+    color: #ffd966;
+    margin-bottom: 20px;
+}
+
+.comments-section-articlei h3 i {
+    margin-right: 8px;
+}
+
+.comment-form-articlei {
+    margin-bottom: 25px;
+}
+
+.comment-form-articlei textarea {
+    width: 100%;
+    padding: 12px 15px;
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    border-radius: 16px;
+    color: #eee;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+.comment-form-articlei textarea:focus {
+    outline: none;
+    border-color: #bd8a3e;
+}
+
+.comment-form-articlei input {
+    width: 100%;
+    padding: 10px 15px;
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    border-radius: 30px;
+    color: #eee;
+    margin-bottom: 10px;
+}
+
+.comment-form-articlei input:focus {
+    outline: none;
+    border-color: #bd8a3e;
+}
+
+.comment-itemi {
+    background: #1b2a1b;
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #bd8a3e;
+}
+
+.comment-authori {
+    font-weight: bold;
+    color: #ffd966;
+    margin-bottom: 5px;
+}
+
+.comment-datei {
+    font-size: 0.7rem;
+    color: #8aa07a;
+    margin-bottom: 8px;
+}
+
+.comment-texti {
+    color: #ccc;
+    line-height: 1.4;
+}
+
+.admin-articles-listi {
+    margin-top: 30px;
+}
+
+.admin-article-itemi {
+    background: #1e2a1e;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-article-titlei {
+    color: #ffd966;
+    font-weight: bold;
+}
+
+.admin-article-actionsi {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-article-actionsi button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+
+.admin-article-actionsi .edit-articlei {
+    color: #ffc107;
+}
+
+.admin-article-actionsi .edit-articlei:hover {
+    background: #ffc107;
+    color: #0f1a0f;
+}
+
+.admin-article-actionsi .delete-articlei {
+    color: #f44336;
+}
+
+.admin-article-actionsi .delete-articlei:hover {
+    background: #f44336;
+    color: white;
+}
+
+.back-link-article {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    padding: 8px 20px;
+    border-radius: 40px;
+    color: #ddd;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+}
+
+.back-link-article:hover {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    transform: translateX(-3px);
 }
