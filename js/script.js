@@ -202,9 +202,7 @@ function createYouTubePlayer(videoId) {
     const playerDiv = document.getElementById('youtubePlayerContainer');
     if (!playerDiv) return;
     
-    // Проверяем, загружен ли уже API
     if (typeof YT !== 'undefined' && YT && YT.Player) {
-        // API уже загружен, создаём плеер
         if (currentPlayer && currentPlayer.destroy) {
             currentPlayer.destroy();
             currentPlayer = null;
@@ -223,20 +221,16 @@ function createYouTubePlayer(videoId) {
             }
         });
     } else {
-        // API не загружен, загружаем его и ждём
         playerDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2a;color:#ffd966;"><i class="fas fa-spinner fa-pulse"></i> Загрузка YouTube...</div>';
         
-        // Загружаем API
         const script = document.createElement('script');
         script.src = 'https://www.youtube.com/iframe_api';
         script.async = true;
         script.onload = () => {
-            // Ждём появления YT объекта
             let attempts = 0;
             const checkYT = setInterval(() => {
                 if (typeof YT !== 'undefined' && YT && YT.Player) {
                     clearInterval(checkYT);
-                    // API загружен, создаём плеер
                     if (currentPlayer && currentPlayer.destroy) currentPlayer.destroy();
                     playerDiv.innerHTML = '';
                     currentPlayer = new YT.Player('youtubePlayerContainer', {
@@ -461,28 +455,21 @@ function loadFirstEpisode() {
         }
         document.getElementById('currentSeriesDesc').innerHTML = firstEpisodes[0].desc;
         
-        // Показываем правильный плеер при загрузке
-        const youtubePlayer = document.getElementById('youtubePlayer');
-        const rutubePlayer = document.getElementById('rutubePlayer');
-        const rentvPlayer = document.getElementById('rentvPlayer');
-        
-        // По умолчанию показываем Rutube (если есть ID)
         if (currentEpisodeObj.rutubeId) {
-            youtubePlayer.style.display = 'none';
-            rutubePlayer.style.display = 'block';
-            rentvPlayer.style.display = 'none';
+            document.getElementById('youtubePlayer').style.display = 'none';
+            document.getElementById('rutubePlayer').style.display = 'block';
+            document.getElementById('rentvPlayer').style.display = 'none';
             loadRutubePlayer(currentEpisodeObj.rutubeId);
             updateActiveButton('rutube');
         } else if (currentEpisodeObj.youtubeId) {
-            // Если нет Rutube, но есть YouTube
-            youtubePlayer.style.display = 'block';
-            rutubePlayer.style.display = 'none';
-            rentvPlayer.style.display = 'none';
+            document.getElementById('youtubePlayer').style.display = 'block';
+            document.getElementById('rutubePlayer').style.display = 'none';
+            document.getElementById('rentvPlayer').style.display = 'none';
             updateActiveButton('youtube');
         } else if (currentEpisodeObj.rentvId) {
-            youtubePlayer.style.display = 'none';
-            rutubePlayer.style.display = 'none';
-            rentvPlayer.style.display = 'block';
+            document.getElementById('youtubePlayer').style.display = 'none';
+            document.getElementById('rutubePlayer').style.display = 'none';
+            document.getElementById('rentvPlayer').style.display = 'block';
             updateActiveButton('rentv');
             loadRentvPlayer(currentEpisodeObj.rentvId);
         }
@@ -943,6 +930,42 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ========== НОВОСТИ В ПРАВОЙ КОЛОНКЕ ==========
+async function loadNewsSidebar() {
+    const container = document.getElementById('newsSidebarList');
+    if (!container) return;
+    
+    try {
+        const snapshot = await db.ref('articles').orderByChild('createdAt').limitToLast(5).once('value');
+        const articles = snapshot.val() || {};
+        const articlesArray = Object.entries(articles).map(([id, data]) => ({ id, ...data })).reverse();
+        
+        if (articlesArray.length === 0) {
+            container.innerHTML = '<div class="empty-news" style="padding: 20px;">Пока нет новостей</div>';
+            return;
+        }
+        
+        let html = '';
+        articlesArray.forEach(article => {
+            const date = new Date(article.createdAt).toLocaleDateString('ru-RU');
+            
+            html += `
+                <div class="news-sidebar-itemi" onclick="location.href='articles.html?id=${article.id}'" style="cursor: pointer;">
+                    ${article.image ? `<img src="${article.image}" class="news-sidebar-imagei" onerror="this.style.display='none'">` : '<div class="news-sidebar-imagei" style="background: #2c3e2c; display: flex; align-items: center; justify-content: center;"><i class="fas fa-newspaper" style="color: #bd8a3e;"></i></div>'}
+                    <div class="news-sidebar-contenti">
+                        <div class="news-sidebar-titlei">${escapeHtml(article.title)}</div>
+                        <div class="news-sidebar-datei"><i class="far fa-calendar-alt"></i> ${date}</div>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Ошибка загрузки новостей:', error);
+        container.innerHTML = '<div class="empty-news" style="padding: 20px;">Ошибка загрузки</div>';
+    }
+}
+
 // ========== ЗАПУСК ==========
 window.onload = () => {
     initPlayerSwitch();
@@ -951,6 +974,7 @@ window.onload = () => {
     loadComments();
     loadRatings();
     updateFormStarsDisplay();
+    loadNewsSidebar();
     
     const submitBtn = document.getElementById('submitCommentBtn');
     if (submitBtn) {
