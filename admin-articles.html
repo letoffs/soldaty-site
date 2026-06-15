@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Админ-панель — Управление статьями | Солдаты</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../Resources/soldaty_icon.png">
+    <!-- Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #ffd966;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .form-group label i {
+            margin-right: 10px;
+            color: #bd8a3e;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: #1e2a1e;
+            border: 1px solid #3e5a3e;
+            border-radius: 12px;
+            color: #eee;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #bd8a3e;
+        }
+        /* Quill editor стилизация */
+        #editor-container {
+            height: 450px;
+            background: #1e2a1e;
+            border: 1px solid #3e5a3e;
+            border-radius: 12px;
+            color: #eee;
+        }
+        .ql-toolbar.ql-snow {
+            background: #0f1a0f;
+            border: 1px solid #3e5a3e;
+            border-radius: 12px 12px 0 0;
+        }
+        .ql-container.ql-snow {
+            border: none;
+            border-radius: 0 0 12px 12px;
+        }
+        .ql-editor {
+            color: #ddd;
+            font-size: 1rem;
+            line-height: 1.6;
+            min-height: 400px;
+        }
+        .ql-editor.ql-blank::before {
+            color: #8aa07a;
+            font-style: italic;
+        }
+        .ql-toolbar.ql-snow .ql-picker-label {
+            color: #ddd;
+        }
+        .ql-snow .ql-stroke {
+            stroke: #ddd;
+        }
+        .ql-snow .ql-fill {
+            fill: #ddd;
+        }
+        .ql-snow .ql-picker-options {
+            background: #1e2a1e;
+            color: #ddd;
+        }
+        .submit-btn {
+            background: #bd8a3e;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 10px;
+            color: #0f1a0f;
+        }
+        .submit-btn:hover {
+            background: #ffb347;
+            transform: scale(1.02);
+        }
+        .cancel-btn {
+            background: #1e2a1e;
+            border: 1px solid #3e5a3e;
+            padding: 14px 30px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 10px;
+            color: #ddd;
+        }
+        .cancel-btn:hover {
+            background: #2c3e2c;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .button-group .submit-btn,
+        .button-group .cancel-btn {
+            flex: 1;
+            margin-top: 0;
+        }
+        .admin-articles-list {
+            margin-top: 40px;
+        }
+        .admin-article-item {
+            background: #0f1a0f;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid #3e5a3e;
+            transition: all 0.2s;
+        }
+        .admin-article-item:hover {
+            border-color: #bd8a3e;
+        }
+        .admin-article-info {
+            flex: 1;
+        }
+        .admin-article-title {
+            color: #ffd966;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+        .admin-article-meta {
+            font-size: 0.7rem;
+            color: #8aa07a;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .admin-article-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .edit-article, .delete-article {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 30px;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .edit-article {
+            color: #ffc107;
+        }
+        .edit-article:hover {
+            background: #ffc107;
+            color: #0f1a0f;
+        }
+        .delete-article {
+            color: #f44336;
+        }
+        .delete-article:hover {
+            background: #f44336;
+            color: white;
+        }
+        .admin-access-denied {
+            text-align: center;
+            padding: 60px;
+            background: #0f1a0f;
+            border-radius: 24px;
+        }
+        .admin-access-denied i {
+            font-size: 4rem;
+            color: #f44336;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1e2a1e;
+            border: 1px solid #3e5a3e;
+            padding: 10px 24px;
+            border-radius: 40px;
+            color: #ddd;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.2s;
+            margin-bottom: 25px;
+        }
+        .back-link:hover {
+            background: #bd8a3e;
+            color: #0f1a0f;
+            transform: translateX(-3px);
+        }
+        .image-preview {
+            margin-top: 10px;
+            max-width: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #3e5a3e;
+            background: #1e2a1e;
+        }
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .image-preview button {
+            background: none;
+            border: none;
+            color: #f44336;
+            cursor: pointer;
+            padding: 8px;
+            width: 100%;
+            font-size: 0.75rem;
+        }
+        .image-preview button:hover {
+            background: #2a1e1e;
+        }
+        .char-counter {
+            text-align: right;
+            font-size: 0.7rem;
+            color: #8aa07a;
+            margin-top: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8aa07a;
+        }
+        hr {
+            border-color: #3e5a3e;
+            margin: 30px 0;
+        }
+        .upload-status {
+            font-size: 0.7rem;
+            color: #8aa07a;
+            margin-top: 5px;
+        }
+        .compress-note {
+            background: #1e2a1e;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="index.html" class="logo-link"><img src="../Resources/soldaty_logo.png" alt="Солдаты" class="logo-image"></a>
+        <p>Управление статьями и новостями</p>
+        <div class="badge"><i class="fas fa-lock"></i> Админ-панель</div>
+    </div>
+
+    <div class="nav-menu">
+        <a href="index.html" class="nav-link">Сериал</a>
+        <a href="heroes.html" class="nav-link">Персонажи</a>
+        <a href="soundtracks.html" class="nav-link">Саундтреки</a>
+        <a href="quiz.html" class="nav-link">Викторина</a>
+        <a href="videos.html" class="nav-link">Видеотека</a>
+        <a href="gallery.html" class="nav-link">Фотоальбом</a>
+    </div>
+
+    <div id="adminContent">
+        <div class="admin-access-denied">
+            <i class="fas fa-spinner fa-pulse"></i>
+            <h2>Проверка доступа...</h2>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div>
+            <i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · 2004-2013
+        </div>
+        <div class="copyright">
+            © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
+            Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="../firebase-config.js"></script>
+<script src="../js/firebase-auth.js"></script>
+
+<script>
+    const ADMIN_EMAIL = "twinkjjjjkmnb@gmail.com";
+    let currentEditId = null;
+    let quillEditor = null;
+
+    // Функция сжатия изображения
+    function compressImage(file, maxWidth = 800, quality = 0.7) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedDataUrl);
+                };
+                img.onerror = reject;
+            };
+            reader.onerror = reject;
+        });
+    }
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+        const container = document.getElementById('adminContent');
+        
+        if (!user) {
+            container.innerHTML = `
+                <div class="admin-access-denied">
+                    <i class="fas fa-lock"></i>
+                    <h2>Вы не авторизованы</h2>
+                    <p>Пожалуйста, <a href="index.html">войдите в аккаунт</a></p>
+                    <button onclick="window.location.href='index.html'" class="submit-btn" style="width: auto; margin-top: 20px;">Вернуться на сайт</button>
+                </div>
+            `;
+            return;
+        }
+        
+        if (user.email !== ADMIN_EMAIL) {
+            container.innerHTML = `
+                <div class="admin-access-denied">
+                    <i class="fas fa-lock"></i>
+                    <h2>Доступ запрещён</h2>
+                    <p>Эта страница только для администратора</p>
+                    <button onclick="window.location.href='index.html'" class="submit-btn" style="width: auto; margin-top: 20px;">Вернуться на сайт</button>
+                </div>
+            `;
+            return;
+        }
+        
+        // Загружаем админ-панель
+        container.innerHTML = `
+            <div class="admin-container">
+                <a href="articles.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к статьям</a>
+                
+                <div class="form-title" style="margin-bottom: 25px;">
+                    <h2 style="color: #ffd966;"><i class="fas fa-plus-circle"></i> <span id="formTitleText">Добавить статью</span></h2>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Заголовок статьи</label>
+                    <input type="text" id="articleTitle" class="form-input" placeholder="Например: Как снимали сериал Солдаты" maxlength="100">
+                    <div class="char-counter"><span id="titleCount">0</span>/100</div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Краткое описание (анонс)</label>
+                    <textarea id="articleExcerpt" class="form-input" rows="3" placeholder="Коротко о чём статья... Это будет отображаться в карточке на главной" maxlength="300"></textarea>
+                    <div class="char-counter"><span id="excerptCount">0</span>/300</div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Превью-картинка (для карточки статьи)</label>
+                    <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+                        <div style="flex: 1;">
+                            <input type="text" id="articleImage" class="form-input" placeholder="Ссылка на изображение или загрузите ниже">
+                        </div>
+                        <div>
+                            <label class="upload-image-btn" style="background: #1e2a1e; border: 1px solid #bd8a3e; padding: 12px 20px; border-radius: 40px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-upload"></i> Загрузить
+                                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="compress-note">
+                        <i class="fas fa-info-circle"></i> Изображения автоматически сжимаются перед сохранением в базу данных (макс. 800px ширина)
+                    </div>
+                    <div id="imagePreviewContainer" class="image-preview" style="display: none;">
+                        <img id="imagePreview" src="" alt="Превью">
+                        <button type="button" onclick="clearImage()"><i class="fas fa-trash"></i> Удалить</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-edit"></i> Текст статьи (HTML-редактор)</label>
+                    <div id="editor-container"></div>
+                    <div class="char-counter" style="margin-top: 8px;">
+                        <i class="fas fa-info-circle"></i> Вы можете вставлять изображения из буфера обмена (Ctrl+V) — они будут сжаты и сохранены в Base64
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="saveArticle()" class="submit-btn" id="saveBtn">
+                        <i class="fas fa-save"></i> Опубликовать
+                    </button>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="admin-container">
+                <h3 style="color: #ffd966; margin-bottom: 20px;"><i class="fas fa-newspaper"></i> Все статьи</h3>
+                <div id="articlesList" class="admin-articles-list">
+                    <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
+                </div>
+            </div>
+        `;
+        
+        // Инициализация Quill редактора
+        quillEditor = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Введите текст статьи здесь... Поддерживает форматирование, заголовки, списки и изображения...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'align': [] }],
+                    ['blockquote', 'code-block'],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            }
+        });
+        
+        // Обработка вставки изображений через кнопку в тулбаре
+        quillEditor.getModule('toolbar').addHandler('image', () => {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+            input.onchange = async () => {
+                const file = input.files[0];
+                if (file) {
+                    await insertImageToEditor(file);
+                }
+            };
+        });
+        
+        // Вставка изображений из буфера обмена (Ctrl+V)
+        document.getElementById('editor-container').addEventListener('paste', async (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (const item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (file) {
+                        await insertImageToEditor(file);
+                    }
+                    break;
+                }
+            }
+        });
+        
+        // Обработка загрузки превью-картинки
+        const imageUploadInput = document.getElementById('imageUpload');
+        if (imageUploadInput) {
+            imageUploadInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    await uploadPreviewImage(file);
+                }
+            });
+        }
+        
+        // Счётчики символов
+        const titleInput = document.getElementById('articleTitle');
+        const excerptInput = document.getElementById('articleExcerpt');
+        
+        if (titleInput) {
+            titleInput.addEventListener('input', () => {
+                document.getElementById('titleCount').textContent = titleInput.value.length;
+            });
+        }
+        if (excerptInput) {
+            excerptInput.addEventListener('input', () => {
+                document.getElementById('excerptCount').textContent = excerptInput.value.length;
+            });
+        }
+        
+        loadArticles();
+    });
+    
+    // Вставка изображения в редактор
+    async function insertImageToEditor(file) {
+        if (!file) return;
+        
+        const range = quillEditor.getSelection(true);
+        const loadingIndex = range.index;
+        quillEditor.insertText(loadingIndex, '⏳ Загрузка изображения...', { 'background': '#2a3a2a' });
+        
+        try {
+            const compressedBase64 = await compressImage(file);
+            // Удаляем текст загрузки
+            quillEditor.deleteText(loadingIndex, '⏳ Загрузка изображения...'.length);
+            // Вставляем изображение
+            quillEditor.insertEmbed(loadingIndex, 'image', compressedBase64);
+            quillEditor.setSelection(loadingIndex + 1);
+            showToast('✅ Изображение загружено');
+        } catch (error) {
+            console.error('Ошибка:', error);
+            quillEditor.deleteText(loadingIndex, '⏳ Загрузка изображения...'.length);
+            quillEditor.insertText(loadingIndex, '❌ Ошибка загрузки', { 'color': '#f44336' });
+            showToast('❌ Ошибка обработки изображения');
+        }
+    }
+    
+    // Загрузка превью-картинки
+    async function uploadPreviewImage(file) {
+        if (!file) return;
+        
+        showToast('⏳ Обработка изображения...');
+        
+        try {
+            const compressedBase64 = await compressImage(file);
+            document.getElementById('articleImage').value = compressedBase64;
+            
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const previewImg = document.getElementById('imagePreview');
+            previewImg.src = compressedBase64;
+            previewContainer.style.display = 'block';
+            
+            showToast('✅ Изображение загружено');
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showToast('❌ Ошибка обработки изображения');
+        }
+    }
+    
+    function clearImage() {
+        document.getElementById('articleImage').value = '';
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+        document.getElementById('imagePreview').src = '';
+        showToast('🖼 Изображение удалено');
+    }
+    
+    async function saveArticle() {
+        const title = document.getElementById('articleTitle').value.trim();
+        const excerpt = document.getElementById('articleExcerpt').value.trim();
+        const content = quillEditor.root.innerHTML;
+        const image = document.getElementById('articleImage').value.trim();
+        
+        if (!title) {
+            showToast('❌ Введите заголовок статьи');
+            return;
+        }
+        if (!content || content === '<p><br></p>') {
+            showToast('❌ Введите текст статьи');
+            return;
+        }
+        
+        // Проверяем размер контента (Firebase ограничение ~10MB)
+        const contentSize = new Blob([content]).size;
+        if (contentSize > 9000000) {
+            showToast('❌ Текст статьи слишком большой (макс. 9MB). Уменьшите количество изображений.');
+            return;
+        }
+        
+        const articleData = {
+            title: title,
+            excerpt: excerpt || content.replace(/<[^>]*>/g, '').substring(0, 200),
+            content: content,
+            image: image || null,
+            updatedAt: Date.now()
+        };
+        
+        try {
+            if (currentEditId) {
+                await db.ref(`articles/${currentEditId}`).update(articleData);
+                showToast('✅ Статья обновлена');
+            } else {
+                const newRef = db.ref('articles').push();
+                articleData.id = newRef.key;
+                articleData.createdAt = Date.now();
+                articleData.views = 0;
+                articleData.comments = {};
+                await newRef.set(articleData);
+                showToast('✅ Статья опубликована');
+            }
+            resetForm();
+            loadArticles();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showToast('❌ Ошибка сохранения: ' + error.message);
+        }
+    }
+    
+    async function loadArticles() {
+        const container = document.getElementById('articlesList');
+        if (!container) return;
+        
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>';
+        
+        try {
+            const snapshot = await db.ref('articles').once('value');
+            const articles = snapshot.val() || {};
+            const articlesArray = Object.entries(articles).map(([id, data]) => ({ id, ...data })).reverse();
+            
+            if (articlesArray.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="text-align: center; padding: 40px; background: #0f1a0f; border-radius: 16px;"><i class="fas fa-newspaper" style="font-size: 3rem; color: #8aa07a;"></i><p>Нет статей. Добавьте первую!</p></div>';
+                return;
+            }
+            
+            let html = '';
+            articlesArray.forEach(article => {
+                const date = new Date(article.createdAt).toLocaleDateString('ru-RU');
+                
+                html += `
+                    <div class="admin-article-item">
+                        <div class="admin-article-info">
+                            <div class="admin-article-title">${escapeHtml(article.title)}</div>
+                            <div class="admin-article-meta">
+                                <span><i class="far fa-calendar-alt"></i> ${date}</span>
+                                <span><i class="far fa-eye"></i> ${article.views || 0} просмотров</span>
+                            </div>
+                        </div>
+                        <div class="admin-article-actions">
+                            <button class="edit-article" onclick="editArticle('${article.id}')" title="Редактировать">
+                                <i class="fas fa-edit"></i> Ред.
+                            </button>
+                            <button class="delete-article" onclick="deleteArticle('${article.id}')" title="Удалить">
+                                <i class="fas fa-trash-alt"></i> Удалить
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Ошибка:', error);
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки</p></div>';
+        }
+    }
+    
+    async function editArticle(id) {
+        try {
+            const snapshot = await db.ref(`articles/${id}`).once('value');
+            const article = snapshot.val();
+            if (!article) return;
+            
+            currentEditId = id;
+            
+            document.getElementById('articleTitle').value = article.title || '';
+            document.getElementById('articleExcerpt').value = article.excerpt || '';
+            document.getElementById('articleImage').value = article.image || '';
+            document.getElementById('titleCount').textContent = (article.title || '').length;
+            document.getElementById('excerptCount').textContent = (article.excerpt || '').length;
+            
+            if (article.image && article.image.startsWith('data:image')) {
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                previewImg.src = article.image;
+                previewContainer.style.display = 'block';
+            } else {
+                document.getElementById('imagePreviewContainer').style.display = 'none';
+            }
+            
+            quillEditor.root.innerHTML = article.content || '';
+            
+            document.getElementById('formTitleText').textContent = 'Редактировать статью';
+            document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Обновить статью';
+            
+            // Добавляем кнопку отмены
+            const buttonGroup = document.querySelector('.button-group');
+            if (buttonGroup && !document.querySelector('.cancel-btn')) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'cancel-btn';
+                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Отменить';
+                cancelBtn.onclick = () => resetForm();
+                buttonGroup.appendChild(cancelBtn);
+            }
+            
+            document.getElementById('articleTitle').scrollIntoView({ behavior: 'smooth' });
+            showToast('✏️ Режим редактирования');
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showToast('❌ Ошибка загрузки статьи');
+        }
+    }
+    
+    async function deleteArticle(id) {
+        if (!confirm('Удалить статью? Это действие нельзя отменить.')) return;
+        try {
+            await db.ref(`articles/${id}`).remove();
+            showToast('✅ Статья удалена');
+            if (currentEditId === id) resetForm();
+            loadArticles();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showToast('❌ Ошибка удаления');
+        }
+    }
+    
+    function resetForm() {
+        currentEditId = null;
+        
+        document.getElementById('formTitleText').textContent = 'Добавить статью';
+        document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Опубликовать';
+        
+        document.getElementById('articleTitle').value = '';
+        document.getElementById('articleExcerpt').value = '';
+        document.getElementById('articleImage').value = '';
+        document.getElementById('titleCount').textContent = '0';
+        document.getElementById('excerptCount').textContent = '0';
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+        document.getElementById('imagePreview').src = '';
+        
+        if (quillEditor) {
+            quillEditor.root.innerHTML = '';
+        }
+        
+        // Удаляем кнопку отмены
+        const cancelBtn = document.querySelector('.cancel-btn');
+        if (cancelBtn) cancelBtn.remove();
+        
+        showToast('🔄 Форма очищена');
+    }
+    
+    function showToast(message) {
+        let toast = document.getElementById('adminToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'adminToast';
+            toast.className = 'toast-message';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+</script>
+
+</body>
+</html>
