@@ -5668,6 +5668,23 @@ button,
     text-overflow: ellipsis;
 }
 
+/* Для ноутбуков и десктопов - блок погоды и времени внизу */
+@media (min-width: 1025px) {
+    .weather-time-block {
+        margin-top: 40px;
+        margin-bottom: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #bd8a3e;
+        order: 10;
+    }
+    
+    /* Делаем контейнер флекс-контейнером, чтобы order работал */
+    .container {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
 /* Адаптация для мобильных */
 @media (max-width: 800px) {
     .weather-time-block {
