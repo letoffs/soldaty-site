@@ -55,6 +55,74 @@ async function copyLink(btnElement) {
     }
 }
 
+// ========== ЛАЙКИ (только для авторизованных) ==========
+async function likeArticle(articleId, btnElement) {
+    // Проверка авторизации
+    if (!window.currentUser) {
+        showToast('🔒 Войдите, чтобы ставить лайки');
+        if (typeof showAuthModal === 'function') showAuthModal();
+        return;
+    }
+    
+    const likeRef = db.ref(`articles/${articleId}/likes/${window.currentUser.uid}`);
+    const snapshot = await likeRef.once('value');
+    const isLiked = snapshot.val() === true;
+    
+    if (isLiked) {
+        await likeRef.remove();
+        showToast('👍 Лайк убран');
+        
+        if (typeof logEvent === 'function') {
+            logEvent('article_unlike', { 
+                articleId: articleId, 
+                title: currentArticleData?.title 
+            });
+        }
+    } else {
+        await likeRef.set(true);
+        showToast('❤️ Спасибо за лайк!');
+        
+        if (typeof logEvent === 'function') {
+            logEvent('article_like', { 
+                articleId: articleId, 
+                title: currentArticleData?.title 
+            });
+        }
+    }
+    
+    await updateLikeCount(articleId);
+    
+    // Обновляем отображение кнопки
+    if (btnElement) {
+        const likeCount = await getLikeCount(articleId);
+        const userLiked = !isLiked;
+        if (userLiked) {
+            btnElement.classList.add('liked');
+            btnElement.innerHTML = '<i class="fas fa-heart"></i> <span class="like-count">' + likeCount + '</span>';
+        } else {
+            btnElement.classList.remove('liked');
+            btnElement.innerHTML = '<i class="far fa-heart"></i> <span class="like-count">' + likeCount + '</span>';
+        }
+    }
+}
+
+async function getLikeCount(articleId) {
+    const snapshot = await db.ref(`articles/${articleId}/likeCount`).once('value');
+    return snapshot.val() || 0;
+}
+
+async function updateLikeCount(articleId) {
+    const snapshot = await db.ref(`articles/${articleId}/likes`).once('value');
+    const likes = snapshot.val() || {};
+    const likeCount = Object.keys(likes).length;
+    await db.ref(`articles/${articleId}/likeCount`).set(likeCount);
+    
+    const likeCountSpan = document.getElementById('likeCount');
+    const likeCountDisplay = document.getElementById('likeCountDisplay');
+    if (likeCountSpan) likeCountSpan.textContent = likeCount;
+    if (likeCountDisplay) likeCountDisplay.textContent = likeCount;
+}
+
 // ========== ПРОВЕРКА URL ПАРАМЕТРА ==========
 function checkUrlForArticle() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -62,10 +130,8 @@ function checkUrlForArticle() {
     
     if (articleId && articleId !== currentArticleId && !isOpeningFromUrl) {
         isOpeningFromUrl = true;
-        // Даем время на полную загрузку DOM и отрисовку списка
         setTimeout(() => {
             openArticle(articleId);
-            // Сбрасываем флаг через некоторое время
             setTimeout(() => {
                 isOpeningFromUrl = false;
             }, 1000);
@@ -86,7 +152,6 @@ async function loadArticles() {
         allArticles = Object.entries(articles).map(([id, data]) => ({ id, ...data })).reverse();
         displayArticles();
         
-        // После отображения списка проверяем URL
         setTimeout(() => {
             checkUrlForArticle();
         }, 100);
@@ -116,6 +181,7 @@ function displayArticles() {
         const escapedTitle = escapeHtml(article.title);
         const escapedExcerpt = escapeHtml(article.excerpt || article.content.replace(/<[^>]*>/g, '').substring(0, 150));
         const articleId = article.id;
+        const likeCount = article.likeCount || 0;
         
         return `
             <div class="article-card" data-id="${articleId}">
@@ -131,6 +197,7 @@ function displayArticles() {
                         <div class="article-meta">
                             <span><i class="far fa-calendar-alt"></i> ${date}</span>
                             <span><i class="far fa-eye"></i> ${article.views || 0} просмотров</span>
+                            <span><i class="far fa-heart"></i> ${likeCount} лайков</span>
                         </div>
                     </div>
                 </div>
@@ -168,7 +235,6 @@ function handleCardClick(event) {
 async function openArticle(id) {
     if (!id) return;
     
-    // Если уже открыта эта же статья, не перезагружаем
     const detailView = document.getElementById('articleDetailView');
     if (currentArticleId === id && detailView && detailView.style.display === 'block') {
         return;
@@ -176,12 +242,10 @@ async function openArticle(id) {
     
     currentArticleId = id;
     
-    // Обновляем URL без перезагрузки страницы
     const newUrl = `${window.location.pathname}?id=${id}`;
     window.history.pushState({ articleId: id }, '', newUrl);
     
     try {
-        // Показываем загрузку
         const articleFullContent = document.getElementById('articleFullContent');
         if (articleFullContent) {
             articleFullContent.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Загрузка статьи...</div>';
@@ -195,62 +259,90 @@ async function openArticle(id) {
             return;
         }
         
-        // Увеличиваем счётчик просмотров
-        await db.ref(`articles/${id}/views`).transaction(views => (views || 0) + 1);
+        // ===== ИСПРАВЛЕННОЕ ОБНОВЛЕНИЕ ПРОСМОТРОВ =====
+        try {
+            const viewsRef = db.ref(`articles/${id}/views`);
+            const viewsSnapshot = await viewsRef.once('value');
+            const currentViews = viewsSnapshot.val() || 0;
+            await viewsRef.set(currentViews + 1);
+            console.log(`👁️ Просмотр статьи: ${currentViews + 1}`);
+        } catch (error) {
+            // Если не получилось обновить просмотры (например, гость), просто логируем
+            console.log("Просмотр не засчитан:", error.message);
+        }
+        // ============================================
+        
+        // Логируем просмотр статьи в аналитику
+        if (typeof logEvent === 'function') {
+            logEvent('article_view', { 
+                articleId: id, 
+                title: currentArticleData.title 
+            });
+        }
         
         const date = new Date(currentArticleData.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+        const likeCount = currentArticleData.likeCount || 0;
         
-        // Обновляем заголовок страницы
         document.title = `${escapeHtml(currentArticleData.title)} | Солдаты`;
         
-        // Показываем контент статьи
+        const isAuthenticated = !!window.currentUser;
+        
+        let userLiked = false;
+        if (isAuthenticated && currentArticleData.likes) {
+            userLiked = currentArticleData.likes[window.currentUser.uid] === true;
+        }
+        
         if (articleFullContent) {
             articleFullContent.innerHTML = `
                 <h1 class="article-full-title">${escapeHtml(currentArticleData.title)}</h1>
                 <div class="article-full-meta">
                     <span><i class="far fa-calendar-alt"></i> ${date}</span>
                     <span><i class="far fa-eye"></i> ${(currentArticleData.views || 0) + 1} просмотров</span>
+                    <span><i class="far fa-heart"></i> <span id="likeCountDisplay">${likeCount}</span> лайков</span>
                 </div>
                 ${currentArticleData.image ? `<img src="${currentArticleData.image}" alt="${escapeHtml(currentArticleData.title)}" class="article-full-image" onerror="this.style.display='none'">` : ''}
                 <div class="article-full-text">
                     ${currentArticleData.content}
                 </div>
-                <div class="share-buttons">
-                    <button class="share-btn vk" onclick="shareVk()" title="Поделиться ВКонтакте">
-                        <i class="fab fa-vk"></i>
+                <div class="article-actions">
+                    <button class="like-btn ${userLiked ? 'liked' : ''}" id="likeButton" onclick="likeArticle('${id}', this)" ${!isAuthenticated ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : ''}>
+                        <i class="${userLiked ? 'fas' : 'far'} fa-heart"></i>
+                        <span class="like-count" id="likeCount">${likeCount}</span>
                     </button>
-                    <button class="share-btn tg" onclick="shareTelegram()" title="Поделиться в Telegram">
-                        <i class="fab fa-telegram-plane"></i>
-                    </button>
-                    <button class="share-btn ok" onclick="shareOk()" title="Поделиться в Одноклассниках">
-                        <i class="fab fa-odnoklassniki"></i>
-                    </button>
-                    <button class="share-btn whatsapp" onclick="shareWhatsapp()" title="Поделиться в WhatsApp">
-                        <i class="fab fa-whatsapp"></i>
-                    </button>
-                    <button class="share-btn viber" onclick="shareViber()" title="Поделиться в Viber">
-                        <i class="fab fa-viber"></i>
-                    </button>
-                    <button class="share-btn copy" onclick="copyLink(this)" title="Копировать ссылку">
-                        <i class="fas fa-link"></i>
-                    </button>
+                    <div class="share-buttons">
+                        <button class="share-btn vk" onclick="shareVk()" title="Поделиться ВКонтакте">
+                            <i class="fab fa-vk"></i>
+                        </button>
+                        <button class="share-btn tg" onclick="shareTelegram()" title="Поделиться в Telegram">
+                            <i class="fab fa-telegram-plane"></i>
+                        </button>
+                        <button class="share-btn ok" onclick="shareOk()" title="Поделиться в Одноклассниках">
+                            <i class="fab fa-odnoklassniki"></i>
+                        </button>
+                        <button class="share-btn whatsapp" onclick="shareWhatsapp()" title="Поделиться в WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                        <button class="share-btn viber" onclick="shareViber()" title="Поделиться в Viber">
+                            <i class="fab fa-viber"></i>
+                        </button>
+                        <button class="share-btn copy" onclick="copyLink(this)" title="Копировать ссылку">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
                 </div>
             `;
         }
         
-        // Показываем блок комментариев и загружаем их
         const commentsSection = document.getElementById('commentsFullSection');
         if (commentsSection) {
             commentsSection.style.display = 'block';
         }
         loadFullComments();
         
-        // Переключаем видимость
         const listView = document.getElementById('articlesListView');
         if (listView) listView.style.display = 'none';
         if (detailView) detailView.style.display = 'block';
         
-        // Прокручиваем вверх
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
     } catch (error) {
@@ -260,28 +352,23 @@ async function openArticle(id) {
 }
 
 function backToList() {
-    // Возвращаем заголовок страницы
     document.title = 'Солдаты — Новости и статьи';
     
-    // Убираем параметр из URL
     const newUrl = window.location.pathname;
     window.history.pushState({}, '', newUrl);
     
-    // Переключаем видимость
     const listView = document.getElementById('articlesListView');
     const detailView = document.getElementById('articleDetailView');
     if (listView) listView.style.display = 'block';
     if (detailView) detailView.style.display = 'none';
     
-    // Очищаем данные текущей статьи
     currentArticleId = null;
     currentArticleData = null;
     
-    // Обновляем список
     loadArticles();
 }
 
-// ========== КОММЕНТАРИИ К СТАТЬЕ ==========
+// ========== КОММЕНТАРИИ (только для авторизованных) ==========
 async function loadFullComments() {
     if (!currentArticleId) return;
     
@@ -302,13 +389,22 @@ async function loadFullComments() {
             return;
         }
         
-        container.innerHTML = commentsArray.map(comment => `
-            <div class="comment-item">
-                <div class="comment-author">${escapeHtml(comment.author)}</div>
-                <div class="comment-date">${new Date(comment.date).toLocaleDateString('ru-RU')}</div>
-                <div class="comment-text">${escapeHtml(comment.text)}</div>
-            </div>
-        `).join('');
+        container.innerHTML = commentsArray.map(comment => {
+            const isAuthor = window.currentUser && comment.userId === window.currentUser.uid;
+            return `
+                <div class="comment-item">
+                    <div class="comment-avatar">
+                        ${comment.userAvatar ? `<img src="${comment.userAvatar}" alt="">` : '<div class="avatar-placeholder"><i class="fas fa-user"></i></div>'}
+                    </div>
+                    <div class="comment-content">
+                        <div class="comment-author">${escapeHtml(comment.author)}</div>
+                        <div class="comment-date">${new Date(comment.date).toLocaleDateString('ru-RU')} ${new Date(comment.date).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
+                        <div class="comment-text">${escapeHtml(comment.text)}</div>
+                        ${isAuthor ? `<button class="delete-comment-btn" onclick="deleteComment('${comment.id}')"><i class="fas fa-trash-alt"></i> Удалить</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
     } catch (error) {
         console.error('Ошибка загрузки комментариев:', error);
     }
@@ -317,40 +413,67 @@ async function loadFullComments() {
 async function submitFullComment() {
     if (!currentArticleId) return;
     
-    const author = document.getElementById('commentFullAuthor');
-    const text = document.getElementById('commentFullText');
-    
-    if (!author || !text) return;
-    
-    const authorValue = author.value.trim();
-    const textValue = text.value.trim();
-    
-    if (!authorValue) {
-        showToast('❌ Введите ваше имя');
+    // Проверка авторизации
+    if (!window.currentUser) {
+        showToast('🔒 Только зарегистрированные пользователи могут оставлять комментарии');
+        if (typeof showAuthModal === 'function') showAuthModal();
         return;
     }
+    
+    const text = document.getElementById('commentFullText');
+    if (!text) return;
+    
+    const textValue = text.value.trim();
+    
     if (!textValue) {
         showToast('❌ Введите текст комментария');
         return;
     }
     
+    const userName = window.currentUser.displayName || window.currentUser.email.split('@')[0];
+    
     const commentData = {
-        author: authorValue,
+        author: userName,
         text: textValue,
         date: Date.now(),
-        articleId: currentArticleId
+        articleId: currentArticleId,
+        userId: window.currentUser.uid,
+        userAvatar: window.currentUser.photoURL || ''
     };
     
     try {
         const newRef = db.ref(`articles/${currentArticleId}/comments`).push();
         await newRef.set(commentData);
+        
+        if (typeof logEvent === 'function') {
+            logEvent('article_comment', { 
+                articleId: currentArticleId, 
+                title: currentArticleData?.title,
+                commentLength: textValue.length 
+            });
+        }
+        
         showToast('✅ Комментарий добавлен');
-        author.value = '';
         text.value = '';
         loadFullComments();
     } catch (error) {
         console.error('Ошибка:', error);
         showToast('❌ Ошибка добавления комментария');
+    }
+}
+
+async function deleteComment(commentId) {
+    if (!window.currentUser) return;
+    
+    if (!confirm('Удалить комментарий?')) return;
+    
+    try {
+        await db.ref(`articles/${currentArticleId}/comments/${commentId}`).remove();
+        showToast('✅ Комментарий удалён');
+        loadFullComments();
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showToast('❌ Ошибка удаления');
     }
 }
 
