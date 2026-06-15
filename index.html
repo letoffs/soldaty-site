@@ -329,106 +329,19 @@
     </div>
 </div>
 
-<script src="js/analytics.js"></script>
+<button onclick="window.location.href='admin-analytics.html'" class="admin-analytics-btn" title="Админ-панель аналитики">
+    <i class="fas fa-chart-line"></i>
+</button>
+
+<!-- СКРИПТЫ -->
 <script src="js/episodes-data.js"></script>
+<script src="js/season-descriptions.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="js/firebase-auth.js"></script>
-<script src="js/season-descriptions.js"></script>
 <script src="js/script.js"></script>
 
-<script>
-// Загрузка новостей в правую колонку
-async function loadNewsSidebar() {
-    const container = document.getElementById('newsSidebarList');
-    if (!container) return;
-    
-    try {
-        const snapshot = await db.ref('articles').orderByChild('createdAt').limitToLast(5).once('value');
-        const articles = snapshot.val() || {};
-        const articlesArray = Object.entries(articles).map(([id, data]) => ({ id, ...data })).reverse();
-        
-        if (articlesArray.length === 0) {
-            container.innerHTML = '<div class="empty-news" style="padding: 20px;">Пока нет новостей</div>';
-            return;
-        }
-        
-        let html = '';
-        articlesArray.forEach(article => {
-            const date = new Date(article.createdAt).toLocaleDateString('ru-RU');
-            let categoryClass = 'article';
-            let categoryName = '📝 Статья';
-            if (article.category === 'news') { categoryClass = 'news'; categoryName = '📰 Новости'; }
-            else if (article.category === 'fun') { categoryClass = 'fun'; categoryName = '😂 Интересное'; }
-            else if (article.category === 'history') { categoryClass = 'history'; categoryName = '📜 История'; }
-            
-            html += `
-                <div class="news-sidebar-itemi" onclick="location.href='article.html?id=${article.id}'">
-                    ${article.image ? `<img src="${article.image}" class="news-sidebar-imagei" onerror="this.style.display='none'">` : '<div class="news-sidebar-imagei" style="background: #2c3e2c; display: flex; align-items: center; justify-content: center;"><i class="fas fa-newspaper" style="color: #bd8a3e;"></i></div>'}
-                    <div class="news-sidebar-contenti">
-                        <div class="news-sidebar-categoryi ${categoryClass}">${categoryName}</div>
-                        <div class="news-sidebar-titlei">${escapeHtml(article.title)}</div>
-                        <div class="news-sidebar-datei"><i class="far fa-calendar-alt"></i> ${date}</div>
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    } catch (error) {
-        console.error('Ошибка загрузки новостей:', error);
-        container.innerHTML = '<div class="empty-news" style="padding: 20px;">Ошибка загрузки</div>';
-    }
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-}
-
-// Регистрация Service Worker для PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('✅ Service Worker зарегистрирован:', reg))
-    .catch(err => console.error('❌ Ошибка регистрации SW:', err));
-}
-
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  
-  const installBtn = document.createElement('button');
-  installBtn.innerHTML = '<i class="fas fa-download"></i> Установить приложение';
-  installBtn.className = 'install-app-btn';
-  installBtn.style.position = 'fixed';
-  installBtn.style.bottom = '80px';
-  installBtn.style.right = '20px';
-  installBtn.style.zIndex = '999';
-  installBtn.style.background = '#bd8a3e';
-  installBtn.style.border = 'none';
-  installBtn.style.padding = '12px 20px';
-  installBtn.style.borderRadius = '50px';
-  installBtn.style.fontWeight = 'bold';
-  installBtn.style.cursor = 'pointer';
-  installBtn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
-  
-  installBtn.onclick = () => {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('Пользователь установил приложение');
-      }
-      installBtn.remove();
-      deferredPrompt = null;
-    });
-  };
-  
-  document.body.appendChild(installBtn);
-});
-
-document.addEventListener('DOMContentLoaded', loadNewsSidebar);
-</script>
 </body>
 </html>
