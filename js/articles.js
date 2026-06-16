@@ -183,7 +183,13 @@ function displayArticles() {
     
     container.innerHTML = sortedArticles.map(article => {
         const publishDate = article.publishedAt || article.createdAt;
-        const date = new Date(publishDate).toLocaleDateString('ru-RU');
+        const date = new Date(publishDate).toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         const escapedTitle = escapeHtml(article.title);
         const escapedExcerpt = escapeHtml(article.excerpt || article.content.replace(/<[^>]*>/g, '').substring(0, 150));
         const articleId = article.id;
@@ -285,7 +291,13 @@ async function openArticle(id) {
         }
         
         const publishDate = currentArticleData.publishedAt || currentArticleData.createdAt;
-        const date = new Date(publishDate).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+        const date = new Date(publishDate).toLocaleString('ru-RU', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         const likeCount = currentArticleData.likeCount || 0;
         
         document.title = `${escapeHtml(currentArticleData.title)} | Солдаты`;
