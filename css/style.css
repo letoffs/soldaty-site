@@ -6959,6 +6959,13 @@ button,
     margin: 5px 0;
 }
 
+.article-full-text img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
 .comments-section-article-full {
     background: #0f1a0f;
     border-radius: 12px;
