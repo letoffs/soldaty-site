@@ -6907,8 +6907,8 @@ button,
 
 .article-full-title {
     color: #ffd966;
-    font-size: 1.3rem;
-    margin-bottom: 10px;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
 }
 
 .article-full-meta {
@@ -7002,7 +7002,7 @@ button,
         font-size: 0.9rem;
     }
     .article-full-title {
-        font-size: 1.1rem;
+        font-size: 1.4rem;
     }
     .article-full-content {
         padding: 12px;
