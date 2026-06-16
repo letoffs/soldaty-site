@@ -951,8 +951,7 @@ async function loadNewsSidebar() {
             
             html += `
                 <div class="news-sidebar-itemi" onclick="location.href='articles.html?id=${article.id}'" style="cursor: pointer;">
-                    ${article.image ? `<img src="${article.image}" class="news-sidebar-imagei" onerror="this.style.display='none'">` : '<div class="news-sidebar-imagei" style="background: #2c3e2c; display: flex; align-items: center; justify-content: center;"><i class="fas fa-newspaper" style="color: #bd8a3e;"></i></div>'}
-                    <div class="news-sidebar-contenti">
+                    <div class="news-sidebar-contenti" style="padding-left: 0;">
                         <div class="news-sidebar-titlei">${escapeHtml(article.title)}</div>
                         <div class="news-sidebar-datei"><i class="far fa-calendar-alt"></i> ${date}</div>
                     </div>
