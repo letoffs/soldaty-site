@@ -57,7 +57,6 @@ async function copyLink(btnElement) {
 
 // ========== ЛАЙКИ (только для авторизованных) ==========
 async function likeArticle(articleId, btnElement) {
-    // Проверка авторизации
     if (!window.currentUser) {
         showToast('🔒 Войдите, чтобы ставить лайки');
         if (typeof showAuthModal === 'function') showAuthModal();
@@ -92,7 +91,6 @@ async function likeArticle(articleId, btnElement) {
     
     await updateLikeCount(articleId);
     
-    // Обновляем отображение кнопки
     if (btnElement) {
         const likeCount = await getLikeCount(articleId);
         const userLiked = !isLiked;
@@ -149,7 +147,7 @@ async function loadArticles() {
     try {
         const snapshot = await db.ref('articles').once('value');
         const articles = snapshot.val() || {};
-        allArticles = Object.entries(articles).map(([id, data]) => ({ id, ...data })).reverse();
+        allArticles = Object.entries(articles).map(([id, data]) => ({ id, ...data }));
         displayArticles();
         
         setTimeout(() => {
@@ -162,7 +160,14 @@ async function loadArticles() {
 }
 
 function displayArticles() {
-    const count = allArticles.length;
+    // Сортировка: сначала закреплённые, потом по дате публикации (новые сверху)
+    const sortedArticles = [...allArticles].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return (b.publishedAt || b.createdAt) - (a.publishedAt || a.createdAt);
+    });
+    
+    const count = sortedArticles.length;
     const articlesCountElem = document.getElementById('articlesCount');
     if (articlesCountElem) {
         articlesCountElem.textContent = `${count} ${getDeclension(count, 'статья', 'статьи', 'статей')}`;
@@ -176,8 +181,9 @@ function displayArticles() {
         return;
     }
     
-    container.innerHTML = allArticles.map(article => {
-        const date = new Date(article.createdAt).toLocaleDateString('ru-RU');
+    container.innerHTML = sortedArticles.map(article => {
+        const publishDate = article.publishedAt || article.createdAt;
+        const date = new Date(publishDate).toLocaleDateString('ru-RU');
         const escapedTitle = escapeHtml(article.title);
         const escapedExcerpt = escapeHtml(article.excerpt || article.content.replace(/<[^>]*>/g, '').substring(0, 150));
         const articleId = article.id;
@@ -259,7 +265,7 @@ async function openArticle(id) {
             return;
         }
         
-        // ===== ИСПРАВЛЕННОЕ ОБНОВЛЕНИЕ ПРОСМОТРОВ =====
+        // Обновление просмотров (без transaction)
         try {
             const viewsRef = db.ref(`articles/${id}/views`);
             const viewsSnapshot = await viewsRef.once('value');
@@ -267,10 +273,8 @@ async function openArticle(id) {
             await viewsRef.set(currentViews + 1);
             console.log(`👁️ Просмотр статьи: ${currentViews + 1}`);
         } catch (error) {
-            // Если не получилось обновить просмотры (например, гость), просто логируем
             console.log("Просмотр не засчитан:", error.message);
         }
-        // ============================================
         
         // Логируем просмотр статьи в аналитику
         if (typeof logEvent === 'function') {
@@ -280,7 +284,8 @@ async function openArticle(id) {
             });
         }
         
-        const date = new Date(currentArticleData.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+        const publishDate = currentArticleData.publishedAt || currentArticleData.createdAt;
+        const date = new Date(publishDate).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
         const likeCount = currentArticleData.likeCount || 0;
         
         document.title = `${escapeHtml(currentArticleData.title)} | Солдаты`;
@@ -291,6 +296,8 @@ async function openArticle(id) {
         if (isAuthenticated && currentArticleData.likes) {
             userLiked = currentArticleData.likes[window.currentUser.uid] === true;
         }
+        
+        const commentsDisabled = currentArticleData.commentsDisabled === true;
         
         if (articleFullContent) {
             articleFullContent.innerHTML = `
@@ -333,11 +340,30 @@ async function openArticle(id) {
             `;
         }
         
+        // Обработка комментариев
         const commentsSection = document.getElementById('commentsFullSection');
         if (commentsSection) {
-            commentsSection.style.display = 'block';
+            if (commentsDisabled) {
+                commentsSection.style.display = 'block';
+                commentsSection.innerHTML = `
+                    <h3><i class="fas fa-comments"></i> Комментарии <span id="commentsFullCount">0</span></h3>
+                    <div class="comment-empty">🔇 Комментарии к этой статье отключены автором</div>
+                `;
+            } else {
+                commentsSection.style.display = 'block';
+                commentsSection.innerHTML = `
+                    <h3><i class="fas fa-comments"></i> Комментарии <span id="commentsFullCount">0</span></h3>
+                    <div class="comment-form-article">
+                        <textarea id="commentFullText" rows="3" placeholder="Поделитесь своим мнением..."></textarea>
+                        <button onclick="submitFullComment()" class="submit-comment-btn"><i class="fas fa-paper-plane"></i> Оставить комментарий</button>
+                    </div>
+                    <div id="commentsFullList" class="comments-list">
+                        <div class="comment-empty">💬 Нет комментариев. Будьте первым!</div>
+                    </div>
+                `;
+                loadFullComments();
+            }
         }
-        loadFullComments();
         
         const listView = document.getElementById('articlesListView');
         if (listView) listView.style.display = 'none';
@@ -371,6 +397,15 @@ function backToList() {
 // ========== КОММЕНТАРИИ (только для авторизованных) ==========
 async function loadFullComments() {
     if (!currentArticleId) return;
+    
+    // Проверяем, отключены ли комментарии
+    if (currentArticleData?.commentsDisabled) {
+        const container = document.getElementById('commentsFullList');
+        if (container) {
+            container.innerHTML = '<div class="comment-empty">🔇 Комментарии к этой статье отключены</div>';
+        }
+        return;
+    }
     
     try {
         const snapshot = await db.ref(`articles/${currentArticleId}/comments`).once('value');
@@ -413,7 +448,12 @@ async function loadFullComments() {
 async function submitFullComment() {
     if (!currentArticleId) return;
     
-    // Проверка авторизации
+    // Проверяем, отключены ли комментарии
+    if (currentArticleData?.commentsDisabled) {
+        showToast('🔇 Комментарии к этой статье отключены');
+        return;
+    }
+    
     if (!window.currentUser) {
         showToast('🔒 Только зарегистрированные пользователи могут оставлять комментарии');
         if (typeof showAuthModal === 'function') showAuthModal();
