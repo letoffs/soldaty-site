@@ -1,42 +1,65 @@
 User-agent: *
 Allow: /
 
+# Запрещаем индексацию служебных страниц
 Disallow: /admin-gallery.html
+Disallow: /admin-articles.html
+Disallow: /admin-analytics.html
 Disallow: /migrate_to_imgbb.html
 Disallow: /analytics.html
 Disallow: /contacts.html
 Disallow: /offer.html
+Disallow: /offline.html
+Disallow: /profile.html
 
+# Запрещаем индексацию папок с ресурсами
 Disallow: /css/
 Disallow: /js/
 Disallow: /fonts/
 Disallow: /Resources/
 
+# Указываем путь к карте сайта
 Sitemap: https://soldaty-fans.ru/sitemap.xml
 
+# Задержка между запросами
 Crawl-delay: 0.5
 
+# Для Google
 User-agent: Googlebot
 Allow: /
 Disallow: /admin-gallery.html
+Disallow: /admin-articles.html
+Disallow: /admin-analytics.html
 Disallow: /migrate_to_imgbb.html
 Disallow: /analytics.html
 Disallow: /contacts.html
 Disallow: /offer.html
+Disallow: /offline.html
+Disallow: /profile.html
 
+# Для Яндекса
 User-agent: YandexBot
 Allow: /
 Disallow: /admin-gallery.html
+Disallow: /admin-articles.html
+Disallow: /admin-analytics.html
 Disallow: /migrate_to_imgbb.html
 Disallow: /analytics.html
 Disallow: /contacts.html
 Disallow: /offer.html
+Disallow: /offline.html
+Disallow: /profile.html
 Crawl-delay: 0.3
 
+# Для Bing
 User-agent: bingbot
 Allow: /
 Disallow: /admin-gallery.html
+Disallow: /admin-articles.html
+Disallow: /admin-analytics.html
 Disallow: /migrate_to_imgbb.html
 Disallow: /analytics.html
 Disallow: /contacts.html
 Disallow: /offer.html
+Disallow: /offline.html
+Disallow: /profile.html
