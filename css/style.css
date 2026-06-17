@@ -6740,7 +6740,6 @@ button,
     gap: 10px;
     margin-top: 20px;
     padding-top: 15px;
-    border-top: 1px solid #3e5a3e;
     flex-wrap: wrap;
 }
 
@@ -6907,8 +6906,8 @@ button,
 
 .article-full-title {
     color: #ffd966;
-    font-size: 1.8rem;
-    margin-bottom: 15px;
+    font-size: 2.3rem;
+    margin-bottom: 10px;
 }
 
 .article-full-meta {
@@ -6957,6 +6956,19 @@ button,
 
 .article-full-text li {
     margin: 5px 0;
+    color: #ddd;
+}
+
+.article-full-text .ql-align-center {
+    text-align: center !important;
+}
+
+.article-full-text .ql-align-right {
+    text-align: right !important;
+}
+
+.article-full-text .ql-align-justify {
+    text-align: justify !important;
 }
 
 .article-full-text img {
@@ -6964,6 +6976,70 @@ button,
     height: auto;
     border-radius: 8px;
     margin: 10px 0;
+}
+
+/* Изображения по центру */
+.article-full-text .ql-align-center img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Изображения с обтеканием */
+.article-full-text .ql-align-left img {
+    float: left;
+    margin-right: 15px;
+    margin-bottom: 10px;
+}
+
+.article-full-text .ql-align-right img {
+    float: right;
+    margin-left: 15px;
+    margin-bottom: 10px;
+}
+
+/* Цитаты */
+.article-full-text blockquote {
+    border-left: 3px solid #bd8a3e;
+    padding: 10px 20px;
+    margin: 15px 0;
+    background: rgba(189, 138, 62, 0.05);
+    color: #ccc;
+}
+
+.article-full-text blockquote p {
+    margin: 0;
+}
+
+.article-full-text h1 { font-size: 1.8rem; }
+.article-full-text h2 { font-size: 1.5rem; }
+.article-full-text h3 { font-size: 1.3rem; }
+.article-full-text h4 { font-size: 1.1rem; }
+
+.article-full-text .ql-color-red { color: #f44336 !important; }
+.article-full-text .ql-color-blue { color: #2196f3 !important; }
+.article-full-text .ql-color-green { color: #4caf50 !important; }
+.article-full-text .ql-color-yellow { color: #ffc107 !important; }
+.article-full-text .ql-color-white { color: #ffffff !important; }
+
+/* Фон текста из редактора */
+.article-full-text .ql-background-red { background: #f44336 !important; padding: 2px 4px; border-radius: 4px; }
+.article-full-text .ql-background-blue { background: #2196f3 !important; padding: 2px 4px; border-radius: 4px; }
+.article-full-text .ql-background-green { background: #4caf50 !important; padding: 2px 4px; border-radius: 4px; }
+.article-full-text .ql-background-yellow { background: #ffc107 !important; padding: 2px 4px; border-radius: 4px; }
+
+/* Адаптация для мобильных */
+@media (max-width: 700px) {
+    .article-full-text .ql-align-left img,
+    .article-full-text .ql-align-right img {
+        float: none;
+        display: block;
+        margin: 10px auto;
+    }
+    
+    .article-full-text h1 { font-size: 1.5rem; }
+    .article-full-text h2 { font-size: 1.3rem; }
+    .article-full-text h3 { font-size: 1.1rem; }
 }
 
 .comments-section-article-full {
@@ -6977,11 +7053,20 @@ button,
 .comments-section-article-full h3 {
     color: #ffd966;
     margin-bottom: 12px;
-    font-size: 1.1rem;
+    font-size: 1.4rem;
 }
 
 .comments-section-article-full h3 i {
     margin-right: 5px;
+}
+
+.comments-section-article-full h3 #commentsFullCount {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    padding: 2px 12px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: bold;
 }
 
 /* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ===== */
@@ -7002,7 +7087,7 @@ button,
         font-size: 0.9rem;
     }
     .article-full-title {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
     }
     .article-full-content {
         padding: 12px;
@@ -7029,6 +7114,7 @@ button,
 .article-full-text a:hover {
     color: #bd8a3e !important; /* золотой при наведении (опционально) */
 }
+
 
 /* ===== КНОПКА ЛАЙКА ===== */
 .like-btn {
@@ -7067,10 +7153,30 @@ button,
 /* ===== БЛОК ДЕЙСТВИЙ СТАТЬИ ===== */
 .article-actions {
     display: flex;
-    gap: 20px;
-    margin-top: 25px;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
     padding-top: 15px;
     border-top: 1px solid #3e5a3e;
     flex-wrap: wrap;
+}
+
+.article-actions .like-btn {
+    flex-shrink: 0;
+}
+
+.article-actions .share-buttons {
+    display: flex;
+    gap: 8px;
     align-items: center;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    flex-wrap: wrap;
+}
+
+.edited-date {
+    color: #8aa07a;
+    font-size: 0.7rem;
+    font-weight: normal;
 }

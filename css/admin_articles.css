@@ -127,6 +127,53 @@
 .ql-editor .ql-size-48pt { font-size: 48pt !important; }
 .ql-editor .ql-size-72pt { font-size: 72pt !important; }
 
+/* Стили для изменения размера изображений в редакторе */
+.ql-editor img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Для отображения размеров при наведении */
+.ql-editor img[style*="width"] {
+    border: 1px dashed rgba(189, 138, 62, 0.3);
+}
+
+/* Уголки для изменения размера */
+.ql-editor .ql-image-resize {
+    position: relative;
+}
+
+.ql-editor .ql-image-resize .ql-image-resize-handle {
+    width: 12px;
+    height: 12px;
+    background: #bd8a3e;
+    border: 2px solid #0f1a0f;
+    border-radius: 50%;
+    position: absolute;
+    bottom: -6px;
+    right: -6px;
+    cursor: nwse-resize;
+}
+
+/* Отображение текущего размера */
+.ql-editor .ql-image-resize .ql-image-resize-size {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 26, 15, 0.8);
+    color: #ffd966;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    display: none;
+}
+
+.ql-editor .ql-image-resize:hover .ql-image-resize-size {
+    display: block;
+}
+
 /* ===== ОТОБРАЖЕНИЕ РАЗМЕРОВ ШРИФТА В ВЫПАДАЮЩЕМ СПИСКЕ ===== */
 /* Убираем "Normal" */
 .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="false"] {
