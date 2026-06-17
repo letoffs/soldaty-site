@@ -6032,6 +6032,7 @@ button,
 }
 
 .submit-feedback-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
     background: #bd8a3e;
     border: none;
     padding: 14px 30px;
