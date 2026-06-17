@@ -2274,6 +2274,8 @@ button,
 }
 
 .logout-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: normal;
     background: none;
     border: none;
     color: #bd8a3e;
