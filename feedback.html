@@ -51,10 +51,18 @@
                 <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
             </div>
         
+            <!-- ФОРМА ВХОДА -->
             <div id="loginForm" class="auth-form">
                 <h3>Вход в аккаунт</h3>
                 <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
-                <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
+                
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
+                    <button type="button" class="toggle-password-btn" onclick="togglePassword('loginPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
                 <button onclick="login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)" class="auth-btn">
                     <i class="fas fa-sign-in-alt"></i> Войти
                 </button>
@@ -64,11 +72,19 @@
                 </button>
             </div>
             
+            <!-- ФОРМА РЕГИСТРАЦИИ -->
             <div id="registerForm" class="auth-form" style="display: none;">
                 <h3>Регистрация</h3>
                 <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
                 <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
-                <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
+                
+                <div class="password-wrapper">
+                    <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
+                    <button type="button" class="toggle-password-btn" onclick="togglePassword('registerPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
                 <button onclick="register(document.getElementById('registerEmail').value, document.getElementById('registerPassword').value, document.getElementById('registerName').value)" class="auth-btn">
                     <i class="fas fa-user-plus"></i> Зарегистрироваться
                 </button>
