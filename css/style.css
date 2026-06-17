@@ -2996,6 +2996,7 @@ button,
 }
 
 .favorite-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
     background: #1e2a1e;
     border: 1px solid #3e5a3e;
     padding: 8px 20px;
@@ -3006,10 +3007,11 @@ button,
     display: flex;
     align-items: center;
     gap: 8px;
+    color: #8aa07a;
 }
 
 .favorite-btn i {
-    color: #ff4757;
+    color: #8aa07a;
 }
 
 .favorite-btn:hover {
@@ -3816,6 +3818,7 @@ button,
 }
 
 .episode-nav-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
     background: #1e2a1e;
     border: 1px solid #3e5a3e;
     padding: 8px 16px;
