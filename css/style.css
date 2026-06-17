@@ -2389,6 +2389,39 @@ button,
     text-decoration: none;
 }
 
+/* ===== ПОЛЕ ПАРОЛЯ С КНОПКОЙ ПОКАЗА ===== */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper .auth-input {
+    width: 100%;
+    padding-right: 45px;  /* Отступ для кнопки */
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #8aa07a;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    transition: color 0.2s;
+}
+
+.toggle-password-btn:hover {
+    color: #ffd966;
+}
+
+.toggle-password-btn i {
+    pointer-events: none;
+}
+
 @media (max-width: 768px) {
     .auth-buttons, .user-info {
         position: static;

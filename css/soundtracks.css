@@ -665,6 +665,8 @@
 }
 
 .auth-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: normal;
     width: 100%;
     padding: 12px;
     background: #bd8a3e;
