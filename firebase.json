@@ -1,14 +1,64 @@
 {
-  "comments": {
-    "comment1": {
-      "userId": "test123",
-      "userName": "Тестовый пользователь",
-      "season": 1,
-      "episode": 1,
-      "seriesTitle": "Призыв не по плану",
-      "text": "Это тестовый комментарий",
-      "rating": 5,
-      "date": "2024-01-01T12:00:00.000Z"
-    }
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "**/.git/**",
+      "package.json",
+      "package-lock.json",
+      "app-debug.apk"
+    ],
+    "rewrites": [
+      {
+        "source": "/serial",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/videos",
+        "destination": "/videos.html"
+      },
+      {
+        "source": "/gallery",
+        "destination": "/gallery.html"
+      },
+      {
+        "source": "/heroes",
+        "destination": "/heroes.html"
+      },
+      {
+        "source": "/articles",
+        "destination": "/articles.html"
+      },
+      {
+        "source": "/soundtracks",
+        "destination": "/soundtracks.html"
+      },
+      {
+        "source": "/quiz",
+        "destination": "/quiz.html"
+      },
+      {
+        "source": "/contacts",
+        "destination": "/contacts.html"
+      },
+      {
+        "source": "/feedback",
+        "destination": "/feedback.html"
+      },
+      {
+        "source": "/profile",
+        "destination": "/profile.html"
+      },
+      {
+        "source": "/offline",
+        "destination": "/offline.html"
+      },
+      {
+        "source": "/offer",
+        "destination": "/offer.html"
+      }
+    ]
   }
 }
