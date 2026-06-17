@@ -53,6 +53,61 @@
         <button onclick="if(window.logout) window.logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
+    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeAuthModal()">&times;</span>
+        
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="showLoginForm()">Вход</button>
+                <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
+            </div>
+        
+            <!-- ФОРМА ВХОДА -->
+            <div id="loginForm" class="auth-form">
+                <h3>Вход в аккаунт</h3>
+                <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
+                
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
+                    <button type="button" class="toggle-password-btn" onclick="togglePassword('loginPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
+                <button onclick="login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)" class="auth-btn">
+                    <i class="fas fa-sign-in-alt"></i> Войти
+                </button>
+                <div class="auth-divider">или</div>
+                <button onclick="loginWithGoogle()" class="auth-btn google">
+                    <i class="fab fa-google"></i> Войти через Google
+                </button>
+            </div>
+            
+            <!-- ФОРМА РЕГИСТРАЦИИ -->
+            <div id="registerForm" class="auth-form" style="display: none;">
+                <h3>Регистрация</h3>
+                <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
+                <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
+                
+                <div class="password-wrapper">
+                    <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
+                    <button type="button" class="toggle-password-btn" onclick="togglePassword('registerPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
+                <button onclick="register(document.getElementById('registerEmail').value, document.getElementById('registerPassword').value, document.getElementById('registerName').value)" class="auth-btn">
+                    <i class="fas fa-user-plus"></i> Зарегистрироваться
+                </button>
+                <div class="auth-divider">или</div>
+                <button onclick="loginWithGoogle()" class="auth-btn google">
+                    <i class="fab fa-google"></i> Регистрация через Google
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="adminPanel" class="admin-controls" style="display: none;">
         <div class="admin-header">
             <h3><i class="fas fa-shield-alt"></i> Админ-панель</h3>
@@ -168,35 +223,7 @@
         </div>
     </div>
 </div>
-
-<!-- МОДАЛЬНЫЕ ОКНА -->
-<div id="authModal" class="modal">
-    <div class="modal-content">
-        <span class="modal-close" onclick="if(window.closeAuthModal) window.closeAuthModal()">&times;</span>
-        <div class="modal-tabs">
-            <button class="modal-tab active" onclick="if(window.showLoginForm) window.showLoginForm()">Вход</button>
-            <button class="modal-tab" onclick="if(window.showRegisterForm) window.showRegisterForm()">Регистрация</button>
-        </div>
-        <div id="loginForm" class="auth-form">
-            <h3>Вход</h3>
-            <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
-            <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
-            <button onclick="if(window.login) window.login()" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Войти</button>
-            <div class="auth-divider">или</div>
-            <button onclick="if(window.loginWithGoogle) window.loginWithGoogle()" class="auth-btn google"><i class="fab fa-google"></i> Google</button>
-        </div>
-        <div id="registerForm" class="auth-form" style="display:none">
-            <h3>Регистрация</h3>
-            <input type="text" id="registerName" placeholder="Имя" class="auth-input">
-            <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
-            <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
-            <button onclick="if(window.register) window.register()" class="auth-btn"><i class="fas fa-user-plus"></i> Зарегистрироваться</button>
-            <div class="auth-divider">или</div>
-            <button onclick="if(window.loginWithGoogle) window.loginWithGoogle()" class="auth-btn google"><i class="fab fa-google"></i> Google</button>
-        </div>
-    </div>
-</div>
-
+    
 <div id="addSongModal" class="modal-add-song">
     <div class="modal-add-song-content">
         <h3><i class="fas fa-plus-circle"></i> Добавить песню</h3>
