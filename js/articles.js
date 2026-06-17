@@ -183,33 +183,48 @@ function displayArticles() {
     
     container.innerHTML = sortedArticles.map(article => {
         const publishDate = article.publishedAt || article.createdAt;
-        const date = new Date(publishDate).toLocaleString('ru-RU', {
+        const updateDate = article.updatedAt;
+        let dateDisplay = new Date(publishDate).toLocaleString('ru-RU', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         });
+
+        if (updateDate && updateDate > publishDate) {
+            const updateDisplay = new Date(updateDate).toLocaleString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            dateDisplay += ` <span style="color: #8aa07a; font-size: 0.7rem;">(изменено: ${updateDisplay})</span>`;
+        }
+
         const escapedTitle = escapeHtml(article.title);
         const escapedExcerpt = escapeHtml(article.excerpt || article.content.replace(/<[^>]*>/g, '').substring(0, 150));
         const articleId = article.id;
         const likeCount = article.likeCount || 0;
+        const likeText = getDeclension(likeCount, 'лайк', 'лайка', 'лайков');
+        const viewText = getDeclension(article.views || 0, 'просмотр', 'просмотра', 'просмотров');
         
         return `
-            <div class="article-card" data-id="${articleId}">
+            <div class="article-card" data-id="${article.id}">
                 <div class="article-card-inner">
                     ${article.image ? `
-                        <div class="article-card-image" data-id="${articleId}">
-                            <img src="${article.image}" alt="${escapedTitle}" onerror="this.style.display='none'">
+                        <div class="article-card-image" data-id="${article.id}">
+                            <img src="${article.image}" alt="${escapeHtml(article.title)}" onerror="this.style.display='none'">
                         </div>
                     ` : ''}
                     <div class="article-card-content">
-                        <h3 data-id="${articleId}">${escapedTitle}</h3>
-                        <p>${escapedExcerpt}...</p>
+                        <h3 data-id="${article.id}">${escapeHtml(article.title)}</h3>
+                        <p>${escapeHtml(article.excerpt || article.content.replace(/<[^>]*>/g, '').substring(0, 150))}...</p>
                         <div class="article-meta">
-                            <span><i class="far fa-calendar-alt"></i> ${date}</span>
-                            <span><i class="far fa-eye"></i> ${article.views || 0} просмотров</span>
-                            <span><i class="far fa-heart"></i> ${likeCount} лайков</span>
+                            <span><i class="far fa-calendar-alt"></i> ${dateDisplay}</span>
+                            <span><i class="far fa-eye"></i> ${article.views || 0} ${viewText}</span>
+                            <span><i class="far fa-heart"></i> ${likeCount} ${likeText}</span>
                         </div>
                     </div>
                 </div>
@@ -291,14 +306,33 @@ async function openArticle(id) {
         }
         
         const publishDate = currentArticleData.publishedAt || currentArticleData.createdAt;
-        const date = new Date(publishDate).toLocaleString('ru-RU', {
+        const updateDate = currentArticleData.updatedAt;
+        
+        // Форматируем дату публикации
+        let dateDisplay = new Date(publishDate).toLocaleString('ru-RU', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         });
+        
+        // Если есть изменения и они отличаются от даты публикации
+        if (updateDate && updateDate > publishDate) {
+            const updateDisplay = new Date(updateDate).toLocaleString('ru-RU', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            dateDisplay += ` <span class="edited-date">(изменено: ${updateDisplay})</span>`;
+        }
+        
         const likeCount = currentArticleData.likeCount || 0;
+        const likeText = getDeclension(likeCount, 'лайк', 'лайка', 'лайков');
+        const viewsCount = (currentArticleData.views || 0) + 1;
+        const viewText = getDeclension(viewsCount, 'просмотр', 'просмотра', 'просмотров');
         
         document.title = `${escapeHtml(currentArticleData.title)} | Солдаты`;
         
@@ -315,9 +349,9 @@ async function openArticle(id) {
             articleFullContent.innerHTML = `
                 <h1 class="article-full-title">${escapeHtml(currentArticleData.title)}</h1>
                 <div class="article-full-meta">
-                    <span><i class="far fa-calendar-alt"></i> ${date}</span>
-                    <span><i class="far fa-eye"></i> ${(currentArticleData.views || 0) + 1} просмотров</span>
-                    <span><i class="far fa-heart"></i> <span id="likeCountDisplay">${likeCount}</span> лайков</span>
+                    <span><i class="far fa-calendar-alt"></i> ${dateDisplay}</span>
+                    <span><i class="far fa-eye"></i> ${viewsCount} ${viewText}</span>
+                    <span><i class="far fa-heart"></i> ${likeCount} ${likeText}</span>
                 </div>
                 ${currentArticleData.image ? `<img src="${currentArticleData.image}" alt="${escapeHtml(currentArticleData.title)}" class="article-full-image" onerror="this.style.display='none'">` : ''}
                 <div class="article-full-text">
@@ -425,8 +459,9 @@ async function loadFullComments() {
         const commentsArray = Object.entries(comments).map(([id, data]) => ({ id, ...data })).reverse();
         
         const count = commentsArray.length;
+        const commentText = getDeclension(count, 'комментарий', 'комментария', 'комментариев');
         const commentsCountElem = document.getElementById('commentsFullCount');
-        if (commentsCountElem) commentsCountElem.textContent = count;
+        if (commentsCountElem) commentsCountElem.textContent = `${count} ${commentText}`;
         
         const container = document.getElementById('commentsFullList');
         if (!container) return;
