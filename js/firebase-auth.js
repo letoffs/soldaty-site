@@ -295,3 +295,18 @@ async function saveCommentToDB(season, episode, seriesTitle, text, rating) {
         return false;
     }
 }
+
+function togglePassword(inputId, btnElement) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const icon = btnElement.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
