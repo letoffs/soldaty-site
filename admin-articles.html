@@ -11,6 +11,7 @@
     <!-- Quill Rich Text Editor -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
 </head>
 <body>
 
@@ -164,7 +165,7 @@
                         </div>
                     </div>
                     <div class="compress-note">
-                        <i class="fas fa-info-circle"></i> Изображения автоматически сжимаются перед сохранением в базу данных (макс. 800px ширина)
+                        <i class="fas fa-info-circle"></i> Изображения автоматически сжимаются перед сохранением. После вставки, вы можете изменить размер, потянув за уголок изображения.
                     </div>
                     <div id="imagePreviewContainer" class="image-preview" style="display: none;">
                         <img id="imagePreview" src="" alt="Превью">
@@ -238,7 +239,11 @@
                     ['blockquote', 'code-block'],
                     ['link', 'image'],
                     ['clean']
-                ]
+                ],
+                imageResize: {
+                    displaySize: true,
+                    modules: [ 'Resize', 'DisplaySize' ]
+                }
             }
         });
         
@@ -456,8 +461,16 @@
             let html = '';
             articlesArray.forEach(article => {
                 const publishDate = article.publishedAt || article.createdAt;
+                const updateDate = article.updatedAt;
                 const date = new Date(publishDate).toLocaleDateString('ru-RU');
                 const time = new Date(publishDate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                let dateDisplay = `${date} в ${time}`;
+
+                if (updateDate && updateDate > publishDate) {
+                    const updateDateFormatted = new Date(updateDate).toLocaleDateString('ru-RU');
+                    const updateTimeFormatted = new Date(updateDate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                    dateDisplay += ` (изменено: ${updateDateFormatted} в ${updateTimeFormatted})`;
+                }
                 
                 html += `
                     <div class="admin-article-item ${article.pinned ? 'pinned' : ''}">
@@ -468,7 +481,7 @@
                                 ${article.commentsDisabled ? '<span class="comments-disabled-badge"><i class="fas fa-comment-slash"></i> Комментарии отключены</span>' : ''}
                             </div>
                             <div class="admin-article-meta">
-                                <span><i class="far fa-calendar-alt"></i> ${date} в ${time}</span>
+                                <span><i class="far fa-calendar-alt"></i> ${dateDisplay}</span>
                                 <span><i class="far fa-eye"></i> ${article.views || 0} просмотров</span>
                                 <span><i class="far fa-heart"></i> ${article.likeCount || 0} лайков</span>
                                 <span><i class="far fa-comment"></i> ${article.comments ? Object.keys(article.comments).length : 0} комментариев</span>
