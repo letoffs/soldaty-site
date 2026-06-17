@@ -771,15 +771,16 @@ input:checked + .autoplay-slider:before {
 }
 
 .submit-comment-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: normal;
+    font-size: 1rem;
     background: #bd8a3e;
     color: #0f1a0f;
     border: none;
     padding: 10px 24px;
     border-radius: 40px;
-    font-weight: bold;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.9rem;
 }
 
 .submit-comment-btn:hover {
@@ -7116,8 +7117,11 @@ button,
 }
 
 
-/* ===== КНОПКА ЛАЙКА ===== */
+/* Обычное состояние */
 .like-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: normal;
+    font-size: 0.9rem;
     background: #1e2a1e;
     border: 1px solid #3e5a3e;
     border-radius: 40px;
@@ -7128,26 +7132,29 @@ button,
     align-items: center;
     gap: 8px;
     color: #aaa;
-    font-size: 0.9rem;
 }
 
-.like-btn:hover {
-    background: #2c3e2c;
-    transform: scale(1.02);
-}
-
+/* Состояние "лайк нажат" */
 .like-btn.liked {
     background: #bd8a3e;
     border-color: #bd8a3e;
     color: #0f1a0f;
 }
 
+/* Иконка сердца при нажатии */
 .like-btn.liked i {
     color: #ff4757;
 }
 
+.like-btn.liked .like-count {
+    color: #0f1a0f;
+}
+
 .like-count {
-    font-weight: bold;
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: normal;
+    font-size: 1rem;
+    color: #ffd966;
 }
 
 /* ===== БЛОК ДЕЙСТВИЙ СТАТЬИ ===== */
