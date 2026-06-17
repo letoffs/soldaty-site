@@ -8,7 +8,10 @@
       "**/.git/**",
       "package.json",
       "package-lock.json",
-      "app-debug.apk"
+      "app-debug.apk",
+      "*.exe",
+      "*.dll",
+      "*.bat"
     ],
     "rewrites": [
       {
