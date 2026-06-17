@@ -2217,6 +2217,8 @@ button,
 }
 
 .auth-header-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: normal;
     background: #1e2a1e;
     border: 1px solid #bd8a3e;
     color: #ddd;
@@ -2351,6 +2353,8 @@ button,
 }
 
 .auth-btn {
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
+    font-weight: normal;
     width: 100%;
     padding: 12px;
     background: #bd8a3e;
