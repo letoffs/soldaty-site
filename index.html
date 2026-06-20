@@ -334,15 +334,26 @@
     </div>
 
     <div class="footer">
-        <a href="/app-debug.apk" class="download-btn" download> Скачать приложение для Android</a>
-        <div>
-            <i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · Видео предоставлены YouTube, Rutube, РЕН ТВ · 2004-2013
-        </div>
-        <div class="copyright">
-            © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
-            Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
-        </div>
+        <div class="footer-content">
+            <!-- Логотип слева -->
+            <div class="footer-logo">
+                <img src="Resources/REN_TV_2004_logo.png" alt="Солдаты" class="footer-logo-img">
+            </div>
+            <!-- Правая часть с кнопкой и текстом -->
+            <div class="footer-right">
+                <a href="/app-debug.apk" class="download-btn" download>
+                    <i class="fas fa-download"></i> Скачать приложение для Android
+                </a>
+                <div class="footer-text">
+                    <i class="fas fa-tv"></i> Фан-сайт сериала «Солдаты» · Видео предоставлены YouTube, Rutube, РЕН ТВ · 2004-2013
+                </div>
+            </div>
     </div>
+    <div class="copyright">
+        © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
+        Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
+    </div>
+</div>
 </div>
 
 <button onclick="window.location.href='admin-analytics.html'" class="admin-analytics-btn" title="Админ-панель аналитики">
@@ -358,6 +369,7 @@
 <script src="firebase-config.js"></script>
 <script src="js/firebase-auth.js"></script>
 <script src="js/script.js"></script>
+<script src="js/subtitles.js"></script>
 
 </body>
 </html>
