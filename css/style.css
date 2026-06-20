@@ -674,6 +674,7 @@ input:checked + .autoplay-slider:before {
     opacity: 0.9;
 }
 
+/* ===== ОБНОВЛЁННЫЙ ФУТЕР С ЛОГОТИПОМ СЛЕВА ===== */
 .footer {
     margin-top: 50px;
     text-align: center;
@@ -681,6 +682,148 @@ input:checked + .autoplay-slider:before {
     color: #8aa07a;
     border-top: 1px solid #3e5a3e;
     padding-top: 25px;
+}
+
+.footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+/* Логотип слева */
+.footer-logo {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.footer-logo-img {
+    height: 55px;
+    width: 55px;
+    object-fit: contain;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 2px solid #3e5a3e;
+    padding: 4px;
+    background: #0f1a0f;
+}
+
+.footer-logo-img:hover {
+    transform: scale(1.1) rotate(-5deg);
+    border-color: #bd8a3e;
+    box-shadow: 0 0 20px rgba(189, 138, 62, 0.3);
+}
+
+/* Правая часть */
+.footer-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #1e2a1e, #2a3a2a);
+    color: #ffd966;
+    padding: 10px 24px;
+    border-radius: 40px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.85rem;
+    border: 1px solid #3e5a3e;
+    transition: all 0.3s ease;
+}
+
+.download-btn:hover {
+    background: linear-gradient(135deg, #2a3a2a, #3e5a3e);
+    border-color: #bd8a3e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(189, 138, 62, 0.3);
+    color: #ffd966;
+}
+
+.download-btn i {
+    color: #bd8a3e;
+    font-size: 1rem;
+}
+
+.footer-text {
+    color: #8aa07a;
+    font-size: 0.8rem;
+    text-align: left;
+}
+
+.footer-text i {
+    color: #bd8a3e;
+    margin-right: 6px;
+}
+
+.copyright {
+    font-size: 0.7rem;
+    color: #6a8a6a;
+    line-height: 1.6;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #2a3a2a;
+}
+
+/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ===== */
+@media (max-width: 700px) {
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .footer-right {
+        align-items: center;
+        text-align: center;
+    }
+    
+    .footer-text {
+        text-align: center;
+        font-size: 0.7rem;
+    }
+    
+    .footer-logo-img {
+        height: 45px;
+        width: 45px;
+    }
+    
+    .download-btn {
+        padding: 8px 18px;
+        font-size: 0.75rem;
+    }
+    
+    .copyright {
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-logo-img {
+        height: 40px;
+        width: 40px;
+    }
+    
+    .download-btn {
+        padding: 6px 14px;
+        font-size: 0.65rem;
+    }
+    
+    .download-btn i {
+        font-size: 0.8rem;
+    }
+    
+    .footer-text {
+        font-size: 0.6rem;
+    }
 }
 
 .episodes-grid::-webkit-scrollbar {
@@ -1175,14 +1318,14 @@ input:checked + .autoplay-slider:before {
 
 .music-card {
     background: #0f1a0f;
+    border: 1px solid #3e5a3e;
     border-radius: 16px;
-    padding: 15px;
+    padding: 15px 20px;
     display: flex;
     align-items: center;
     gap: 15px;
     cursor: pointer;
     transition: all 0.2s;
-    border: 1px solid #3e5a3e;
 }
 
 .music-card:hover {
@@ -7229,4 +7372,217 @@ button,
     color: #8aa07a;
     font-size: 0.7rem;
     font-weight: normal;
+}
+
+/* ===== AI СУБТИТРЫ ===== */
+.subtitles-toggle-btn {
+    background: #1e2a1e;
+    border: 1px solid #3e5a3e;
+    color: #ddd;
+    padding: 6px 16px;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.subtitles-toggle-btn:hover {
+    background: #2f442f;
+    border-color: #bd8a3e;
+    color: #ffd966;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(189, 138, 62, 0.2);
+}
+
+.subtitles-toggle-btn.active {
+    background: #bd8a3e;
+    color: #0f1a0f;
+    border-color: #bd8a3e;
+    box-shadow: 0 0 20px rgba(189, 138, 62, 0.3);
+}
+
+.subtitles-badge {
+    font-size: 0.5rem;
+    background: #bd8a3e;
+    color: #0f1a0f;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.subtitles-panel {
+    background: linear-gradient(135deg, #0c130c, #0a0f0a);
+    border-radius: 16px;
+    border: 1px solid #3e5a3e;
+    margin-top: 12px;
+    padding: 16px 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.subtitles-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.subtitles-panel::-webkit-scrollbar-track {
+    background: #1c2a1c;
+    border-radius: 10px;
+}
+
+.subtitles-panel::-webkit-scrollbar-thumb {
+    background: #bd8a3e;
+    border-radius: 10px;
+}
+
+.subtitles-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #aaa;
+    font-size: 0.9rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2a3a2a;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.subtitles-header i {
+    color: #bd8a3e;
+    margin-right: 8px;
+}
+
+.subtitles-status {
+    font-size: 0.8rem;
+    color: #8aa07a;
+    background: #1a2a1a;
+    padding: 2px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.subtitles-content {
+    min-height: 60px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #eee;
+}
+
+.subtitles-placeholder {
+    color: #6a8a6a;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.subtitles-line {
+    padding: 8px 15px;
+    margin-bottom: 6px;
+    background: #1a2a1a;
+    border-radius: 8px;
+    border-left: 3px solid #bd8a3e;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.subtitles-line:hover {
+    background: #223a22;
+}
+
+.subtitles-line .timestamp {
+    font-size: 0.7rem;
+    color: #8aa07a;
+    margin-right: 12px;
+    font-family: monospace;
+    background: #0a120a;
+    padding: 0 8px;
+    border-radius: 4px;
+}
+
+.subtitles-line .text {
+    color: #f0f0e0;
+}
+
+.speaker-label {
+    color: #bd8a3e;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 0.8rem;
+}
+
+.subtitles-progress {
+    margin-top: 15px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.subtitles-progress .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #2a3a2a;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.subtitles-progress #aiProgress {
+    height: 100%;
+    background: linear-gradient(90deg, #bd8a3e, #ffd966);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+
+/* Анимация появления */
+@keyframes fadeInSub {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.subtitles-line {
+    animation: fadeInSub 0.3s ease;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 768px) {
+    .subtitles-panel {
+        max-height: 200px;
+        padding: 12px 14px;
+        margin-top: 8px;
+    }
+    .subtitles-content {
+        font-size: 0.9rem;
+    }
+    .subtitles-toggle-btn {
+        font-size: 0.75rem;
+        padding: 4px 12px;
+    }
+    .subtitles-header {
+        font-size: 0.8rem;
+    }
+    .subtitles-line {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    .subtitles-badge {
+        font-size: 0.4rem;
+        padding: 1px 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .subtitles-toggle-btn {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+    .subtitles-line .timestamp {
+        font-size: 0.6rem;
+        margin-right: 6px;
+    }
 }
