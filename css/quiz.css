@@ -358,8 +358,8 @@
 .question-cost {
     font-size: 1.3rem;
     color: #bd8a3e;
-    font-weight: bold;
-    font-family: 'Gotham Pro', sans-serif;
+    font-weight: medium;
+    font-family: 'Magistral-MediumItalic', sans-serif;
 }
 
 .question-close {
