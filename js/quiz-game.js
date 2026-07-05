@@ -2,6 +2,7 @@ class QuizGame {
     constructor() {
         this.db = firebase.database();
         this.quizRef = this.db.ref('quiz');
+        this.usersRef = this.db.ref('users');
         this.categories = {};
         this.score = 0;
         this.answeredQuestions = new Set();
@@ -16,6 +17,9 @@ class QuizGame {
         this.timeLeft = 10;
         this.userAnswer = '';
         this.isAnswerSubmitted = false;
+        this.lastAnswer = null;
+        this.history = [];
+        this.currentUser = null;
         this.costs = ['100', '200', '300', '400', '500', '600', '700', '800', '900', '1000'];
         this.defaultCategories = [
             { id: 'characters', name: 'Персонажи' },
@@ -29,18 +33,127 @@ class QuizGame {
             { id: 'locations', name: 'Места' },
             { id: 'humor', name: 'Юмор' }
         ];
-        
         this.init();
     }
 
     async init() {
         await this.checkAdminStatus();
         await this.initializeCategories();
+        await this.loadCurrentUser();
+        this.loadProgress();
         this.renderGameBoard();
         this.setupEventListeners();
-        
         if (this.isAdmin) {
             this.setupAdminEasterEgg();
+        }
+    }
+
+    async loadCurrentUser() {
+        return new Promise((resolve) => {
+            const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    this.currentUser = {
+                        uid: user.uid,
+                        email: user.email,
+                        name: user.displayName || user.email || 'Аноним'
+                    };
+                    console.log('👤 Текущий пользователь:', this.currentUser.name);
+                } else {
+                    this.currentUser = null;
+                    console.log('👤 Пользователь не авторизован');
+                }
+                resolve();
+                unsubscribe();
+            });
+        });
+    }
+
+    loadProgress() {
+        if (!this.currentUser) {
+            this.score = 0;
+            this.answeredQuestions = new Set();
+            this.answeredCount = 0;
+            this.history = [];
+            return;
+        }
+        const key = 'soldaty_quiz_progress_' + this.currentUser.uid;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                this.score = data.score || 0;
+                this.answeredQuestions = new Set(data.answered || []);
+                this.answeredCount = this.answeredQuestions.size;
+                this.history = data.history || [];
+                console.log('📊 Прогресс загружен:', this.answeredCount, 'вопросов');
+            } catch (e) {
+                console.error('Ошибка загрузки прогресса:', e);
+            }
+        }
+        this.saveProgressToFirebase();
+    }
+
+    saveProgress() {
+        if (!this.currentUser) return;
+        const key = 'soldaty_quiz_progress_' + this.currentUser.uid;
+        const data = {
+            score: this.score,
+            answered: Array.from(this.answeredQuestions),
+            history: this.history,
+            userName: this.currentUser.name,
+            userEmail: this.currentUser.email,
+            updatedAt: Date.now()
+        };
+        localStorage.setItem(key, JSON.stringify(data));
+        this.saveProgressToFirebase();
+    }
+
+    saveProgressToFirebase() {
+        if (!this.currentUser) return;
+        this.usersRef.child(this.currentUser.uid + '/quizProgress').set({
+            score: this.score,
+            answered: Array.from(this.answeredQuestions),
+            history: this.history.slice(-50),
+            userName: this.currentUser.name,
+            userEmail: this.currentUser.email,
+            updatedAt: Date.now()
+        }).catch(err => console.error('Ошибка сохранения прогресса в Firebase:', err));
+    }
+
+    async loadUserProgress(uid) {
+        try {
+            const snapshot = await this.usersRef.child(uid + '/quizProgress').once('value');
+            const data = snapshot.val();
+            if (data) {
+                return {
+                    score: data.score || 0,
+                    answered: data.answered || [],
+                    history: data.history || [],
+                    userName: data.userName || 'Аноним',
+                    userEmail: data.userEmail || '',
+                    updatedAt: data.updatedAt || 0
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Ошибка загрузки прогресса пользователя:', error);
+            return null;
+        }
+    }
+
+    async resetUserProgress(uid) {
+        if (!this.isAdmin) {
+            this.showFeedback('Доступ запрещён', 'error');
+            return;
+        }
+        if (!confirm('Сбросить прогресс этого пользователя?')) return;
+        try {
+            await this.usersRef.child(uid + '/quizProgress').remove();
+            this.showFeedback('✅ Прогресс пользователя сброшен!', 'success');
+            this.openUserProgressPanel();
+        } catch (error) {
+            console.error('Ошибка сброса прогресса:', error);
+            this.showFeedback('❌ Ошибка при сбросе прогресса', 'error');
         }
     }
 
@@ -48,17 +161,14 @@ class QuizGame {
         return new Promise((resolve) => {
             const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
                 this.isAdmin = user && user.email === this.adminEmail;
-                
                 if (document.querySelector('.game-container')) {
                     this.renderGameBoard();
                 }
-                
                 if (this.isAdmin) {
                     this.setupAdminEasterEgg();
                 }
-                
-                unsubscribe();
                 resolve();
+                unsubscribe();
             });
         });
     }
@@ -67,7 +177,6 @@ class QuizGame {
         try {
             const snapshot = await this.quizRef.child('categories').once('value');
             const data = snapshot.val();
-            
             if (!data || Object.keys(data).length === 0) {
                 const categoriesData = {};
                 this.defaultCategories.forEach(cat => {
@@ -76,7 +185,6 @@ class QuizGame {
                         questions: {}
                     };
                 });
-                
                 await this.quizRef.child('categories').set(categoriesData);
                 this.categories = categoriesData;
                 console.log('Созданы категории-заглушки');
@@ -84,9 +192,7 @@ class QuizGame {
                 this.categories = data;
                 console.log('Загружено ' + Object.keys(this.categories).length + ' категорий');
             }
-            
             this.calculateTotalQuestions();
-            
         } catch (error) {
             console.error('Ошибка инициализации:', error);
         }
@@ -103,24 +209,18 @@ class QuizGame {
 
     setupAdminEasterEgg() {
         if (!this.isAdmin) return;
-
         console.log('Админ-панель активирована');
-        
         this.removeEasterEgg();
         this.createEasterEggInFooter();
-
         document.addEventListener('click', (e) => {
             const target = e.target.closest('.footer-easter-egg');
             if (target && this.isAdmin) {
                 this.adminClickCount++;
-                
                 if (this.adminClickCount === 5) {
                     this.adminClickCount = 0;
                     this.activateAdminMode();
                 }
-                
                 this.showEasterDot(e.clientX, e.clientY);
-                
                 if (this.adminClickCount > 0 && this.adminClickCount < 5) {
                     this.showEasterProgress(this.adminClickCount);
                 }
@@ -131,24 +231,20 @@ class QuizGame {
     removeEasterEgg() {
         const oldEaster = document.querySelector('.footer-easter-egg');
         if (oldEaster) oldEaster.remove();
-        
         const oldProgress = document.getElementById('easterProgress');
         if (oldProgress) oldProgress.remove();
     }
 
     createEasterEggInFooter() {
         if (!this.isAdmin) return;
-
         setTimeout(() => {
             const footer = document.querySelector('.footer');
             if (!footer) {
                 setTimeout(() => this.createEasterEggInFooter(), 500);
                 return;
             }
-
             const oldEaster = footer.querySelector('.footer-easter-egg');
             if (oldEaster) oldEaster.remove();
-
             const easterZone = document.createElement('div');
             easterZone.className = 'footer-easter-egg';
             easterZone.style.cssText = `
@@ -168,7 +264,6 @@ class QuizGame {
                 font-family: 'Gotham Pro', sans-serif;
                 letter-spacing: 0.5px;
             `;
-            
             easterZone.innerHTML = `
                 <span style="transition: opacity 0.3s;">[ Админ-панель ]</span>
                 <span class="easter-hint" style="
@@ -188,10 +283,8 @@ class QuizGame {
                     клик 5 раз для входа
                 </span>
             `;
-            
             const footerContent = footer.querySelector('.footer-content') || footer;
             footerContent.appendChild(easterZone);
-
             easterZone.addEventListener('mouseenter', () => {
                 if (this.isAdmin) {
                     easterZone.style.borderColor = 'rgba(189, 138, 62, 0.5)';
@@ -201,7 +294,6 @@ class QuizGame {
                     if (hint) hint.style.opacity = '0.8';
                 }
             });
-            
             easterZone.addEventListener('mouseleave', () => {
                 if (!this.adminModeActivated) {
                     easterZone.style.borderColor = 'rgba(189, 138, 62, 0.15)';
@@ -211,7 +303,6 @@ class QuizGame {
                     if (hint) hint.style.opacity = '0.4';
                 }
             });
-
             console.log('Админ-панель: клик 5 раз по зоне в футере');
         }, 500);
     }
@@ -233,7 +324,6 @@ class QuizGame {
         dot.style.left = (x - 5) + 'px';
         dot.style.top = (y - 5) + 'px';
         document.body.appendChild(dot);
-        
         setTimeout(() => {
             dot.style.opacity = '0';
             dot.style.transform = 'scale(3)';
@@ -265,12 +355,10 @@ class QuizGame {
             `;
             document.body.appendChild(progress);
         }
-        
         const filled = '•'.repeat(count);
         const empty = '○'.repeat(5 - count);
         progress.innerHTML = '[ ' + filled + empty + ' ]';
         progress.style.opacity = '1';
-        
         clearTimeout(progress._timeout);
         progress._timeout = setTimeout(() => {
             progress.style.opacity = '0';
@@ -285,23 +373,18 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         this.adminModeActivated = true;
         this.showFeedback('Админ-панель активирована', 'success');
-        
         const progress = document.getElementById('easterProgress');
         if (progress) progress.remove();
-        
         setTimeout(() => {
             this.openAdminPanel();
         }, 500);
-
         this.updateFooterEasterEgg(true);
     }
 
     deactivateAdminMode() {
         if (!this.isAdmin) return;
-        
         this.adminModeActivated = false;
         this.adminClickCount = 0;
         this.showFeedback('Админ-панель закрыта', 'info');
@@ -311,7 +394,6 @@ class QuizGame {
 
     updateFooterEasterEgg(active) {
         if (!this.isAdmin) return;
-        
         const easterZone = document.querySelector('.footer-easter-egg');
         if (easterZone) {
             if (active) {
@@ -347,14 +429,12 @@ class QuizGame {
     renderGameBoard() {
         const container = document.getElementById('quizContainer');
         const categories = Object.keys(this.categories);
-        
         let hasQuestions = false;
         Object.values(this.categories).forEach(cat => {
             if (cat.questions && Object.keys(cat.questions).length > 0) {
                 hasQuestions = true;
             }
         });
-        
         if (!hasQuestions) {
             container.innerHTML = `
                 <div class="game-container">
@@ -365,12 +445,9 @@ class QuizGame {
                             <span class="game-subtitle">Своя игра</span>
                         </div>
                     </div>
-                    
-                    <!-- ФОТО ВНУТРИ КОНТЕЙНЕРА -->
                     <div class="quiz-banner">
                         <img src="Resources/soldaty_quiz_preview.jpg" alt="Викторина Солдаты" class="quiz-banner-image">
                     </div>
-                    
                     <div class="welcome-screen">
                         <h2 class="welcome-title">Викторина «Солдаты»</h2>
                         <div class="welcome-text">
@@ -406,7 +483,6 @@ class QuizGame {
             `;
             return;
         }
-
         let html = `
             <div class="game-container">
                 <div class="game-header">
@@ -425,13 +501,19 @@ class QuizGame {
                             <i class="fas fa-check-circle"></i>
                             <span id="answeredDisplay">${this.answeredCount}/${this.totalQuestions}</span>
                         </div>
+                        <div class="stat-item" style="cursor:pointer;" onclick="game.undoLastAnswer()" title="Отменить последний ответ">
+                            <i class="fas fa-undo"></i>
+                            <span style="font-size:0.8rem;">Отменить</span>
+                        </div>
+                        <div class="stat-item" style="cursor:pointer;" onclick="game.resetProgress()" title="Сбросить прогресс">
+                            <i class="fas fa-trash"></i>
+                            <span style="font-size:0.8rem;">Сбросить</span>
+                        </div>
                     </div>
                 </div>
-
                 <div class="quiz-banner">
                     <img src="Resources/soldaty_quiz_preview.jpg" alt="Викторина Солдаты" class="quiz-banner-image">
                 </div>
-
                 ${this.adminModeActivated ? `
                     <div class="admin-controls">
                         <button onclick="game.openAddQuestionPanel()" class="admin-btn primary">
@@ -443,8 +525,11 @@ class QuizGame {
                         <button onclick="game.openCategoryManager()" class="admin-btn">
                             <i class="fas fa-folder-plus"></i> Категории
                         </button>
+                        <button onclick="game.openUserProgressPanel()" class="admin-btn" style="background: #2a3a6a; color: #8ad0ff;">
+                            <i class="fas fa-users"></i> Пользователи
+                        </button>
                         <button onclick="game.resetGame()" class="admin-btn danger">
-                            <i class="fas fa-redo"></i> Сбросить
+                            <i class="fas fa-redo"></i> Сбросить игру
                         </button>
                         <button onclick="game.refreshQuestions()" class="admin-btn">
                             <i class="fas fa-sync"></i> Обновить
@@ -465,7 +550,6 @@ class QuizGame {
                         </span>
                     </div>
                 `}
-
                 <div class="game-board">
                     <div class="board-header">
                         <div class="board-corner"></div>
@@ -478,7 +562,6 @@ class QuizGame {
                             </div>
                         `).join('')}
                     </div>
-                    
                     ${this.costs.map(cost => `
                         <div class="board-row">
                             <div class="cost-label">${cost}</div>
@@ -486,7 +569,6 @@ class QuizGame {
                                 const question = this.categories[catId]?.questions?.[cost];
                                 const isAnswered = this.answeredQuestions.has(`${catId}_${cost}`);
                                 const hasQuestion = !!question;
-                                
                                 return `
                                     <div class="board-cell ${isAnswered ? 'answered' : ''} ${hasQuestion ? '' : 'empty'}"
                                         data-category="${catId}"
@@ -504,29 +586,173 @@ class QuizGame {
                 </div>
             </div>
         `;
-
         container.innerHTML = html;
         this.updateStats();
         this.updateFooterEasterEgg(this.adminModeActivated);
+    }
+
+    openUserProgressPanel() {
+        if (!this.isAdmin || !this.adminModeActivated) {
+            this.showFeedback('Доступ запрещён', 'error');
+            return;
+        }
+        const modal = document.createElement('div');
+        modal.className = 'admin-modal';
+        modal.innerHTML = `
+            <div class="admin-modal-content" style="max-width: 900px; max-height: 90vh;">
+                <div class="admin-modal-header">
+                    <h3><i class="fas fa-users"></i> Прогресс пользователей</h3>
+                    <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+                </div>
+                <div id="usersProgressList" style="max-height: 60vh; overflow-y: auto;">
+                    <div style="text-align: center; padding: 20px; color: #8aa07a;">
+                        <i class="fas fa-spinner fa-spin"></i> Загрузка...
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button onclick="this.closest('.admin-modal').remove()" class="admin-btn cancel">Закрыть</button>
+                    <button onclick="game.refreshUsersList()" class="admin-btn">
+                        <i class="fas fa-sync"></i> Обновить
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.style.display = 'flex';
+        this.loadUsersList();
+    }
+
+    async loadUsersList() {
+        const listContainer = document.getElementById('usersProgressList');
+        if (!listContainer) return;
+        try {
+            const snapshot = await this.usersRef.once('value');
+            const data = snapshot.val();
+            if (!data) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #5a7a5a;">
+                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #bd8a3e;"></i>
+                        <p style="margin-top: 10px;">Нет данных о пользователях</p>
+                    </div>
+                `;
+                return;
+            }
+            let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+            const users = Object.entries(data);
+            for (const [uid, userData] of users) {
+                const progress = userData.quizProgress;
+                if (!progress) continue;
+                const answeredCount = progress.answered ? progress.answered.length : 0;
+                const score = progress.score || 0;
+                const name = progress.userName || 'Аноним';
+                const email = progress.userEmail || '';
+                const updatedAt = progress.updatedAt ? new Date(progress.updatedAt).toLocaleString() : 'Неизвестно';
+                const isCurrentUser = this.currentUser && this.currentUser.uid === uid;
+                html += `
+                    <div class="user-progress-item" style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 12px 16px;
+                        background: ${isCurrentUser ? '#1a2a2a' : '#0a120a'};
+                        border-radius: 12px;
+                        border: 1px solid ${isCurrentUser ? '#bd8a3e' : '#2a3a2a'};
+                        flex-wrap: wrap;
+                        gap: 8px;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="
+                                width: 36px;
+                                height: 36px;
+                                border-radius: 50%;
+                                background: ${isCurrentUser ? '#bd8a3e' : '#2a3a2a'};
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: ${isCurrentUser ? '#0f1a0f' : '#8aa07a'};
+                                font-weight: bold;
+                            ">
+                                ${name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="color: #ffd966; font-weight: bold;">${name} ${isCurrentUser ? '⭐' : ''}</div>
+                                <div style="color: #8aa07a; font-size: 0.8rem;">${email}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="color: #bd8a3e; font-weight: bold;">${score} очков</span>
+                                <span style="color: #5a7a5a; font-size: 0.8rem;">${answeredCount} вопросов</span>
+                                <span style="color: #5a7a5a; font-size: 0.7rem;">${updatedAt}</span>
+                            </div>
+                            <button onclick="game.resetUserProgress('${uid}')" class="admin-btn small danger" title="Сбросить прогресс">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            listContainer.innerHTML = html;
+        } catch (error) {
+            console.error('Ошибка загрузки списка пользователей:', error);
+            listContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #cd5d5d;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <p style="margin-top: 10px;">Ошибка загрузки данных</p>
+                </div>
+            `;
+        }
+    }
+
+    refreshUsersList() {
+        this.loadUsersList();
+        this.showFeedback('🔄 Список обновлён', 'info');
+    }
+
+    undoLastAnswer() {
+        if (this.history.length === 0) {
+            this.showFeedback('Нет действий для отмены', 'info');
+            return;
+        }
+        const last = this.history.pop();
+        const key = last.categoryId + '_' + last.cost;
+        if (this.answeredQuestions.has(key)) {
+            this.answeredQuestions.delete(key);
+            this.answeredCount = this.answeredQuestions.size;
+            this.score -= last.scoreChange;
+            this.showFeedback('↩️ Отменён ответ на вопрос ' + last.cost + ' (' + (last.scoreChange > 0 ? '+' : '') + last.scoreChange + ' очков)', 'info');
+            this.saveProgress();
+            this.renderGameBoard();
+        }
+    }
+
+    resetProgress() {
+        if (!confirm('Сбросить весь прогресс? Это действие нельзя отменить!')) return;
+        this.score = 0;
+        this.answeredQuestions = new Set();
+        this.answeredCount = 0;
+        this.history = [];
+        this.lastAnswer = null;
+        this.saveProgress();
+        this.renderGameBoard();
+        this.showFeedback('🔄 Прогресс сброшен', 'info');
     }
 
     async selectQuestion(categoryId, cost) {
         if (this.answeredQuestions.has(`${categoryId}_${cost}`)) {
             return;
         }
-
         const questionData = this.categories[categoryId]?.questions?.[cost];
         if (!questionData) {
             this.showFeedback('Вопрос не найден', 'error');
             return;
         }
-
         this.currentQuestion = {
             categoryId,
             cost,
             ...questionData
         };
-
         this.showQuestionModal();
     }
 
@@ -535,13 +761,11 @@ class QuizGame {
         this.isAnswerSubmitted = false;
         this.timeLeft = 10;
         this.userAnswer = '';
-        
         const modal = document.createElement('div');
         modal.className = 'question-modal';
         modal.id = 'questionModal';
-        
         const isAdmin = this.adminModeActivated;
-        
+        const questionText = this.currentQuestion.question.replace(/\n/g, '<br>');
         modal.innerHTML = `
             <div class="question-modal-content">
                 <div class="question-header">
@@ -551,11 +775,8 @@ class QuizGame {
                     <div class="question-cost">${this.currentQuestion.cost}</div>
                     <button class="question-close" onclick="game.closeQuestion()">&times;</button>
                 </div>
-                
                 <div class="question-body">
-                    <div class="question-text">${this.currentQuestion.question}</div>
-                    
-                    <!-- Поле ввода ответа -->
+                    <div class="question-text">${questionText}</div>
                     <div class="answer-input-area" id="answerInputArea">
                         <div class="input-wrapper">
                             <input type="text" id="userAnswerInput" placeholder="Введите ответ..." autocomplete="off">
@@ -573,8 +794,6 @@ class QuizGame {
                         </div>
                         <div class="input-hint" id="inputHint">Введите ответ. Кнопка станет активной через 10 секунд</div>
                     </div>
-                    
-                    <!-- Блок результата -->
                     <div id="resultBlock" style="display: none;">
                         <div class="answer-divider"></div>
                         <div id="resultMessage" class="result-message"></div>
@@ -604,10 +823,8 @@ class QuizGame {
                 </div>
             </div>
         `;
-
         document.body.appendChild(modal);
         modal.style.display = 'flex';
-
         setTimeout(() => {
             const input = document.getElementById('userAnswerInput');
             if (input) {
@@ -619,7 +836,6 @@ class QuizGame {
                 });
             }
         }, 300);
-
         this.startTimer();
     }
 
@@ -627,24 +843,19 @@ class QuizGame {
         this.stopTimer();
         this.timeLeft = 10;
         this.isAnswerSubmitted = false;
-        
         const timerText = document.getElementById('timerText');
         const timerFill = document.getElementById('timerFill');
         const submitBtn = document.getElementById('submitBtn');
         const inputHint = document.getElementById('inputHint');
         const input = document.getElementById('userAnswerInput');
-        
         this.timerInterval = setInterval(() => {
             this.timeLeft--;
-            
             if (timerText) {
                 timerText.textContent = '⏱ ' + this.timeLeft + ' сек';
             }
-            
             if (timerFill) {
                 const percent = (this.timeLeft / 10) * 100;
                 timerFill.style.width = percent + '%';
-                
                 if (this.timeLeft > 5) {
                     timerFill.style.background = '#2d7d2d';
                 } else if (this.timeLeft > 3) {
@@ -653,10 +864,8 @@ class QuizGame {
                     timerFill.style.background = '#7d2d2d';
                 }
             }
-            
             if (this.timeLeft <= 0) {
                 this.stopTimer();
-                
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Ответить';
@@ -664,16 +873,13 @@ class QuizGame {
                     submitBtn.style.color = '#0f1a0f';
                     submitBtn.style.cursor = 'pointer';
                 }
-                
                 if (inputHint) {
                     inputHint.textContent = 'Введите ответ и нажмите "Ответить" или Enter';
                     inputHint.style.color = '#bd8a3e';
                 }
-                
                 if (timerText) {
                     timerText.textContent = '⏱ 0 сек';
                 }
-                
                 if (input) {
                     input.focus();
                 }
@@ -690,30 +896,181 @@ class QuizGame {
 
     submitAnswer() {
         if (this.isAnswerSubmitted) return;
-        
         const input = document.getElementById('userAnswerInput');
         const userAnswer = input.value.trim();
-        
         if (!userAnswer) {
             this.showFeedback('Введите ответ!', 'error');
             input.focus();
             return;
         }
-
         const submitBtn = document.getElementById('submitBtn');
         if (submitBtn.disabled) {
             this.showFeedback('Подождите ' + this.timeLeft + ' секунд!', 'error');
             return;
         }
-
         this.isAnswerSubmitted = true;
         this.userAnswer = userAnswer;
-        
         this.stopTimer();
-        
-        const isCorrect = userAnswer.toLowerCase().trim() === this.currentQuestion.answer.toLowerCase().trim();
-        
+        const isCorrect = this.isAnswerMatch(userAnswer, this.currentQuestion.answer);
         this.showResult(isCorrect);
+    }
+
+    isAnswerMatch(userAnswer, correctAnswer) {
+        let user = userAnswer.toLowerCase().trim();
+        let correct = correctAnswer.toLowerCase().trim();
+        user = user.replace(/[.,!?;:()\[\]{}<>\/\\|`~@#$%^&*_+=\-]+$/, '');
+        correct = correct.replace(/[.,!?;:()\[\]{}<>\/\\|`~@#$%^&*_+=\-]+$/, '');
+        user = user.replace(/ё/g, 'е');
+        correct = correct.replace(/ё/g, 'е');
+        user = user.replace(/\s+/g, ' ');
+        correct = correct.replace(/\s+/g, ' ');
+        user = user.trim();
+        correct = correct.trim();
+        if (user === correct) return true;
+        if (correct.includes('(') && correct.includes(')')) {
+            const mainAnswer = correct.replace(/\([^)]*\)/g, '').trim();
+            if (user === mainAnswer.toLowerCase()) return true;
+            const bracketContent = correct.match(/\(([^)]*)\)/);
+            if (bracketContent) {
+                const alternatives = bracketContent[1].split(/[,;]/).map(s => s.trim().toLowerCase());
+                for (const alt of alternatives) {
+                    if (user === alt) return true;
+                    if (user.includes(alt) || alt.includes(user)) return true;
+                }
+            }
+        }
+        const numberMap = {
+            'один': '1', 'одна': '1', 'одно': '1', 'первый': '1', '1-й': '1', '1м': '1',
+            'два': '2', 'две': '2', 'второй': '2', '2-й': '2', '2м': '2',
+            'три': '3', 'третий': '3', '3-й': '3', '3м': '3',
+            'четыре': '4', 'четвертый': '4', '4-й': '4', '4м': '4',
+            'пять': '5', 'пятый': '5', '5-й': '5', '5м': '5',
+            'шесть': '6', 'шестой': '6', '6-й': '6', '6м': '6',
+            'семь': '7', 'седьмой': '7', '7-й': '7', '7м': '7',
+            'восемь': '8', 'восьмой': '8', '8-й': '8', '8м': '8',
+            'девять': '9', 'девятый': '9', '9-й': '9', '9м': '9',
+            'десять': '10', 'десятый': '10', '10-й': '10', '10м': '10',
+            'одиннадцать': '11', 'одиннадцатый': '11', '11-й': '11', '11м': '11',
+            'двенадцать': '12', 'двенадцатый': '12', '12-й': '12', '12м': '12',
+            'тринадцать': '13', 'тринадцатый': '13', '13-й': '13', '13м': '13',
+            'четырнадцать': '14', 'четырнадцатый': '14', '14-й': '14', '14м': '14',
+            'пятнадцать': '15', 'пятнадцатый': '15', '15-й': '15', '15м': '15',
+            'шестнадцать': '16', 'шестнадцатый': '16', '16-й': '16', '16м': '16',
+            'семнадцать': '17', 'семнадцатый': '17', '17-й': '17', '17м': '17',
+            'восемнадцать': '18', 'восемнадцатый': '18', '18-й': '18', '18м': '18',
+            'девятнадцать': '19', 'девятнадцатый': '19', '19-й': '19', '19м': '19',
+            'двадцать': '20', 'двадцатый': '20', '20-й': '20', '20м': '20'
+        };
+        let userNormalized = user;
+        let correctNormalized = correct;
+        for (const [word, num] of Object.entries(numberMap)) {
+            userNormalized = userNormalized.replace(new RegExp(word, 'g'), num);
+            correctNormalized = correctNormalized.replace(new RegExp(word, 'g'), num);
+        }
+        userNormalized = userNormalized.replace(/[^0-9\s]/g, '').trim();
+        correctNormalized = correctNormalized.replace(/[^0-9\s]/g, '').trim();
+        if (userNormalized === correctNormalized && userNormalized.length > 0) {
+            return true;
+        }
+        const userNumbers = user.match(/\d+/g);
+        const correctNumbers = correct.match(/\d+/g);
+        if (userNumbers && correctNumbers) {
+            if (userNumbers.some(num => correctNumbers.includes(num))) {
+                return true;
+            }
+        }
+        const keywords = this.extractKeywords(correct);
+        if (keywords.length > 0) {
+            const userKeywords = this.extractKeywords(user);
+            let matchCount = 0;
+            for (const keyword of keywords) {
+                if (userKeywords.some(u => u.includes(keyword) || keyword.includes(u))) {
+                    matchCount++;
+                }
+            }
+            const matchPercentage = matchCount / keywords.length;
+            if (matchPercentage >= 0.4) {
+                return true;
+            }
+        }
+        if (user.length > 2) {
+            const userWords = user.split(' ');
+            let importantWordsFound = 0;
+            let totalImportant = 0;
+            for (const word of userWords) {
+                if (word.length > 2) {
+                    totalImportant++;
+                    let found = false;
+                    for (const cWord of correct.split(' ')) {
+                        if (cWord.length > 2 && (cWord.includes(word) || word.includes(cWord))) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) importantWordsFound++;
+                }
+            }
+            if (totalImportant > 0 && importantWordsFound / totalImportant >= 0.5) {
+                return true;
+            }
+        }
+        const similarity = this.getSimilarity(user, correct);
+        if (similarity > 0.55) {
+            return true;
+        }
+        return false;
+    }
+
+    extractKeywords(text) {
+        const stopWords = [
+            'и', 'в', 'на', 'с', 'по', 'к', 'у', 'за', 'от', 'из', 'для',
+            'о', 'об', 'при', 'через', 'между', 'без', 'до', 'после', 'во',
+            'со', 'под', 'над', 'около', 'перед', 'это', 'как', 'что', 'так',
+            'же', 'бы', 'не', 'но', 'а', 'или', 'их', 'его', 'её', 'они',
+            'мы', 'вы', 'ты', 'он', 'она', 'оно', 'она', 'они', 'себя',
+            'время', 'работы', 'съёмок', 'становится', 'который', 'этого',
+            'сезоне', 'сюжете', 'появляется', 'майор', 'называлось', 'место',
+            'воинской', 'части', 'небольшой', 'магазин', 'буфет', 'солдаты',
+            'могли', 'купить', 'еду', 'сигареты', 'другие', 'товары', 'который',
+            'сериале', 'был', 'связан', 'предпринимательской', 'деятельностью'
+        ];
+        return text.split(' ')
+            .filter(word => word.length > 2)
+            .filter(word => !stopWords.includes(word))
+            .map(word => word.replace(/[^а-яё0-9]/g, ''))
+            .filter(word => word.length > 0);
+    }
+
+    getSimilarity(str1, str2) {
+        const longer = str1.length > str2.length ? str1 : str2;
+        const shorter = str1.length > str2.length ? str2 : str1;
+        if (longer.length === 0) return 1.0;
+        const distance = this.levenshteinDistance(longer, shorter);
+        return (longer.length - distance) / longer.length;
+    }
+
+    levenshteinDistance(str1, str2) {
+        const matrix = [];
+        for (let i = 0; i <= str2.length; i++) {
+            matrix[i] = [i];
+        }
+        for (let j = 0; j <= str1.length; j++) {
+            matrix[0][j] = j;
+        }
+        for (let i = 1; i <= str2.length; i++) {
+            for (let j = 1; j <= str1.length; j++) {
+                if (str2[i - 1] === str1[j - 1]) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j] + 1
+                    );
+                }
+            }
+        }
+        return matrix[str2.length][str1.length];
     }
 
     showResult(isCorrect) {
@@ -721,11 +1078,12 @@ class QuizGame {
         const resultBlock = document.getElementById('resultBlock');
         const resultMessage = document.getElementById('resultMessage');
         const cost = parseInt(this.currentQuestion.cost);
-        
+        const key = this.currentQuestion.categoryId + '_' + this.currentQuestion.cost;
+        let scoreChange = 0;
         if (inputArea) inputArea.style.display = 'none';
         if (resultBlock) resultBlock.style.display = 'block';
-        
         if (isCorrect) {
+            scoreChange = cost;
             this.score += cost;
             resultMessage.innerHTML = `
                 <div class="result-correct">
@@ -739,6 +1097,7 @@ class QuizGame {
             resultMessage.style.borderColor = '#2d7d2d';
             this.showFeedback('Правильно! +' + cost + ' очков', 'success');
         } else {
+            scoreChange = -cost;
             this.score -= cost;
             resultMessage.innerHTML = `
                 <div class="result-wrong">
@@ -752,18 +1111,23 @@ class QuizGame {
             resultMessage.style.borderColor = '#7d2d2d';
             this.showFeedback('Неправильно! -' + cost + ' очков', 'error');
         }
-
-        const key = this.currentQuestion.categoryId + '_' + this.currentQuestion.cost;
         this.answeredQuestions.add(key);
         this.answeredCount++;
-
+        this.history.push({
+            categoryId: this.currentQuestion.categoryId,
+            cost: this.currentQuestion.cost,
+            scoreChange: scoreChange,
+            isCorrect: isCorrect,
+            userAnswer: this.userAnswer,
+            correctAnswer: this.currentQuestion.answer
+        });
+        this.saveProgress();
         this.updateStats();
     }
 
     continueGame() {
         this.closeQuestion();
         this.renderGameBoard();
-
         if (this.answeredCount === this.totalQuestions && this.totalQuestions > 0) {
             setTimeout(() => this.showGameComplete(), 500);
         }
@@ -781,7 +1145,6 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         this.closeQuestion();
         this.openEditQuestionForm(this.currentQuestion);
     }
@@ -839,7 +1202,6 @@ class QuizGame {
         `;
         document.body.appendChild(modal);
         modal.style.display = 'flex';
-
         document.getElementById('editQuestionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             await this.saveEditedQuestion(question);
@@ -851,26 +1213,19 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         const newCategory = document.getElementById('editCategory').value;
         const newCost = document.getElementById('editCost').value;
         const question = document.getElementById('editQuestion').value.trim();
         const answer = document.getElementById('editAnswer').value.trim();
         const explanation = document.getElementById('editExplanation').value.trim();
-
         if (!question || !answer) {
             this.showFeedback('Вопрос и ответ обязательны', 'error');
             return;
         }
-
         try {
-            // Если изменилась категория или стоимость — удаляем старый и создаём новый
             if (newCategory !== oldQuestion.categoryId || newCost !== oldQuestion.cost) {
-                // Удаляем старый
                 const oldPath = 'categories/' + oldQuestion.categoryId + '/questions/' + oldQuestion.cost;
                 await this.quizRef.child(oldPath).remove();
-                
-                // Создаём новый
                 const newPath = 'categories/' + newCategory + '/questions/' + newCost;
                 await this.quizRef.child(newPath).set({
                     question: question,
@@ -878,7 +1233,6 @@ class QuizGame {
                     explanation: explanation || ''
                 });
             } else {
-                // Обновляем существующий
                 const path = 'categories/' + oldQuestion.categoryId + '/questions/' + oldQuestion.cost;
                 await this.quizRef.child(path).update({
                     question: question,
@@ -886,7 +1240,6 @@ class QuizGame {
                     explanation: explanation || ''
                 });
             }
-            
             this.showFeedback('Вопрос обновлён', 'success');
             document.querySelector('.admin-modal').remove();
             await this.initializeCategories();
@@ -902,13 +1255,10 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         if (!confirm('Удалить вопрос "' + this.currentQuestion.question + '"?')) return;
-
         try {
             const path = 'categories/' + this.currentQuestion.categoryId + '/questions/' + this.currentQuestion.cost;
             await this.quizRef.child(path).remove();
-            
             this.showFeedback('Вопрос удалён', 'info');
             this.closeQuestion();
             await this.initializeCategories();
@@ -924,13 +1274,10 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         if (!this.adminModeActivated) {
             this.showFeedback('Активируй админ-панель через [Админ-панель] в футере', 'error');
             return;
         }
-
-        // Просто показываем основную панель управления
         this.renderGameBoard();
     }
 
@@ -939,7 +1286,6 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         const modal = document.createElement('div');
         modal.className = 'admin-modal';
         modal.innerHTML = `
@@ -959,12 +1305,10 @@ class QuizGame {
                             <option value="new">+ Создать новую категорию</option>
                         </select>
                     </div>
-                    
                     <div class="form-group" id="newCategoryGroup" style="display: none;">
                         <label>Название новой категории</label>
                         <input type="text" id="newCategoryName" placeholder="Например: Актёры">
                     </div>
-                    
                     <div class="form-group">
                         <label>Стоимость вопроса</label>
                         <select id="adminCost" required>
@@ -974,22 +1318,18 @@ class QuizGame {
                             `).join('')}
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>Вопрос</label>
                         <textarea id="adminQuestion" required placeholder="Введите текст вопроса..." rows="3"></textarea>
                     </div>
-                    
                     <div class="form-group">
                         <label>Ответ</label>
                         <input type="text" id="adminAnswer" required placeholder="Введите правильный ответ">
                     </div>
-                    
                     <div class="form-group">
                         <label>Пояснение (необязательно)</label>
                         <textarea id="adminExplanation" placeholder="Дополнительная информация..." rows="2"></textarea>
                     </div>
-                    
                     <div class="form-actions">
                         <button type="button" onclick="this.closest('.admin-modal').remove()" class="admin-btn cancel">Отмена</button>
                         <button type="submit" class="admin-btn submit">
@@ -1001,7 +1341,6 @@ class QuizGame {
         `;
         document.body.appendChild(modal);
         modal.style.display = 'flex';
-
         document.getElementById('adminCategory').addEventListener('change', function() {
             const newCategoryGroup = document.getElementById('newCategoryGroup');
             if (this.value === 'new') {
@@ -1010,7 +1349,6 @@ class QuizGame {
                 newCategoryGroup.style.display = 'none';
             }
         });
-
         document.getElementById('addQuestionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             await this.addQuestionToFirebase();
@@ -1022,7 +1360,6 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         const modal = document.createElement('div');
         modal.className = 'admin-modal';
         modal.innerHTML = `
@@ -1035,7 +1372,6 @@ class QuizGame {
                     ${Object.entries(this.categories).map(([catId, cat]) => {
                         const questions = cat.questions || {};
                         const questionEntries = Object.entries(questions);
-                        
                         return `
                             <div class="category-edit-block">
                                 <div class="category-edit-header">
@@ -1092,16 +1428,11 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
-        // Закрываем панель редактирования
         document.querySelector('.admin-modal')?.remove();
-
         if (categoryId === 'new') {
             this.openAddQuestionPanel();
             return;
         }
-
-        // Открываем форму добавления с предвыбранной категорией
         const modal = document.createElement('div');
         modal.className = 'admin-modal';
         modal.innerHTML = `
@@ -1116,7 +1447,6 @@ class QuizGame {
                             <option value="${categoryId}" selected>${this.categories[categoryId].name}</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-dollar-sign"></i> Стоимость вопроса</label>
                         <select id="adminCost" required>
@@ -1126,22 +1456,18 @@ class QuizGame {
                             `).join('')}
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-question-circle"></i> Вопрос</label>
                         <textarea id="adminQuestion" required placeholder="Введите текст вопроса..." rows="3"></textarea>
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-check-circle"></i> Ответ</label>
                         <input type="text" id="adminAnswer" required placeholder="Введите правильный ответ">
                     </div>
-                    
                     <div class="form-group">
                         <label><i class="fas fa-info-circle"></i> Пояснение (необязательно)</label>
                         <textarea id="adminExplanation" placeholder="Дополнительная информация..." rows="2"></textarea>
                     </div>
-                    
                     <div class="form-actions">
                         <button type="button" onclick="this.closest('.admin-modal').remove()" class="admin-btn cancel">Отмена</button>
                         <button type="submit" class="admin-btn submit">
@@ -1153,7 +1479,6 @@ class QuizGame {
         `;
         document.body.appendChild(modal);
         modal.style.display = 'flex';
-
         document.getElementById('addQuestionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             await this.addQuestionToFirebaseWithCategory(categoryId);
@@ -1165,30 +1490,24 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         const cost = document.getElementById('adminCost').value;
         const question = document.getElementById('adminQuestion').value.trim();
         const answer = document.getElementById('adminAnswer').value.trim();
         const explanation = document.getElementById('adminExplanation').value.trim();
-
         if (!cost || !question || !answer) {
             this.showFeedback('Заполните все обязательные поля', 'error');
             return;
         }
-
         try {
             await this.quizRef.child('categories/' + categoryId + '/questions/' + cost).set({
                 question: question,
                 answer: answer,
                 explanation: explanation || ''
             });
-            
             this.showFeedback('Вопрос добавлен в "' + this.categories[categoryId].name + '"', 'success');
             document.querySelector('.admin-modal').remove();
             await this.initializeCategories();
             this.renderGameBoard();
-            
-            // Открываем панель редактирования заново
             setTimeout(() => this.openEditQuestionsPanel(), 300);
         } catch (error) {
             console.error('Ошибка добавления вопроса:', error);
@@ -1202,7 +1521,6 @@ class QuizGame {
             this.showFeedback('Вопрос не найден', 'error');
             return;
         }
-
         const oldQuestion = {
             categoryId: categoryId,
             cost: cost,
@@ -1210,18 +1528,15 @@ class QuizGame {
             answer: question.answer,
             explanation: question.explanation || ''
         };
-
         this.openEditQuestionForm(oldQuestion);
         document.querySelector('.admin-modal')?.remove();
     }
 
     async deleteQuestionFromList(categoryId, cost) {
         if (!confirm('Удалить этот вопрос?')) return;
-
         try {
             const path = 'categories/' + categoryId + '/questions/' + cost;
             await this.quizRef.child(path).remove();
-            
             this.showFeedback('Вопрос удалён', 'info');
             await this.initializeCategories();
             this.renderGameBoard();
@@ -1237,29 +1552,23 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         const categorySelect = document.getElementById('adminCategory');
         let categoryId = categorySelect.value;
         const cost = document.getElementById('adminCost').value;
         const question = document.getElementById('adminQuestion').value.trim();
         const answer = document.getElementById('adminAnswer').value.trim();
         const explanation = document.getElementById('adminExplanation').value.trim();
-
         if (!categoryId || !cost || !question || !answer) {
             this.showFeedback('Заполните все обязательные поля', 'error');
             return;
         }
-
         if (categoryId === 'new') {
             const newName = document.getElementById('newCategoryName').value.trim();
-            
             if (!newName) {
                 this.showFeedback('Введите название новой категории', 'error');
                 return;
             }
-
-            categoryId = newName.toLowerCase().replace(/[^a-zа-яё]/g, '_');
-            
+            categoryId = newName.toLowerCase().replace(/[^a-zа-яё0-9\s]/g, '').replace(/\s+/g, '_');
             try {
                 await this.quizRef.child('categories/' + categoryId).set({
                     name: newName,
@@ -1274,14 +1583,12 @@ class QuizGame {
                 return;
             }
         }
-
         try {
             await this.quizRef.child('categories/' + categoryId + '/questions/' + cost).set({
                 question: question,
                 answer: answer,
                 explanation: explanation || ''
             });
-            
             this.showFeedback('Вопрос добавлен', 'success');
             document.querySelector('.admin-modal').remove();
             await this.initializeCategories();
@@ -1297,12 +1604,10 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         if (!this.adminModeActivated) {
             this.showFeedback('Активируй админ-панель через [Админ-панель] в футере', 'error');
             return;
         }
-
         const modal = document.createElement('div');
         modal.className = 'admin-modal';
         modal.innerHTML = `
@@ -1310,6 +1615,11 @@ class QuizGame {
                 <div class="admin-modal-header">
                     <h3>Управление категориями</h3>
                     <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+                </div>
+                <div style="margin-bottom: 15px; text-align: right;">
+                    <button onclick="game.addNewCategory()" class="admin-btn primary">
+                        <i class="fas fa-plus-circle"></i> Добавить категорию
+                    </button>
                 </div>
                 <div class="category-list">
                     ${Object.entries(this.categories).map(([id, cat]) => `
@@ -1338,15 +1648,104 @@ class QuizGame {
         modal.style.display = 'flex';
     }
 
+    addNewCategory() {
+        if (!this.isAdmin || !this.adminModeActivated) {
+            this.showFeedback('Доступ запрещён', 'error');
+            return;
+        }
+        const modal = document.createElement('div');
+        modal.className = 'admin-modal';
+        modal.innerHTML = `
+            <div class="admin-modal-content">
+                <div class="admin-modal-header">
+                    <h3><i class="fas fa-plus-circle"></i> Добавить категорию</h3>
+                    <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+                </div>
+                <form id="addCategoryForm" class="admin-form">
+                    <div class="form-group">
+                        <label>Название категории</label>
+                        <input type="text" id="newCategoryName" required placeholder="Например: Отношения и любовь">
+                    </div>
+                    <div class="form-group">
+                        <label>ID категории</label>
+                        <input type="text" id="newCategoryId" placeholder="автоматически" readonly style="background: #1a2a1a; color: #8aa07a;">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="this.closest('.admin-modal').remove()" class="admin-btn cancel">Отмена</button>
+                        <button type="submit" class="admin-btn submit">
+                            <i class="fas fa-save"></i> Создать
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.style.display = 'flex';
+        document.getElementById('newCategoryName').addEventListener('input', function() {
+            const name = this.value.trim();
+            const idField = document.getElementById('newCategoryId');
+            if (name) {
+                const generatedId = name.toLowerCase()
+                    .replace(/[^a-zа-яё0-9\s]/g, '')
+                    .replace(/\s+/g, '_');
+                idField.value = generatedId;
+            } else {
+                idField.value = '';
+            }
+        });
+        document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.saveNewCategory();
+        });
+    }
+
+    async saveNewCategory() {
+        if (!this.isAdmin) {
+            this.showFeedback('Доступ запрещён', 'error');
+            return;
+        }
+        const name = document.getElementById('newCategoryName').value.trim();
+        const id = document.getElementById('newCategoryId').value.trim();
+        if (!name) {
+            this.showFeedback('Введите название категории', 'error');
+            return;
+        }
+        if (!id) {
+            this.showFeedback('Ошибка генерации ID', 'error');
+            return;
+        }
+        if (this.categories[id]) {
+            this.showFeedback('❌ Категория с таким ID уже существует!', 'error');
+            return;
+        }
+        const existing = Object.values(this.categories).some(cat => cat.name === name);
+        if (existing) {
+            this.showFeedback('❌ Категория с таким названием уже существует!', 'error');
+            return;
+        }
+        try {
+            await this.quizRef.child('categories/' + id).set({
+                name: name,
+                questions: {}
+            });
+            this.showFeedback('✅ Категория "' + name + '" создана!', 'success');
+            document.querySelector('.admin-modal').remove();
+            await this.initializeCategories();
+            this.renderGameBoard();
+            setTimeout(() => this.openCategoryManager(), 300);
+        } catch (error) {
+            console.error('Ошибка создания категории:', error);
+            this.showFeedback('❌ Ошибка при создании категории', 'error');
+        }
+    }
+
     async editCategory(categoryId) {
         if (!this.isAdmin) {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         const cat = this.categories[categoryId];
         if (!cat) return;
-
         const newName = prompt('Новое название категории:', cat.name);
         if (newName && newName.trim() !== cat.name) {
             try {
@@ -1358,7 +1757,6 @@ class QuizGame {
                 this.showFeedback('Ошибка обновления', 'error');
             }
         }
-
         document.querySelector('.admin-modal')?.remove();
     }
 
@@ -1367,9 +1765,7 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         if (!confirm('Удалить категорию "' + this.categories[categoryId]?.name + '" и все её вопросы?')) return;
-
         try {
             await this.quizRef.child('categories/' + categoryId).remove();
             this.showFeedback('Категория удалена', 'info');
@@ -1384,7 +1780,6 @@ class QuizGame {
     updateStats() {
         const scoreEl = document.getElementById('scoreDisplay');
         const answeredEl = document.getElementById('answeredDisplay');
-        
         if (scoreEl) scoreEl.textContent = this.score;
         if (answeredEl) answeredEl.textContent = this.answeredCount + '/' + this.totalQuestions;
     }
@@ -1394,7 +1789,6 @@ class QuizGame {
         feedback.className = 'game-feedback ' + type;
         feedback.textContent = message;
         document.body.appendChild(feedback);
-        
         setTimeout(() => feedback.classList.add('show'), 100);
         setTimeout(() => {
             feedback.classList.remove('show');
@@ -1427,13 +1821,13 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-
         this.score = 0;
         this.answeredQuestions = new Set();
         this.answeredCount = 0;
         this.currentQuestion = null;
+        this.history = [];
         this.stopTimer();
-        
+        this.saveProgress();
         document.querySelectorAll('.question-modal, .game-complete-modal').forEach(el => el.remove());
         this.renderGameBoard();
         this.showFeedback('Игра сброшена', 'info');
@@ -1444,7 +1838,6 @@ class QuizGame {
             this.showFeedback('Доступ запрещён', 'error');
             return;
         }
-        
         this.initializeCategories();
         this.showFeedback('Вопросы обновлены', 'info');
     }
@@ -1460,11 +1853,9 @@ class QuizGame {
                 }
             }
         });
-
         firebase.auth().onAuthStateChanged((user) => {
             const wasAdmin = this.isAdmin;
             this.isAdmin = user && user.email === this.adminEmail;
-            
             if (this.isAdmin && !wasAdmin) {
                 this.setupAdminEasterEgg();
                 this.renderGameBoard();
@@ -1473,12 +1864,22 @@ class QuizGame {
                 this.removeEasterEgg();
                 this.renderGameBoard();
             }
+            if (user) {
+                this.currentUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    name: user.displayName || user.email || 'Аноним'
+                };
+                this.loadProgress();
+                this.renderGameBoard();
+            } else {
+                this.currentUser = null;
+            }
         });
     }
 }
 
 let game;
-
 document.addEventListener('DOMContentLoaded', () => {
     const checkFirebase = setInterval(() => {
         if (typeof firebase !== 'undefined' && firebase.database) {
