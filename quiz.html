@@ -6,23 +6,24 @@
     <title>Солдаты — Викторина</title>
 
     <!-- SEO метатеги -->
-    <meta name="description" content="Проверьте свои знания о сериале «Солдаты»! Викторина из 100 вопросов о персонажах, цитатах, песнях и сюжете. 10 уровней — от рядового до генерала.">
-    <meta name="keywords" content="викторина Солдаты, тест Солдаты, вопросы о Солдатах, квиз Солдаты, знатоки Солдатов">
+    <meta name="description" content="Викторина по сериалу «Солдаты» в формате «Своей игры»! Проверьте свои знания в категориях разной сложности.">
+    <meta name="keywords" content="викторина Солдаты, своя игра Солдаты, тест Солдаты, квиз Солдаты">
     <meta name="author" content="Фан-сайт сериала Солдаты">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Викторина «Солдаты» — проверь свои знания!">
-    <meta property="og:description" content="100 вопросов о культовом сериале «Солдаты». Пройди путь от рядового до генерала!">
+    <meta property="og:title" content="Викторина «Солдаты» в формате «Своей игры»">
+    <meta property="og:description" content="Играй в викторину по культовому сериалу «Солдаты»! Выбирай категории и отвечай на вопросы.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="Resources/soldaty_icon.png">
     
     <!-- Технические метатеги -->
     <meta name="theme-color" content="#1a2a1a">
-    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="icon" href="firebase-config.js" type="image/png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/quiz.css">
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -45,7 +46,7 @@
 
         <p>Проверь свои знания о культовом сериале!</p>
 
-        <div class="quiz-line"></div>
+        <div class="heroes-top-line"></div>
         
         <div class="nav-menu">
             <a href="index.html" class="nav-link">Сериал</a>
@@ -132,20 +133,14 @@
     <div class="page-description">
         <h2 class="description-title"><i class="fas fa-brain"></i> ВИКТОРИНА</h2>
         <div class="description-content">
-            <p>Проверьте, насколько хорошо вы помните культовый сериал «Солдаты»! Вопросы о персонажах, крылатых фразах и сюжетных поворотах.</p>
-            <div class="description-features">
-                <div class="feature">
-                    <i class="fas fa-layer-group"></i>
-                    <span>10 уровней</span>
-                </div>
-                <div class="feature">
-                    <i class="fas fa-question-circle"></i>
-                    <span>100 вопросов</span>
-                </div>
-                <div class="feature">
-                    <i class="fas fa-trophy"></i>
-                    <span>Проверь знания</span>
-                </div>
+            <p>Проверьте свои знания о культовом сериале «Солдаты»! Игра проходит в формате телевизионной викторины «Своя игра».</p>
+            <div class="game-rules" style="margin-top: 20px; padding: 15px; background: #0a120a; border-radius: 16px; border-left: 4px solid #bd8a3e;">
+                <p style="font-size: 0.9rem; color: #8aa07a; margin: 0;">
+                    <i class="fas fa-info-circle" style="color: #bd8a3e;"></i>
+                    <strong>Правила:</strong> Выберите категорию и стоимость вопроса. 
+                    За правильный ответ вы получаете очки, за неправильный — теряете. 
+                    Будьте внимательны!
+                </p>
             </div>
         </div>
     </div>
@@ -159,35 +154,7 @@
         </div>
     </div>
 
-    <!-- КНОПКА ТАБЛИЦЫ РЕКОРДОВ -->
-    <button class="leaderboard-btn" onclick="openLeaderboardModal()">
-        <i class="fas fa-trophy"></i> Таблица рекордов
-    </button>
-
-    <!-- МОДАЛЬНОЕ ОКНО ТАБЛИЦЫ РЕКОРДОВ -->
-    <div id="leaderboardModal" class="leaderboard-modal">
-        <div class="leaderboard-modal-content">
-            <div class="leaderboard-modal-header">
-                <h2><i class="fas fa-trophy"></i> Таблица рекордов</h2>
-                <button class="leaderboard-close" onclick="closeLeaderboardModal()">&times;</button>
-            </div>
-            <div class="leaderboard-modal-body">
-                <div class="leaderboard-tabs">
-                    <button class="leaderboard-tab active" onclick="switchLeaderboardTab('tokens')">🏆 По жетонам</button>
-                    <button class="leaderboard-tab" onclick="switchLeaderboardTab('levels')">⭐ По уровням</button>
-                    <button class="leaderboard-tab" onclick="switchLeaderboardTab('perfect')">🎯 По идеальным</button>
-                </div>
-                <div id="leaderboardContent" class="leaderboard-content">
-                <!-- Содержимое будет загружено через JS -->
-                </div>
-                <div class="leaderboard-info">
-                    <p><i class="fas fa-chart-line"></i> Рекорды обновляются каждую минуту</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-        <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
+    <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
     <div class="feedback-banners">
         <!-- Баннер обратной связи -->
         <div class="banner-card">
@@ -219,8 +186,7 @@
     </div>
 
     <div class="footer">
-        Викторина на тему сериала «Солдаты»
-        <!-- Ссылки на оферту и контакты УДАЛЕНЫ -->
+        Викторина по сериалу «Солдаты» в формате «Своей игры»
         <div class="copyright">
             © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
             Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
@@ -230,8 +196,7 @@
 </div>
 
 <!-- СКРИПТЫ -->
-<!-- <script src="js/quiz-levels.js"></script>
-<script src="js/quiz.js"></script> -->
+<!-- <script src="js/quiz-game.js"></script> -->
 
 </body>
 </html>
