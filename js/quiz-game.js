@@ -1093,6 +1093,9 @@ class QuizGame {
                 <div class="result-user-answer">
                     Ваш ответ: <strong>${this.userAnswer}</strong>
                 </div>
+                <div class="result-correct-answer" style="color: #2d7d2d; margin-top: 8px; font-size: 0.9rem;">
+                    Правильный ответ: ${this.currentQuestion.answer}
+                </div>
             `;
             resultMessage.style.borderColor = '#2d7d2d';
             this.showFeedback('Правильно! +' + cost + ' очков', 'success');
@@ -1106,6 +1109,9 @@ class QuizGame {
                 </div>
                 <div class="result-user-answer">
                     Ваш ответ: <strong>${this.userAnswer}</strong>
+                </div>
+                <div class="result-correct-answer" style="color: #ffd966; margin-top: 8px; font-size: 0.9rem;">
+                    Правильный ответ: ${this.currentQuestion.answer}
                 </div>
             `;
             resultMessage.style.borderColor = '#7d2d2d';
