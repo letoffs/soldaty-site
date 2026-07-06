@@ -6,6 +6,7 @@ class QuizGame {
         this.categories = {};
         this.score = 0;
         this.answeredQuestions = new Set();
+        this.wrongQuestions = new Set();
         this.totalQuestions = 0;
         this.answeredCount = 0;
         this.currentQuestion = null;
@@ -17,9 +18,9 @@ class QuizGame {
         this.timeLeft = 10;
         this.userAnswer = '';
         this.isAnswerSubmitted = false;
-        this.lastAnswer = null;
         this.history = [];
         this.currentUser = null;
+        this.syncTimeout = null;
         this.costs = ['100', '200', '300', '400', '500', '600', '700', '800', '900', '1000'];
         this.defaultCategories = [
             { id: 'characters', name: 'Персонажи' },
@@ -40,7 +41,7 @@ class QuizGame {
         await this.checkAdminStatus();
         await this.initializeCategories();
         await this.loadCurrentUser();
-        this.loadProgress();
+        this.setupSyncListener();
         this.renderGameBoard();
         this.setupEventListeners();
         if (this.isAdmin) {
@@ -57,10 +58,15 @@ class QuizGame {
                         email: user.email,
                         name: user.displayName || user.email || 'Аноним'
                     };
-                    console.log('👤 Текущий пользователь:', this.currentUser.name);
+                    this.loadProgressFromFirebase();
                 } else {
                     this.currentUser = null;
-                    console.log('👤 Пользователь не авторизован');
+                    this.score = 0;
+                    this.answeredQuestions = new Set();
+                    this.wrongQuestions = new Set();
+                    this.answeredCount = 0;
+                    this.history = [];
+                    this.renderGameBoard();
                 }
                 resolve();
                 unsubscribe();
@@ -68,93 +74,114 @@ class QuizGame {
         });
     }
 
-    loadProgress() {
-        if (!this.currentUser) {
-            this.score = 0;
-            this.answeredQuestions = new Set();
-            this.answeredCount = 0;
-            this.history = [];
-            return;
-        }
-        const key = 'soldaty_quiz_progress_' + this.currentUser.uid;
-        const saved = localStorage.getItem(key);
-        if (saved) {
-            try {
-                const data = JSON.parse(saved);
-                this.score = data.score || 0;
-                this.answeredQuestions = new Set(data.answered || []);
-                this.answeredCount = this.answeredQuestions.size;
-                this.history = data.history || [];
-                console.log('📊 Прогресс загружен:', this.answeredCount, 'вопросов');
-            } catch (e) {
-                console.error('Ошибка загрузки прогресса:', e);
+    setupSyncListener() {
+        if (!this.currentUser) return;
+        const userProgressRef = this.usersRef.child(this.currentUser.uid + '/quizProgress');
+        userProgressRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data && !this._isLocalUpdate) {
+                this.applyRemoteProgress(data);
             }
-        }
-        this.saveProgressToFirebase();
+            this._isLocalUpdate = false;
+        });
     }
 
-    saveProgress() {
+    applyRemoteProgress(data) {
+        if (!data) return;
+        const localAnswered = new Set(this.answeredQuestions);
+        const remoteAnswered = new Set(data.answered || []);
+        const localWrong = new Set(this.wrongQuestions);
+        const remoteWrong = new Set(data.wrong || []);
+        const mergedAnswered = new Set([...localAnswered, ...remoteAnswered]);
+        const mergedWrong = new Set([...localWrong, ...remoteWrong]);
+        const localScore = this.score;
+        const remoteScore = data.score || 0;
+        this.score = Math.max(localScore, remoteScore);
+        this.answeredQuestions = mergedAnswered;
+        this.wrongQuestions = mergedWrong;
+        this.answeredCount = this.answeredQuestions.size + this.wrongQuestions.size;
+        this.history = data.history || this.history;
+        if (this.history.length > 50) this.history = this.history.slice(-50);
+        this.saveProgressToLocal();
+        this.renderGameBoard();
+    }
+
+    saveProgressToFirebase() {
+        if (!this.currentUser) return;
+        this._isLocalUpdate = true;
+        const data = {
+            score: this.score,
+            answered: Array.from(this.answeredQuestions),
+            wrong: Array.from(this.wrongQuestions),
+            history: this.history.slice(-50),
+            userName: this.currentUser.name,
+            userEmail: this.currentUser.email,
+            updatedAt: Date.now()
+        };
+        this.usersRef.child(this.currentUser.uid + '/quizProgress').set(data).catch(err => {
+            console.error('Ошибка сохранения:', err);
+            this._isLocalUpdate = false;
+        });
+    }
+
+    saveProgressToLocal() {
         if (!this.currentUser) return;
         const key = 'soldaty_quiz_progress_' + this.currentUser.uid;
         const data = {
             score: this.score,
             answered: Array.from(this.answeredQuestions),
-            history: this.history,
+            wrong: Array.from(this.wrongQuestions),
+            history: this.history.slice(-50),
             userName: this.currentUser.name,
             userEmail: this.currentUser.email,
             updatedAt: Date.now()
         };
         localStorage.setItem(key, JSON.stringify(data));
-        this.saveProgressToFirebase();
     }
 
-    saveProgressToFirebase() {
+    loadProgressFromFirebase() {
         if (!this.currentUser) return;
-        this.usersRef.child(this.currentUser.uid + '/quizProgress').set({
-            score: this.score,
-            answered: Array.from(this.answeredQuestions),
-            history: this.history.slice(-50),
-            userName: this.currentUser.name,
-            userEmail: this.currentUser.email,
-            updatedAt: Date.now()
-        }).catch(err => console.error('Ошибка сохранения прогресса в Firebase:', err));
-    }
-
-    async loadUserProgress(uid) {
-        try {
-            const snapshot = await this.usersRef.child(uid + '/quizProgress').once('value');
+        const key = 'soldaty_quiz_progress_' + this.currentUser.uid;
+        const localData = localStorage.getItem(key);
+        if (localData) {
+            try {
+                const data = JSON.parse(localData);
+                this.score = data.score || 0;
+                this.answeredQuestions = new Set(data.answered || []);
+                this.wrongQuestions = new Set(data.wrong || []);
+                this.answeredCount = this.answeredQuestions.size + this.wrongQuestions.size;
+                this.history = data.history || [];
+            } catch (e) {
+                console.error('Ошибка загрузки локального прогресса:', e);
+            }
+        }
+        this.usersRef.child(this.currentUser.uid + '/quizProgress').once('value').then(snapshot => {
             const data = snapshot.val();
             if (data) {
-                return {
-                    score: data.score || 0,
-                    answered: data.answered || [],
-                    history: data.history || [],
-                    userName: data.userName || 'Аноним',
-                    userEmail: data.userEmail || '',
-                    updatedAt: data.updatedAt || 0
-                };
+                const remoteAnswered = new Set(data.answered || []);
+                const remoteWrong = new Set(data.wrong || []);
+                const mergedAnswered = new Set([...this.answeredQuestions, ...remoteAnswered]);
+                const mergedWrong = new Set([...this.wrongQuestions, ...remoteWrong]);
+                this.score = Math.max(this.score, data.score || 0);
+                this.answeredQuestions = mergedAnswered;
+                this.wrongQuestions = mergedWrong;
+                this.answeredCount = this.answeredQuestions.size + this.wrongQuestions.size;
+                this.history = data.history || this.history;
+                if (this.history.length > 50) this.history = this.history.slice(-50);
+                this.saveProgressToLocal();
+                this.renderGameBoard();
+            } else {
+                this.saveProgressToFirebase();
             }
-            return null;
-        } catch (error) {
-            console.error('Ошибка загрузки прогресса пользователя:', error);
-            return null;
-        }
+        }).catch(err => console.error('Ошибка загрузки из Firebase:', err));
     }
 
-    async resetUserProgress(uid) {
-        if (!this.isAdmin) {
-            this.showFeedback('Доступ запрещён', 'error');
-            return;
-        }
-        if (!confirm('Сбросить прогресс этого пользователя?')) return;
-        try {
-            await this.usersRef.child(uid + '/quizProgress').remove();
-            this.showFeedback('✅ Прогресс пользователя сброшен!', 'success');
-            this.openUserProgressPanel();
-        } catch (error) {
-            console.error('Ошибка сброса прогресса:', error);
-            this.showFeedback('❌ Ошибка при сбросе прогресса', 'error');
-        }
+    saveProgress() {
+        this.saveProgressToLocal();
+        if (this.syncTimeout) clearTimeout(this.syncTimeout);
+        this.syncTimeout = setTimeout(() => {
+            this.saveProgressToFirebase();
+        }, 500);
     }
 
     async checkAdminStatus() {
@@ -187,10 +214,8 @@ class QuizGame {
                 });
                 await this.quizRef.child('categories').set(categoriesData);
                 this.categories = categoriesData;
-                console.log('Созданы категории-заглушки');
             } else {
                 this.categories = data;
-                console.log('Загружено ' + Object.keys(this.categories).length + ' категорий');
             }
             this.calculateTotalQuestions();
         } catch (error) {
@@ -209,7 +234,6 @@ class QuizGame {
 
     setupAdminEasterEgg() {
         if (!this.isAdmin) return;
-        console.log('Админ-панель активирована');
         this.removeEasterEgg();
         this.createEasterEggInFooter();
         document.addEventListener('click', (e) => {
@@ -303,7 +327,6 @@ class QuizGame {
                     if (hint) hint.style.opacity = '0.4';
                 }
             });
-            console.log('Админ-панель: клик 5 раз по зоне в футере');
         }, 500);
     }
 
@@ -443,6 +466,7 @@ class QuizGame {
                             <i class="fas fa-gamepad"></i>
                             ВИКТОРИНА
                             <span class="game-subtitle">Своя игра</span>
+                            ${this.currentUser ? '<span style="font-size:0.7rem;color:#5a7a5a;margin-left:10px;">' + this.currentUser.name + '</span>' : ''}
                         </div>
                     </div>
                     <div class="quiz-banner">
@@ -490,6 +514,7 @@ class QuizGame {
                         <i class="fas fa-gamepad"></i>
                         ВИКТОРИНА
                         <span class="game-subtitle">Своя игра</span>
+                        ${this.currentUser ? '<span style="font-size:0.7rem;color:#5a7a5a;margin-left:10px;">' + this.currentUser.name + '</span>' : ''}
                         ${this.adminModeActivated ? '<span class="admin-badge">АДМИН</span>' : ''}
                     </div>
                     <div class="game-stats">
@@ -567,16 +592,21 @@ class QuizGame {
                             <div class="cost-label">${cost}</div>
                             ${categories.map(catId => {
                                 const question = this.categories[catId]?.questions?.[cost];
-                                const isAnswered = this.answeredQuestions.has(`${catId}_${cost}`);
+                                const isCorrectAnswered = this.answeredQuestions.has(`${catId}_${cost}`);
+                                const isWrongAnswered = this.wrongQuestions.has(`${catId}_${cost}`);
+                                const isAnswered = isCorrectAnswered || isWrongAnswered;
                                 const hasQuestion = !!question;
+                                let statusIcon = '';
+                                if (isCorrectAnswered) statusIcon = '<i class="fas fa-check" style="color:#2d7d2d;"></i>';
+                                else if (isWrongAnswered) statusIcon = '<i class="fas fa-times" style="color:#7d2d2d;"></i>';
                                 return `
                                     <div class="board-cell ${isAnswered ? 'answered' : ''} ${hasQuestion ? '' : 'empty'}"
                                         data-category="${catId}"
                                         data-cost="${cost}"
                                         ${hasQuestion && !isAnswered ? `onclick="game.selectQuestion('${catId}', '${cost}')"` : ''}
-                                        title="${hasQuestion ? 'Открыть вопрос' : 'Нет вопроса'}"
+                                        title="${hasQuestion ? (isAnswered ? 'Уже отвечено' : 'Открыть вопрос') : 'Нет вопроса'}"
                                         style="${!hasQuestion ? 'background: #0a120a; color: #1a2a1a; border-color: #1a2a1a; cursor: default;' : ''}">
-                                        ${isAnswered ? '<i class="fas fa-check"></i>' : (hasQuestion ? cost : '')}
+                                        ${isAnswered ? statusIcon : (hasQuestion ? cost : '')}
                                         ${!hasQuestion ? '·' : ''}
                                     </div>
                                 `;
@@ -601,12 +631,12 @@ class QuizGame {
         modal.innerHTML = `
             <div class="admin-modal-content" style="max-width: 900px; max-height: 90vh;">
                 <div class="admin-modal-header">
-                    <h3><i class="fas fa-users"></i> Прогресс пользователей</h3>
+                    <h3>Прогресс пользователей</h3>
                     <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
                 </div>
                 <div id="usersProgressList" style="max-height: 60vh; overflow-y: auto;">
                     <div style="text-align: center; padding: 20px; color: #8aa07a;">
-                        <i class="fas fa-spinner fa-spin"></i> Загрузка...
+                        Загрузка...
                     </div>
                 </div>
                 <div class="form-actions">
@@ -631,8 +661,7 @@ class QuizGame {
             if (!data) {
                 listContainer.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #5a7a5a;">
-                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #bd8a3e;"></i>
-                        <p style="margin-top: 10px;">Нет данных о пользователях</p>
+                        <p>Нет данных о пользователях</p>
                     </div>
                 `;
                 return;
@@ -643,6 +672,8 @@ class QuizGame {
                 const progress = userData.quizProgress;
                 if (!progress) continue;
                 const answeredCount = progress.answered ? progress.answered.length : 0;
+                const wrongCount = progress.wrong ? progress.wrong.length : 0;
+                const totalAnswered = answeredCount + wrongCount;
                 const score = progress.score || 0;
                 const name = progress.userName || 'Аноним';
                 const email = progress.userEmail || '';
@@ -682,7 +713,7 @@ class QuizGame {
                         <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <span style="color: #bd8a3e; font-weight: bold;">${score} очков</span>
-                                <span style="color: #5a7a5a; font-size: 0.8rem;">${answeredCount} вопросов</span>
+                                <span style="color: #5a7a5a; font-size: 0.8rem;">${totalAnswered} вопросов</span>
                                 <span style="color: #5a7a5a; font-size: 0.7rem;">${updatedAt}</span>
                             </div>
                             <button onclick="game.resetUserProgress('${uid}')" class="admin-btn small danger" title="Сбросить прогресс">
@@ -698,8 +729,7 @@ class QuizGame {
             console.error('Ошибка загрузки списка пользователей:', error);
             listContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: #cd5d5d;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
-                    <p style="margin-top: 10px;">Ошибка загрузки данных</p>
+                    <p>Ошибка загрузки данных</p>
                 </div>
             `;
         }
@@ -707,7 +737,7 @@ class QuizGame {
 
     refreshUsersList() {
         this.loadUsersList();
-        this.showFeedback('🔄 Список обновлён', 'info');
+        this.showFeedback('Список обновлён', 'info');
     }
 
     undoLastAnswer() {
@@ -719,28 +749,57 @@ class QuizGame {
         const key = last.categoryId + '_' + last.cost;
         if (this.answeredQuestions.has(key)) {
             this.answeredQuestions.delete(key);
-            this.answeredCount = this.answeredQuestions.size;
-            this.score -= last.scoreChange;
-            this.showFeedback('↩️ Отменён ответ на вопрос ' + last.cost + ' (' + (last.scoreChange > 0 ? '+' : '') + last.scoreChange + ' очков)', 'info');
-            this.saveProgress();
-            this.renderGameBoard();
         }
+        if (this.wrongQuestions.has(key)) {
+            this.wrongQuestions.delete(key);
+        }
+        this.answeredCount = this.answeredQuestions.size + this.wrongQuestions.size;
+        this.score -= last.scoreChange;
+        this.showFeedback('↩️ Отменён ответ на вопрос ' + last.cost + ' (' + (last.scoreChange > 0 ? '+' : '') + last.scoreChange + ' очков)', 'info');
+        this.saveProgress();
+        this.renderGameBoard();
     }
 
     resetProgress() {
         if (!confirm('Сбросить весь прогресс? Это действие нельзя отменить!')) return;
         this.score = 0;
         this.answeredQuestions = new Set();
+        this.wrongQuestions = new Set();
         this.answeredCount = 0;
         this.history = [];
-        this.lastAnswer = null;
         this.saveProgress();
         this.renderGameBoard();
-        this.showFeedback('🔄 Прогресс сброшен', 'info');
+        this.showFeedback('Прогресс сброшен', 'info');
+    }
+
+    async resetUserProgress(uid) {
+        if (!this.isAdmin) {
+            this.showFeedback('Доступ запрещён', 'error');
+            return;
+        }
+        if (!confirm('Сбросить прогресс этого пользователя?')) return;
+        try {
+            await this.usersRef.child(uid + '/quizProgress').remove();
+            if (this.currentUser && this.currentUser.uid === uid) {
+                this.score = 0;
+                this.answeredQuestions = new Set();
+                this.wrongQuestions = new Set();
+                this.answeredCount = 0;
+                this.history = [];
+                this.saveProgress();
+                this.renderGameBoard();
+            }
+            this.showFeedback('Прогресс пользователя сброшен', 'success');
+            this.openUserProgressPanel();
+        } catch (error) {
+            console.error('Ошибка сброса прогресса:', error);
+            this.showFeedback('Ошибка при сбросе прогресса', 'error');
+        }
     }
 
     async selectQuestion(categoryId, cost) {
-        if (this.answeredQuestions.has(`${categoryId}_${cost}`)) {
+        const key = categoryId + '_' + cost;
+        if (this.answeredQuestions.has(key) || this.wrongQuestions.has(key)) {
             return;
         }
         const questionData = this.categories[categoryId]?.questions?.[cost];
@@ -988,8 +1047,7 @@ class QuizGame {
                     matchCount++;
                 }
             }
-            const matchPercentage = matchCount / keywords.length;
-            if (matchPercentage >= 0.4) {
+            if (matchCount / keywords.length >= 0.4) {
                 return true;
             }
         }
@@ -1085,9 +1143,9 @@ class QuizGame {
         if (isCorrect) {
             scoreChange = cost;
             this.score += cost;
+            this.answeredQuestions.add(key);
             resultMessage.innerHTML = `
                 <div class="result-correct">
-                    <i class="fas fa-check-circle"></i>
                     <span>Правильно! +${cost} очков</span>
                 </div>
                 <div class="result-user-answer">
@@ -1102,9 +1160,9 @@ class QuizGame {
         } else {
             scoreChange = -cost;
             this.score -= cost;
+            this.wrongQuestions.add(key);
             resultMessage.innerHTML = `
                 <div class="result-wrong">
-                    <i class="fas fa-times-circle"></i>
                     <span>Неправильно! -${cost} очков</span>
                 </div>
                 <div class="result-user-answer">
@@ -1117,8 +1175,7 @@ class QuizGame {
             resultMessage.style.borderColor = '#7d2d2d';
             this.showFeedback('Неправильно! -' + cost + ' очков', 'error');
         }
-        this.answeredQuestions.add(key);
-        this.answeredCount++;
+        this.answeredCount = this.answeredQuestions.size + this.wrongQuestions.size;
         this.history.push({
             categoryId: this.currentQuestion.categoryId,
             cost: this.currentQuestion.cost,
@@ -1127,6 +1184,7 @@ class QuizGame {
             userAnswer: this.userAnswer,
             correctAnswer: this.currentQuestion.answer
         });
+        if (this.history.length > 50) this.history = this.history.slice(-50);
         this.saveProgress();
         this.updateStats();
     }
@@ -1371,7 +1429,7 @@ class QuizGame {
         modal.innerHTML = `
             <div class="admin-modal-content" style="max-width: 900px; max-height: 90vh;">
                 <div class="admin-modal-header">
-                    <h3>РЕДАКТИРОВАНИЕ ВОПРОСОВ</h3>
+                    <h3>Редактирование вопросов</h3>
                     <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
                 </div>
                 <div class="questions-edit-container">
@@ -1403,7 +1461,6 @@ class QuizGame {
                                         </div>
                                     `).join('') : `
                                         <div class="empty-questions-message">
-                                            <i class="fas fa-info-circle"></i>
                                             Нет вопросов в этой категории
                                             <button onclick="game.addQuestionToCategory('${catId}')" class="admin-btn small primary" style="margin-left: 10px;">
                                                 <i class="fas fa-plus"></i> Добавить
@@ -1444,7 +1501,7 @@ class QuizGame {
         modal.innerHTML = `
             <div class="admin-modal-content">
                 <div class="admin-modal-header">
-                    <h3><i class="fas fa-plus-circle"></i> Добавить вопрос в "${this.categories[categoryId].name}"</h3>
+                    <h3>Добавить вопрос в "${this.categories[categoryId].name}"</h3>
                     <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
                 </div>
                 <form id="addQuestionForm" class="admin-form">
@@ -1454,7 +1511,7 @@ class QuizGame {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label><i class="fas fa-dollar-sign"></i> Стоимость вопроса</label>
+                        <label>Стоимость вопроса</label>
                         <select id="adminCost" required>
                             <option value="">Выберите стоимость</option>
                             ${this.costs.map(cost => `
@@ -1463,15 +1520,15 @@ class QuizGame {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label><i class="fas fa-question-circle"></i> Вопрос</label>
+                        <label>Вопрос</label>
                         <textarea id="adminQuestion" required placeholder="Введите текст вопроса..." rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label><i class="fas fa-check-circle"></i> Ответ</label>
+                        <label>Ответ</label>
                         <input type="text" id="adminAnswer" required placeholder="Введите правильный ответ">
                     </div>
                     <div class="form-group">
-                        <label><i class="fas fa-info-circle"></i> Пояснение (необязательно)</label>
+                        <label>Пояснение (необязательно)</label>
                         <textarea id="adminExplanation" placeholder="Дополнительная информация..." rows="2"></textarea>
                     </div>
                     <div class="form-actions">
@@ -1664,7 +1721,7 @@ class QuizGame {
         modal.innerHTML = `
             <div class="admin-modal-content">
                 <div class="admin-modal-header">
-                    <h3><i class="fas fa-plus-circle"></i> Добавить категорию</h3>
+                    <h3>Добавить категорию</h3>
                     <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
                 </div>
                 <form id="addCategoryForm" class="admin-form">
@@ -1721,12 +1778,12 @@ class QuizGame {
             return;
         }
         if (this.categories[id]) {
-            this.showFeedback('❌ Категория с таким ID уже существует!', 'error');
+            this.showFeedback('Категория с таким ID уже существует!', 'error');
             return;
         }
         const existing = Object.values(this.categories).some(cat => cat.name === name);
         if (existing) {
-            this.showFeedback('❌ Категория с таким названием уже существует!', 'error');
+            this.showFeedback('Категория с таким названием уже существует!', 'error');
             return;
         }
         try {
@@ -1734,14 +1791,14 @@ class QuizGame {
                 name: name,
                 questions: {}
             });
-            this.showFeedback('✅ Категория "' + name + '" создана!', 'success');
+            this.showFeedback('Категория "' + name + '" создана!', 'success');
             document.querySelector('.admin-modal').remove();
             await this.initializeCategories();
             this.renderGameBoard();
             setTimeout(() => this.openCategoryManager(), 300);
         } catch (error) {
             console.error('Ошибка создания категории:', error);
-            this.showFeedback('❌ Ошибка при создании категории', 'error');
+            this.showFeedback('Ошибка при создании категории', 'error');
         }
     }
 
@@ -1829,6 +1886,7 @@ class QuizGame {
         }
         this.score = 0;
         this.answeredQuestions = new Set();
+        this.wrongQuestions = new Set();
         this.answeredCount = 0;
         this.currentQuestion = null;
         this.history = [];
@@ -1876,10 +1934,16 @@ class QuizGame {
                     email: user.email,
                     name: user.displayName || user.email || 'Аноним'
                 };
-                this.loadProgress();
+                this.loadProgressFromFirebase();
                 this.renderGameBoard();
             } else {
                 this.currentUser = null;
+                this.score = 0;
+                this.answeredQuestions = new Set();
+                this.wrongQuestions = new Set();
+                this.answeredCount = 0;
+                this.history = [];
+                this.renderGameBoard();
             }
         });
     }
