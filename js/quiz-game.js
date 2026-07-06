@@ -526,10 +526,6 @@ class QuizGame {
                             <i class="fas fa-check-circle"></i>
                             <span id="answeredDisplay">${this.answeredCount}/${this.totalQuestions}</span>
                         </div>
-                        <div class="stat-item" style="cursor:pointer;" onclick="game.undoLastAnswer()" title="Отменить последний ответ">
-                            <i class="fas fa-undo"></i>
-                            <span style="font-size:0.8rem;">Отменить</span>
-                        </div>
                         <div class="stat-item" style="cursor:pointer;" onclick="game.resetProgress()" title="Сбросить прогресс">
                             <i class="fas fa-trash"></i>
                             <span style="font-size:0.8rem;">Сбросить</span>
@@ -634,9 +630,9 @@ class QuizGame {
                     <h3>Прогресс пользователей</h3>
                     <button class="admin-modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
                 </div>
-                <div id="usersProgressList" style="max-height: 60vh; overflow-y: auto;">
+                <div id="usersProgressList" style="max-height: 60vh; overflow-y: auto; padding: 5px;">
                     <div style="text-align: center; padding: 20px; color: #8aa07a;">
-                        Загрузка...
+                        <i class="fas fa-spinner fa-spin"></i> Загрузка...
                     </div>
                 </div>
                 <div class="form-actions">
@@ -661,16 +657,19 @@ class QuizGame {
             if (!data) {
                 listContainer.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #5a7a5a;">
-                        <p>Нет данных о пользователях</p>
+                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #bd8a3e;"></i>
+                        <p style="margin-top: 10px;">Нет данных о пользователях</p>
                     </div>
                 `;
                 return;
             }
             let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
             const users = Object.entries(data);
+            let hasProgress = false;
             for (const [uid, userData] of users) {
                 const progress = userData.quizProgress;
                 if (!progress) continue;
+                hasProgress = true;
                 const answeredCount = progress.answered ? progress.answered.length : 0;
                 const wrongCount = progress.wrong ? progress.wrong.length : 0;
                 const totalAnswered = answeredCount + wrongCount;
@@ -679,6 +678,7 @@ class QuizGame {
                 const email = progress.userEmail || '';
                 const updatedAt = progress.updatedAt ? new Date(progress.updatedAt).toLocaleString() : 'Неизвестно';
                 const isCurrentUser = this.currentUser && this.currentUser.uid === uid;
+                const displayName = name || uid.substring(0, 8);
                 html += `
                     <div class="user-progress-item" style="
                         display: flex;
@@ -702,12 +702,13 @@ class QuizGame {
                                 justify-content: center;
                                 color: ${isCurrentUser ? '#0f1a0f' : '#8aa07a'};
                                 font-weight: bold;
+                                font-size: 0.9rem;
                             ">
-                                ${name.charAt(0).toUpperCase()}
+                                ${displayName.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <div style="color: #ffd966; font-weight: bold;">${name} ${isCurrentUser ? '⭐' : ''}</div>
-                                <div style="color: #8aa07a; font-size: 0.8rem;">${email}</div>
+                                <div style="color: #ffd966; font-weight: bold;">${displayName} ${isCurrentUser ? '⭐' : ''}</div>
+                                <div style="color: #8aa07a; font-size: 0.75rem;">${email || 'ID: ' + uid.substring(0, 12)}</div>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
@@ -716,20 +717,44 @@ class QuizGame {
                                 <span style="color: #5a7a5a; font-size: 0.8rem;">${totalAnswered} вопросов</span>
                                 <span style="color: #5a7a5a; font-size: 0.7rem;">${updatedAt}</span>
                             </div>
-                            <button onclick="game.resetUserProgress('${uid}')" class="admin-btn small danger" title="Сбросить прогресс">
-                                <i class="fas fa-trash"></i>
+                            <button onclick="game.resetUserProgress('${uid}')" class="admin-btn small danger" title="Сбросить прогресс" style="
+                                padding: 5px 12px;
+                                border: none;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-size: 0.75rem;
+                                background: #4a1a1a;
+                                color: #ff6b6b;
+                                transition: all 0.2s;
+                                font-family: 'Gotham Pro', sans-serif;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 4px;
+                            ">
+                                <i class="fas fa-trash"></i> Сбросить
                             </button>
                         </div>
                     </div>
                 `;
             }
-            html += '</div>';
-            listContainer.innerHTML = html;
+            if (!hasProgress) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #5a7a5a;">
+                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #bd8a3e;"></i>
+                        <p style="margin-top: 10px;">Нет данных о прогрессе пользователей</p>
+                    </div>
+                `;
+            } else {
+                html += '</div>';
+                listContainer.innerHTML = html;
+            }
         } catch (error) {
             console.error('Ошибка загрузки списка пользователей:', error);
             listContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: #cd5d5d;">
-                    <p>Ошибка загрузки данных</p>
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <p style="margin-top: 10px;">Ошибка загрузки данных</p>
+                    <p style="font-size: 0.8rem; color: #8aa07a;">Проверьте подключение к Firebase</p>
                 </div>
             `;
         }
@@ -790,7 +815,7 @@ class QuizGame {
                 this.renderGameBoard();
             }
             this.showFeedback('Прогресс пользователя сброшен', 'success');
-            this.openUserProgressPanel();
+            this.loadUsersList();
         } catch (error) {
             console.error('Ошибка сброса прогресса:', error);
             this.showFeedback('Ошибка при сбросе прогресса', 'error');
@@ -1187,11 +1212,31 @@ class QuizGame {
         if (this.history.length > 50) this.history = this.history.slice(-50);
         this.saveProgress();
         this.updateStats();
+        this.updateBoardCell(this.currentQuestion.categoryId, this.currentQuestion.cost, isCorrect);
+    }
+
+    updateBoardCell(categoryId, cost, isCorrect) {
+        const cells = document.querySelectorAll('.board-cell');
+        const key = categoryId + '_' + cost;
+        for (const cell of cells) {
+            if (cell.dataset.category === categoryId && cell.dataset.cost === cost) {
+                cell.classList.add('answered');
+                if (isCorrect) {
+                    cell.innerHTML = '<i class="fas fa-check" style="color:#2d7d2d;"></i>';
+                    cell.style.color = '#2d7d2d';
+                } else {
+                    cell.innerHTML = '<i class="fas fa-times" style="color:#7d2d2d;"></i>';
+                    cell.style.color = '#7d2d2d';
+                }
+                cell.onclick = null;
+                cell.title = 'Уже отвечено';
+                break;
+            }
+        }
     }
 
     continueGame() {
         this.closeQuestion();
-        this.renderGameBoard();
         if (this.answeredCount === this.totalQuestions && this.totalQuestions > 0) {
             setTimeout(() => this.showGameComplete(), 500);
         }
