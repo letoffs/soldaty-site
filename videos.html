@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/videos.css">
-    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="icon" type="image/png" href="Resources/soldaty_icon.png">
 </head>
 <body>
 <div class="container">
@@ -27,13 +27,11 @@
         <a href="gallery.html" class="nav-link">Фотоальбом</a>
     </div>
 
-    <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
     <div id="authButtons" class="auth-buttons">
         <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
         <button onclick="showAuthModal()" class="auth-header-btn register"><i class="fas fa-user-plus"></i> Регистрация</button>
     </div>
-
-    <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ -->
+    
     <div id="userInfo" class="user-info" style="display: none;">
         <img id="userAvatar" class="user-avatar" src="" alt="avatar">
         <div class="user-details">
@@ -43,7 +41,6 @@
         <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeAuthModal()">&times;</span>
@@ -53,7 +50,6 @@
                 <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
             </div>
         
-            <!-- ФОРМА ВХОДА -->
             <div id="loginForm" class="auth-form">
                 <h3>Вход в аккаунт</h3>
                 <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
@@ -74,7 +70,6 @@
                 </button>
             </div>
             
-            <!-- ФОРМА РЕГИСТРАЦИИ -->
             <div id="registerForm" class="auth-form" style="display: none;">
                 <h3>Регистрация</h3>
                 <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
@@ -98,7 +93,6 @@
         </div>
     </div>
 
-    <!-- АДМИН-ПАНЕЛЬ -->
     <div id="adminPanel" class="admin-panel" style="display: none;">
         <div class="admin-header">
             <h3><i class="fas fa-crown"></i> Админ-панель — Управление видео</h3>
@@ -193,7 +187,6 @@
         </button>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
     <div id="editModal" class="modal-edit">
         <div class="modal-edit-content">
             <h3><i class="fas fa-edit"></i> Редактирование видео</h3>
@@ -266,7 +259,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ПРОСМОТРА ВИДЕО -->
     <div id="videoModal" class="modal video-modal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeVideoModal()">&times;</span>
@@ -276,6 +268,29 @@
         </div>
     </div>
 
+    <div class="maintenance-placeholder">
+        <div class="maintenance-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="maintenance-content">
+            <h1 class="maintenance-title">🎬 Видеотека на ремонте</h1>
+            <p class="maintenance-text">
+                Мы обновляем раздел с видео, чтобы сделать его ещё удобнее и интереснее.
+                Скоро здесь появятся трейлеры, клипы и закулисные кадры сериала «Солдаты».
+            </p>
+            <p class="maintenance-text secondary">
+                Приносим извинения за временные неудобства. Возвращайтесь чуть позже!
+            </p>
+            <div class="maintenance-spinner">
+                <i class="fas fa-spinner fa-pulse"></i> Идёт ремонт...
+            </div>
+            <a href="index.html" class="maintenance-home-btn">
+                <i class="fas fa-arrow-left"></i> На главную
+            </a>
+        </div>
+    </div>
+
+    <!--
     <div class="series-description">
         <h2 class="description-title"><i class="fas fa-video"></i> ВИДЕОТЕКА</h2>
         <div class="description-content"><p>Трейлеры, анонсы и лучшие клипы по мотивам сериала «Солдаты».</p></div>
@@ -299,7 +314,6 @@
         </div>
     </div>
 
-    <!-- ОСНОВНАЯ ЧАСТЬ С БОКОВОЙ ПАНЕЛЬЮ -->
     <div class="videos-page-layout">
         <aside class="videos-sidebar">
             <div class="sidebar-header">
@@ -319,10 +333,9 @@
             <div id="videosContainer"></div>
         </main>
     </div>
+    -->
 
-        <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
     <div class="feedback-banners">
-        <!-- Баннер обратной связи -->
         <div class="banner-card">
             <div class="banner-icon">
                 <i class="fas fa-comment-dots"></i>
@@ -336,14 +349,13 @@
             </a>
         </div>
         
-        <!-- Баннер поддержки -->
         <div class="banner-card">
             <div class="banner-icon">
                 <i class="fas fa-heart"></i>
             </div>
             <div class="banner-content">
                 <h4><i class="fas fa-coffee"></i> Поддержать проект</h4>
-                <p>На продвижение и развитие</p>
+                <p>Помочь с развитием и хостингом</p>
             </div>
             <a href="https://yoomoney.ru/to/4100119553580481" target="_blank" class="banner-btn donate">
                 Поддержать <i class="fas fa-external-link-alt"></i>
@@ -371,7 +383,6 @@
 </body>
 </html>
 <script>
-    // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ПОЛЯ ПОИСКА
     (function() {
         // Очищаем сразу после загрузки DOM
         const clearSearchField = () => {
