@@ -4045,6 +4045,7 @@ button,
     border-radius: 30px;
     color: #c0d0c0;
     font-size: 14px;
+    font-family: 'Magistral-Book', 'Gotham Pro', 'Montserrat', sans-serif;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
