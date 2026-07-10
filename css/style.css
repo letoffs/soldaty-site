@@ -4494,61 +4494,6 @@ button,
     padding: 40px;
 }
 
-/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ВОЗРАСТА */
-.age-verification-modal .modal-content {
-    max-width: 450px;
-    text-align: center;
-}
-
-.age-verification-icon {
-    font-size: 4rem;
-    color: #ff9800;
-    margin-bottom: 20px;
-}
-
-.age-verification-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 25px;
-    flex-wrap: wrap;
-}
-
-.age-confirm-btn {
-    background: #4caf50;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 40px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.age-cancel-btn {
-    background: #f44336;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 40px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.verify-age-btn {
-    background: #bd8a3e;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 40px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 20px;
-}
-
-.verify-age-btn:hover {
-    background: #ffb347;
-}
-
 /* ТОСТ УВЕДОМЛЕНИЯ */
 .toast-message {
     position: fixed;
