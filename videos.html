@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Солдаты — Видеотека</title>
     <meta name="description" content="Трейлеры, анонсы и лучшие клипы по мотивам сериала «Солдаты».">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/videos.css">
@@ -33,7 +38,7 @@
     </div>
     
     <div id="userInfo" class="user-info" style="display: none;">
-        <img id="userAvatar" class="user-avatar" src="" alt="avatar">
+        <img id="userAvatar" class="user-avatar" src="" alt="avatar" loading="lazy">
         <div class="user-details">
             <span id="userName"></span>
             <span id="userEmail"></span>
@@ -44,23 +49,19 @@
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeAuthModal()">&times;</span>
-        
             <div class="modal-tabs">
                 <button class="modal-tab active" onclick="showLoginForm()">Вход</button>
                 <button class="modal-tab" onclick="showRegisterForm()">Регистрация</button>
             </div>
-        
             <div id="loginForm" class="auth-form">
                 <h3>Вход в аккаунт</h3>
                 <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
-                
                 <div class="password-wrapper">
                     <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
                     <button type="button" class="toggle-password-btn" onclick="togglePassword('loginPassword', this)">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
-                
                 <button onclick="login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)" class="auth-btn">
                     <i class="fas fa-sign-in-alt"></i> Войти
                 </button>
@@ -69,19 +70,16 @@
                     <i class="fab fa-google"></i> Войти через Google
                 </button>
             </div>
-            
             <div id="registerForm" class="auth-form" style="display: none;">
                 <h3>Регистрация</h3>
                 <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
                 <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
-                
                 <div class="password-wrapper">
                     <input type="password" id="registerPassword" placeholder="Пароль" class="auth-input">
                     <button type="button" class="toggle-password-btn" onclick="togglePassword('registerPassword', this)">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
-                
                 <button onclick="register(document.getElementById('registerEmail').value, document.getElementById('registerPassword').value, document.getElementById('registerName').value)" class="auth-btn">
                     <i class="fas fa-user-plus"></i> Зарегистрироваться
                 </button>
@@ -96,7 +94,9 @@
     <div id="adminPanel" class="admin-panel" style="display: none;">
         <div class="admin-header">
             <h3><i class="fas fa-crown"></i> Админ-панель — Управление видео</h3>
-            <button onclick="hideAdminPanel()" class="close-admin"><i class="fas fa-times"></i> Закрыть</button>
+            <button onclick="hideAdminPanel()" class="close-admin" title="Закрыть">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         
         <div class="upload-methods">
@@ -144,26 +144,59 @@
         
         <input type="hidden" id="newVideoThumb" value="">
         
+        <div style="margin-bottom: 10px;">
+            <label style="color: #ffd966; font-size: 0.9rem; display: block; margin-bottom: 5px;">
+                <i class="fab fa-youtube" style="color: #ff0000;"></i> Ссылка YouTube
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="newVideoUrlYoutube" placeholder="https://www.youtube.com/watch?v=..." style="flex: 1; padding: 10px; background: #1e2a1e; border: 1px solid #3e5a3e; color: white; border-radius: 8px;">
+                <button type="button" class="detect-btn" onclick="detectVideoFromUrl('youtube')" style="background: #ff0000; border: none; padding: 8px 15px; border-radius: 8px; color: white; cursor: pointer; white-space: nowrap;">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label style="color: #ffd966; font-size: 0.9rem; display: block; margin-bottom: 5px;">
+                <i class="fab fa-vk" style="color: #2787f5;"></i> Ссылка VK
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="newVideoUrlVk" placeholder="https://vk.com/video..." style="flex: 1; padding: 10px; background: #1e2a1e; border: 1px solid #3e5a3e; color: white; border-radius: 8px;">
+                <button type="button" class="detect-btn" onclick="detectVideoFromUrl('vk')" style="background: #2787f5; border: none; padding: 8px 15px; border-radius: 8px; color: white; cursor: pointer; white-space: nowrap;">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="color: #ffd966; font-size: 0.9rem; display: block; margin-bottom: 5px;">
+                <i class="fas fa-video" style="color: #00b4d8;"></i> Ссылка Rutube
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="newVideoUrlRutube" placeholder="https://rutube.ru/video/..." style="flex: 1; padding: 10px; background: #1e2a1e; border: 1px solid #3e5a3e; color: white; border-radius: 8px;">
+                <button type="button" class="detect-btn" onclick="detectVideoFromUrl('rutube')" style="background: #00b4d8; border: none; padding: 8px 15px; border-radius: 8px; color: white; cursor: pointer; white-space: nowrap;">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <input type="hidden" id="newVideoYoutubeId" value="">
+        <input type="hidden" id="newVideoVkId" value="">
+        <input type="hidden" id="newVideoRutubeId" value="">
+        
         <input type="text" id="newVideoTitle" placeholder="Название видео *">
-        <input type="text" id="newVideoYoutubeId" placeholder="YouTube ID (например, SKgkjpOmSQ8) *">
         <textarea id="newVideoDesc" placeholder="Описание видео"></textarea>
         
         <div class="duration-input-wrapper">
             <input type="text" id="newVideoDuration" placeholder="Длительность">
-            <button type="button" class="fetch-duration-btn" onclick="fetchVideoDuration()">
+            <button type="button" class="fetch-duration-btn" onclick="fetchAllDurations()">
                 <i class="fas fa-magic"></i> Определить
             </button>
         </div>
         
         <input type="text" id="newVideoYear" placeholder="Год">
         
-        <select id="newVideoCategory">
-            <option value="trailer">Трейлеры и анонсы</option>
-            <option value="clip">Клипы и нарезки</option>
-            <option value="parody">Пародии</option>
-            <option value="behind">Закулисье</option>
-            <option value="dembel">Дембель</option>
-        </select>
+        <select id="newVideoCategory"></select>
         
         <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
             <input type="checkbox" id="newVideo18Plus">
@@ -181,10 +214,21 @@
                 <i class="fas fa-info-circle"></i> Перетаскивайте видео мышкой для изменения порядка
             </div>
         </div>
+
+        <div class="admin-categories-section">
+            <h4><i class="fas fa-tags"></i> Управление категориями (Firebase)</h4>
+            <div class="admin-categories-form">
+                <input type="text" id="newCategoryId" placeholder="ID (например: trailer)">
+                <input type="text" id="newCategoryName" placeholder="Название">
+                <input type="text" id="newCategoryIcon" placeholder="Иконка (fas fa-folder)">
+                <button onclick="addCategory()" class="add-category-btn">
+                    <i class="fas fa-plus"></i> Добавить
+                </button>
+            </div>
+            <div id="adminCategoriesList" class="admin-sort-list"></div>
+        </div>
         
-        <button onclick="addNewVideo(event)" class="submit-btn" style="background: #ffd700; color: #1a472a; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
-            <i class="fas fa-save"></i> Добавить видео
-        </button>
+        <button onclick="addNewVideo(event)" class="submit-btn">Добавить видео</button>
     </div>
 
     <div id="editModal" class="modal-edit">
@@ -192,33 +236,48 @@
             <h3><i class="fas fa-edit"></i> Редактирование видео</h3>
             <input type="hidden" id="editVideoId">
             <input type="text" id="editVideoTitle" placeholder="Название">
-            <input type="text" id="editVideoYoutubeId" placeholder="YouTube ID">
+            
+            <div style="margin-bottom: 10px;">
+                <label style="color: #ffd966; font-size: 0.85rem; display: block; margin-bottom: 3px;">
+                    <i class="fab fa-youtube" style="color: #ff0000;"></i> YouTube
+                </label>
+                <input type="text" id="editVideoUrlYoutube" placeholder="Ссылка YouTube" style="width:100%; padding: 10px; background: #1e2a1e; border: 1px solid #3e5a3e; color: white; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label style="color: #ffd966; font-size: 0.85rem; display: block; margin-bottom: 3px;">
+                    <i class="fab fa-vk" style="color: #2787f5;"></i> VK
+                </label>
+                <input type="text" id="editVideoUrlVk" placeholder="Ссылка VK" style="width:100%; padding: 10px; background: #1e2a1e; border: 1px solid #3e5a3e; color: white; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label style="color: #ffd966; font-size: 0.85rem; display: block; margin-bottom: 3px;">
+                    <i class="fas fa-video" style="color: #00b4d8;"></i> Rutube
+                </label>
+                <input type="text" id="editVideoUrlRutube" placeholder="Ссылка Rutube" style="width:100%; padding: 10px; background: #1e2a1e; border: 1px solid #3e5a3e; color: white; border-radius: 8px;">
+            </div>
+            
             <textarea id="editVideoDesc" placeholder="Описание"></textarea>
             
             <div class="duration-input-wrapper">
                 <input type="text" id="editVideoDuration" placeholder="Длительность">
-                <button type="button" class="fetch-duration-btn" onclick="fetchEditVideoDuration()">
+                <button type="button" class="fetch-duration-btn" onclick="fetchEditAllDurations()">
                     <i class="fas fa-magic"></i> Определить
                 </button>
             </div>
             
             <div class="upload-method" style="margin-top: 15px;">
                 <h3><i class="fas fa-link"></i> Ссылка на превью</h3>
-            
-                <!-- Поле ввода ссылки с кнопкой очистки -->
                 <div class="link-input-wrapper">
                     <input type="url" id="editVideoUrlInput" class="url-input" placeholder="https://example.com/preview.jpg">
                     <button type="button" class="clear-url-btn" onclick="clearEditUrlInput()" title="Очистить поле">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
-                <!-- Предпросмотр по ссылке -->
                 <div id="editUrlPreview" class="image-preview" style="display: none;">
                     <img id="editUrlPreviewImg" src="" alt="Preview">
                 </div>
-                
-                <!-- Кнопки действий -->
                 <div class="thumb-actions">
                     <button type="button" class="generate-thumb-btn" onclick="generateEditThumbnailFromYouTube()">
                         <i class="fab fa-youtube"></i> Из YouTube
@@ -227,13 +286,10 @@
                         <i class="fas fa-trash-alt"></i> Удалить превью
                     </button>
                 </div>
-                
-                <!-- Текущее превью -->
                 <div id="editThumbPreview" class="thumb-preview" style="display: none; margin-top: 10px;">
                     <img id="editThumbPreviewImg" src="" alt="Preview">
                     <span class="thumb-hint">Текущее превью</span>
                 </div>
-            
                 <div class="info-hint">
                     <i class="fas fa-info-circle"></i> Если удалить превью — будет использовано стандартное из YouTube
                 </div>
@@ -241,13 +297,7 @@
             
             <input type="hidden" id="editVideoThumb" value="">
             <input type="text" id="editVideoYear" placeholder="Год">
-            <select id="editVideoCategory">
-                <option value="trailer">Трейлеры и анонсы</option>
-                <option value="clip">Клипы и нарезки</option>
-                <option value="parody">Пародии</option>
-                <option value="behind">Закулисье</option>
-                <option value="dembel">Дембель</option>
-            </select>
+            <select id="editVideoCategory"></select>
             <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
                 <input type="checkbox" id="editVideo18Plus">
                 <span>Контент 18+</span>
@@ -259,38 +309,79 @@
         </div>
     </div>
 
-    <div id="videoModal" class="modal video-modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeVideoModal()">&times;</span>
-            <div id="videoPlayer" class="video-player-container"></div>
-            <div id="videoTitle" class="video-modal-title"></div>
-            <div id="videoDesc" class="video-modal-desc"></div>
-        </div>
-    </div>
-
-    <div class="maintenance-placeholder">
-        <div class="maintenance-icon">
-            <i class="fas fa-tools"></i>
-        </div>
-        <div class="maintenance-content">
-            <h1 class="maintenance-title">🎬 Видеотека на ремонте</h1>
-            <p class="maintenance-text">
-                Мы обновляем раздел с видео, чтобы сделать его ещё удобнее и интереснее.
-                Скоро здесь появятся трейлеры, клипы и закулисные кадры сериала «Солдаты».
-            </p>
-            <p class="maintenance-text secondary">
-                Приносим извинения за временные неудобства. Возвращайтесь чуть позже!
-            </p>
-            <div class="maintenance-spinner">
-                <i class="fas fa-spinner fa-pulse"></i> Идёт ремонт...
+    <div id="editCategoryModal" class="modal-edit">
+        <div class="modal-edit-content">
+            <h3><i class="fas fa-edit"></i> Редактирование категории</h3>
+            <input type="hidden" id="editCategoryKey">
+            <input type="text" id="editCategoryId" placeholder="ID категории">
+            <input type="text" id="editCategoryName" placeholder="Название категории">
+            <input type="text" id="editCategoryIcon" placeholder="Иконка (fas fa-folder)">
+            <div class="edit-buttons">
+                <button class="save-edit-btn" onclick="saveEditedCategory(event)"><i class="fas fa-save"></i> Сохранить</button>
+                <button class="cancel-edit-btn" onclick="closeEditCategoryModal()"><i class="fas fa-times"></i> Отмена</button>
             </div>
-            <a href="index.html" class="maintenance-home-btn">
-                <i class="fas fa-arrow-left"></i> На главную
-            </a>
         </div>
     </div>
 
-    <!--
+    <div id="ageVerificationModal" class="modal age-verification-modal">
+        <div class="modal-content">
+            <div class="age-verification-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <div class="age-verification-content">
+                <h3>Подтверждение возраста</h3>
+                <p>Для просмотра этого видео необходимо подтвердить, что вам есть 18 лет</p>
+                
+                <div class="age-input-group">
+                    <label for="ageDay">День</label>
+                    <select id="ageDay">
+                        <option value="">ДД</option>
+                    </select>
+                </div>
+                
+                <div class="age-input-group">
+                    <label for="ageMonth">Месяц</label>
+                    <select id="ageMonth">
+                        <option value="">ММ</option>
+                        <option value="1">Январь</option>
+                        <option value="2">Февраль</option>
+                        <option value="3">Март</option>
+                        <option value="4">Апрель</option>
+                        <option value="5">Май</option>
+                        <option value="6">Июнь</option>
+                        <option value="7">Июль</option>
+                        <option value="8">Август</option>
+                        <option value="9">Сентябрь</option>
+                        <option value="10">Октябрь</option>
+                        <option value="11">Ноябрь</option>
+                        <option value="12">Декабрь</option>
+                    </select>
+                </div>
+                
+                <div class="age-input-group">
+                    <label for="ageYear">Год</label>
+                    <select id="ageYear">
+                        <option value="">ГГГГ</option>
+                    </select>
+                </div>
+                
+                <div class="age-verification-buttons">
+                    <button class="age-confirm-btn" onclick="confirmAge()">
+                        <i class="fas fa-check"></i> Подтвердить
+                    </button>
+                    <button class="age-cancel-btn" onclick="cancelAgeVerification()">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                </div>
+                
+                <div id="ageError" class="age-error" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Вам должно быть 18 лет для просмотра этого видео</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="series-description">
         <h2 class="description-title"><i class="fas fa-video"></i> ВИДЕОТЕКА</h2>
         <div class="description-content"><p>Трейлеры, анонсы и лучшие клипы по мотивам сериала «Солдаты».</p></div>
@@ -305,9 +396,11 @@
         <div class="sort-container">
             <label><i class="fas fa-sort"></i> Сортировать:</label>
             <select id="sortSelect" onchange="setSortOrder(this.value)">
-                <option value="default">По порядку (по умолчанию)</option>
+                <option value="default">По порядку</option>
                 <option value="newest">Сначала новые</option>
                 <option value="oldest">Сначала старые</option>
+                <option value="year-desc">По году (новые)</option>
+                <option value="year-asc">По году (старые)</option>
                 <option value="title-asc">Название (А-Я)</option>
                 <option value="title-desc">Название (Я-А)</option>
             </select>
@@ -328,12 +421,16 @@
                     <i class="fas fa-video"></i>
                     <span>Все видео</span>
                 </div>
-                <div class="videos-count" id="videosCount"></div>
+                <div class="videos-count" id="videosCount">Загрузка...</div>
             </div>
-            <div id="videosContainer"></div>
+            <div id="videosContainer">
+                <div class="loading-placeholder">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                    <p>Загрузка видео...</p>
+                </div>
+            </div>
         </main>
     </div>
-    -->
 
     <div class="feedback-banners">
         <div class="banner-card">
@@ -369,47 +466,40 @@
             © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
             Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
         </div>
-        <div id="secretAdminBtn" class="secret-admin-btn" title="⚡ Кликните 3 раза для доступа к админ-панели"></div>
+        <div id="secretAdminBtn" class="secret-admin-btn" title="Кликните 3 раза для доступа к админ-панели"></div>
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="firebase-config.js"></script>
-<script src="js/firebase-auth.js"></script>
-<script src="https://www.youtube.com/iframe_api"></script>
-<script src="js/videos.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js" defer></script>
+<script src="firebase-config.js" defer></script>
+<script src="js/firebase-auth.js" defer></script>
+<script src="js/videos.js" defer></script>
 </body>
 </html>
 <script>
     (function() {
-        // Очищаем сразу после загрузки DOM
         const clearSearchField = () => {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
                 searchInput.value = '';
-                console.log('✅ Поле поиска очищено');
             }
         };
         
-        // Запускаем сразу
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', clearSearchField);
         } else {
             clearSearchField();
         }
         
-        // Также очищаем через небольшую задержку (на случай, если какой-то скрипт позже заполняет)
         setTimeout(clearSearchField, 100);
         setTimeout(clearSearchField, 500);
         
-        // Наблюдатель за изменениями (если кто-то меняет поле после загрузки)
         const observer = new MutationObserver(() => {
             const searchInput = document.getElementById('searchInput');
             if (searchInput && searchInput.value && searchInput.value.includes('@')) {
                 searchInput.value = '';
-                console.log('🛡️ Обнаружен email в поиске, очищено');
             }
         });
         
