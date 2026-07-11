@@ -6,10 +6,10 @@
     <title>Солдаты — Саундтреки</title>
     <meta name="description" content="Саундтреки сериала «Солдаты» — слушать онлайн">
     <meta name="theme-color" content="#1a2a1a">
-    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="icon" type="image/png" href="../resources/soldaty_icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/soundtracks.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/soundtracks.css">
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -17,40 +17,40 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
-    <script src="firebase-config.js"></script>
-    <script src="js/firebase-auth.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../js/firebase-auth.js"></script>
 </head>
 <body>
 
 <div class="container">
-    <div class="header heroes-header">
-        <a href="index.html" class="logo-link">
-            <img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
-        </a>
-        <p class="music-subtitle">Музыка из сериала «Солдаты» — песни, которые звучали в любимых сериях</p>
-        <div class="music-line"></div>
-        <div class="nav-menu">
+    <div class="header">
+        <a href="index.html" class="logo-link"><img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image"></a>
+        <p>Музыка из сериала «Солдаты» — песни, которые звучали в любимых сериях</p>
+    </div>
+
+    <div class="nav-menu">
             <a href="index.html" class="nav-link">Сериал</a>
             <a href="heroes.html" class="nav-link">Персонажи</a>
             <a href="soundtracks.html" class="nav-link active">Саундтреки</a>
             <a href="quiz.html" class="nav-link">Викторина</a>
             <a href="videos.html" class="nav-link">Видеотека</a>
             <a href="gallery.html" class="nav-link">Фотоальбом</a>
-        </div>
     </div>
 
+    <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
     <div id="authButtons" class="auth-buttons">
-        <button onclick="if(window.showAuthModal) window.showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
-        <button onclick="if(window.showAuthModal) window.showAuthModal()" class="auth-header-btn"><i class="fas fa-user-plus"></i> Регистрация</button>
+        <button onclick="showAuthModal()" class="auth-header-btn"><i class="fas fa-sign-in-alt"></i> Вход</button>
+        <button onclick="showAuthModal()" class="auth-header-btn register"><i class="fas fa-user-plus"></i> Регистрация</button>
     </div>
     
+    <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ -->
     <div id="userInfo" class="user-info" style="display: none;">
         <img id="userAvatar" class="user-avatar" src="" alt="avatar">
         <div class="user-details">
             <span id="userName"></span>
             <span id="userEmail"></span>
         </div>
-        <button onclick="if(window.logout) window.logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+        <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
@@ -183,47 +183,13 @@
         <div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
     </div>
 
-        <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
-    <div class="feedback-banners">
-        <!-- Баннер обратной связи -->
-        <div class="banner-card">
-            <div class="banner-icon">
-                <i class="fas fa-comment-dots"></i>
-            </div>
-            <div class="banner-content">
-                <h4><i class="fas fa-bullhorn"></i> Есть идея?</h4>
-                <p>Предложения и сообщения об ошибках</p>
-            </div>
-            <a href="feedback.html" class="banner-btn">
-                Написать <i class="fas fa-arrow-right"></i>
-            </a>
-        </div>
-        
-        <!-- Баннер поддержки -->
-        <div class="banner-card">
-            <div class="banner-icon">
-                <i class="fas fa-heart"></i>
-            </div>
-            <div class="banner-content">
-                <h4><i class="fas fa-coffee"></i> Поддержать проект</h4>
-                <p>На продвижение и развитие</p>
-            </div>
-            <a href="https://yoomoney.ru/to/4100119553580481" target="_blank" class="banner-btn donate">
-                Поддержать <i class="fas fa-external-link-alt"></i>
-            </a>
-        </div>
-    </div>
-
     <div class="footer">
         Саундтреки сериала «Солдаты».
+        Предупреждение: треки сохранены в base64, поэтому они могут долго загружаться
         <div id="secretAdminBtn" class="secret-admin-btn" title="⚡ Кликните 3 раза для доступа к админ-панели"></div>
-        <div class="copyright">
-            © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
-            Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
-        </div>
     </div>
 </div>
-    
+
 <div id="addSongModal" class="modal-add-song">
     <div class="modal-add-song-content">
         <h3><i class="fas fa-plus-circle"></i> Добавить песню</h3>
@@ -279,7 +245,38 @@
     </div>
 </div>
 
-<script src="js/soundtracks.js"></script>
+    <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
+    <div class="feedback-banners">
+        <!-- Баннер обратной связи -->
+        <div class="banner-card">
+            <div class="banner-icon">
+                <i class="fas fa-comment-dots"></i>
+            </div>
+            <div class="banner-content">
+                <h4><i class="fas fa-bullhorn"></i> Есть идея?</h4>
+                <p>Предложения и сообщения об ошибках</p>
+            </div>
+            <a href="feedback.html" class="banner-btn">
+                Написать <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        
+        <!-- Баннер поддержки -->
+        <div class="banner-card">
+            <div class="banner-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="banner-content">
+                <h4><i class="fas fa-coffee"></i> Поддержать проект</h4>
+                <p>Помочь с развитием и хостингом</p>
+            </div>
+            <a href="https://yoomoney.ru/to/4100119553580481" target="_blank" class="banner-btn donate">
+                Поддержать <i class="fas fa-external-link-alt"></i>
+            </a>
+        </div>
+    </div>
+
+<script src="../js/soundtracks.js"></script>
 
 <!-- Дополнительная проверка загрузки -->
 <script>
