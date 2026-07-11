@@ -15,11 +15,12 @@
     <meta property="og:title" content="Все персонажи сериала Солдаты">
     <meta property="og:description" content="Легендарные персонажи культового армейского сериала.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="Resources/soldaty_icon.png">
+    <meta property="og:image" content="resources/soldaty_icon.png">
     
     <!-- Технические метатеги -->
     <meta name="theme-color" content="#1a2a1a">
-    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="icon" type="image/png" href="resources/soldaty_icon.png">
+    <link rel="shortcut icon" href="resources/soldaty_icon.png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -40,7 +41,7 @@
 <div class="container">
     <div class="header heroes-header">
         <a href="index.html" class="logo-link">
-            <img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
+            <img src="resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
         </a>
 
         <p>Персонажи культового сериала «Солдаты»</p>
@@ -152,12 +153,22 @@
         </div>
     </div>
 
-    <!-- СЕТКА ГЕРОЕВ -->
-    <div class="heroes-grid" id="heroesGrid">
-        <!-- Карточки будут загружены через JavaScript -->
+    <!-- СТРАНИЦА НА РЕМОНТЕ -->
+    <div class="heroes-grid" id="heroesGrid" style="display: flex; justify-content: center; align-items: center; min-height: 400px;">
+        <div class="maintenance-message" style="text-align: center; padding: 40px 20px; background: #0f1a0f; border-radius: 24px; border: 2px solid #bd8a3e; max-width: 600px;">
+            <i class="fas fa-tools" style="font-size: 4rem; color: #bd8a3e; margin-bottom: 20px; display: block;"></i>
+            <h2 style="color: #ffd966; margin-bottom: 15px;">Страница на ремонте</h2>
+            <p style="color: #ccc; line-height: 1.6; margin-bottom: 20px;">
+                Мы обновляем раздел с персонажами, чтобы сделать его ещё лучше.
+                Скоро здесь появятся новые биографии и фотографии!
+            </p>
+            <div style="display: inline-block; padding: 10px 30px; background: #bd8a3e; border-radius: 40px; color: #0f1a0f; font-weight: bold;">
+                <i class="fas fa-clock"></i> Скоро вернёмся
+            </div>
+        </div>
     </div>
 
-        <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
+    <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
     <div class="feedback-banners">
         <!-- Баннер обратной связи -->
         <div class="banner-card">
@@ -180,7 +191,7 @@
             </div>
             <div class="banner-content">
                 <h4><i class="fas fa-coffee"></i> Поддержать проект</h4>
-                <p>На продвижение и развитие</p>
+                <p>Помочь с развитием и хостингом</p>
             </div>
             <a href="https://yoomoney.ru/to/4100119553580481" target="_blank" class="banner-btn donate">
                 Поддержать <i class="fas fa-external-link-alt"></i>
@@ -188,16 +199,10 @@
         </div>
     </div>
 
-    <div class="footer"> 
-        Фан-сайт сериала «Солдаты» 
-        <div class="copyright">
-            © 2026 Фан-сайт сериала «Солдаты». Все права защищены. <br>
-            Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
-        </div>
-    </div>
+    <div class="footer"> Фан-сайт сериала «Солдаты» </div>
 </div>
 
-<script src="js/heroes-data.js"></script>
-<script src="js/heroes.js"></script>
+<!-- <script src="js/heroes-data.js"></script>
+<script src="js/heroes.js"></script> -->
 </body>
 </html>
