@@ -87,7 +87,7 @@ body::before {
     text-align: center;
     padding: 30px 0 20px;
     border-bottom: 2px solid #bd8a3e;
-    margin-bottom: 30px;
+    margin-bottom: 0px;
 }
 
 .logo-link {
