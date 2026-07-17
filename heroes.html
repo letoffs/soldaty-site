@@ -15,17 +15,17 @@
     <meta property="og:title" content="Все персонажи сериала Солдаты">
     <meta property="og:description" content="Легендарные персонажи культового армейского сериала.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="resources/soldaty_icon.png">
+    <meta property="og:image" content="Resources/soldaty_icon.png">
     
     <!-- Технические метатеги -->
     <meta name="theme-color" content="#1a2a1a">
-    <link rel="icon" type="image/png" href="resources/soldaty_icon.png">
-    <link rel="shortcut icon" href="resources/soldaty_icon.png">
+    <link rel="icon" href="favicon.png" type="image/png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/heroes.css">
 
-        <!-- Firebase SDK -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -39,23 +39,18 @@
 <body>
 
 <div class="container">
-    <div class="header heroes-header">
-        <a href="index.html" class="logo-link">
-            <img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image">
-        </a>
-
+    <div class="header">
+        <a href="index.html" class="logo-link"><img src="Resources/soldaty_logo.png" alt="Солдаты" class="logo-image"></a>
         <p>Персонажи культового сериала «Солдаты»</p>
+    </div>
 
-        <div class="heroes-top-line"></div>
-
-        <div class="nav-menu">
-            <a href="index.html" class="nav-link">Сериал</a>
-            <a href="heroes.html" class="nav-link active">Персонажи</a>
-            <a href="soundtracks.html" class="nav-link">Саундтреки</a>
-            <a href="quiz.html" class="nav-link">Викторина</a>
-            <a href="videos.html" class="nav-link">Видеотека</a>
-            <a href="gallery.html" class="nav-link">Фотоальбом</a>
-        </div>
+    <div class="nav-menu">
+        <a href="index.html" class="nav-link">Сериал</a>
+        <a href="heroes.html" class="nav-link active">Персонажи</a>
+        <a href="soundtracks.html" class="nav-link">Саундтреки</a>
+        <a href="quiz.html" class="nav-link">Викторина</a>
+        <a href="videos.html" class="nav-link">Видеотека</a>
+        <a href="gallery.html" class="nav-link">Фотоальбом</a>
     </div>
 
     <!-- КНОПКИ ВХОДА/РЕГИСТРАЦИИ -->
@@ -139,7 +134,7 @@
             <div class="description-features">
                 <div class="feature">
                     <i class="fas fa-user-tie"></i>
-                    <span>19+ персонажей</span>
+                    <span id="heroesCountNumber">0</span> персонажей
                 </div>
                 <div class="feature">
                     <i class="fas fa-star"></i>
@@ -153,24 +148,33 @@
         </div>
     </div>
 
-    <!-- СТРАНИЦА НА РЕМОНТЕ -->
-    <div class="heroes-grid" id="heroesGrid" style="display: flex; justify-content: center; align-items: center; min-height: 400px;">
-        <div class="maintenance-message" style="text-align: center; padding: 40px 20px; background: #0f1a0f; border-radius: 24px; border: 2px solid #bd8a3e; max-width: 600px;">
-            <i class="fas fa-tools" style="font-size: 4rem; color: #bd8a3e; margin-bottom: 20px; display: block;"></i>
-            <h2 style="color: #ffd966; margin-bottom: 15px;">Страница на ремонте</h2>
-            <p style="color: #ccc; line-height: 1.6; margin-bottom: 20px;">
-                Мы обновляем раздел с персонажами, чтобы сделать его ещё лучше.
-                Скоро здесь появятся новые биографии и фотографии!
-            </p>
-            <div style="display: inline-block; padding: 10px 30px; background: #bd8a3e; border-radius: 40px; color: #0f1a0f; font-weight: bold;">
-                <i class="fas fa-clock"></i> Скоро вернёмся
+    <div class="heroes-search-sort">
+        <div class="heroes-search-container">
+            <input type="text" id="heroesSearchInput" placeholder="🔍 Поиск по имени, актёру или роли..." oninput="filterHeroes()">
+            <button class="heroes-search-clear" onclick="clearHeroesSearch()" style="display: none;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+
+    <div class="heroes-grid" id="heroesGrid">
+        <!-- Карточки будут загружены через JavaScript -->
+    </div>
+
+    <div id="heroPage" style="display: none;">
+        <div class="hero-page-content">
+            <button class="hero-page-back" onclick="closeHeroPage()">
+                <i class="fas fa-arrow-left"></i> Назад к списку
+            </button>
+            <div id="heroPageContent">
+                <!-- Содержимое загружается через JS -->
             </div>
         </div>
     </div>
 
     <!-- БАННЕРЫ ОБРАТНОЙ СВЯЗИ И ПОДДЕРЖКИ -->
     <div class="feedback-banners">
-        <!-- Баннер обратной связи -->
         <div class="banner-card">
             <div class="banner-icon">
                 <i class="fas fa-comment-dots"></i>
@@ -184,7 +188,6 @@
             </a>
         </div>
         
-        <!-- Баннер поддержки -->
         <div class="banner-card">
             <div class="banner-icon">
                 <i class="fas fa-heart"></i>
@@ -206,9 +209,276 @@
             Сериал «Солдаты» является собственностью правообладателей. Сайт создан в фанатских целях.
         </div>
     </div>
+
+    <!-- АДМИН-ПАНЕЛЬ ДЛЯ ПЕРСОНАЖЕЙ -->
+    <div id="adminPanel" class="admin-panel" style="display: none;">
+        <div class="admin-header">
+            <h3><i class="fas fa-crown"></i> Админ-панель — Управление персонажами</h3>
+            <button onclick="hideAdminPanel()" class="close-admin" title="Закрыть">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Вкладки админ-панели -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchAdminTab('main')">
+                <i class="fas fa-user"></i> Основное
+            </button>
+            <button class="admin-tab" onclick="switchAdminTab('details')">
+                <i class="fas fa-list"></i> Детали
+            </button>
+            <button class="admin-tab" onclick="switchAdminTab('gallery')">
+                <i class="fas fa-images"></i> Фото
+            </button>
+            <button class="admin-tab" onclick="switchAdminTab('list')">
+                <i class="fas fa-list-ul"></i> Список
+            </button>
+        </div>
+        
+        <!-- Вкладка: Основное -->
+        <div id="adminTabMain" class="admin-tab-content active">
+            <div class="admin-hero-form">
+                <h4><i class="fas fa-user-plus"></i> Основная информация</h4>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-user"></i> Имя *</label>
+                        <input type="text" id="adminHeroName" placeholder="Например: Прапорщик Олег Шматко">
+                    </div>
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-user-circle"></i> Актёр *</label>
+                        <input type="text" id="adminHeroActor" placeholder="Например: Алексей Маклаков">
+                    </div>
+                </div>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-star"></i> Звание</label>
+                        <input type="text" id="adminHeroZvanie" placeholder="Например: Старший прапорщик">
+                    </div>
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-hashtag"></i> ID (число)</label>
+                        <input type="number" id="adminHeroId" placeholder="Автоматически">
+                    </div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-briefcase"></i> Должности</label>
+                        <input type="text" id="adminHeroPositions" placeholder="Старшина, Командир роты...">
+                        <div class="admin-hint">Укажите через запятую</div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-flag"></i> Статус</label>
+                        <select id="adminHeroStatus">
+                            <option value="Военный">Военный</option>
+                            <option value="Гражданский">Гражданский</option>
+                            <option value="Неизвестно">Неизвестно</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-align-left"></i> Краткое описание</label>
+                    <textarea id="adminHeroDescription" rows="2" placeholder="Краткое описание персонажа..."></textarea>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-book"></i> Полная биография</label>
+                    <textarea id="adminHeroBio" rows="10" placeholder="Введите полную биографию персонажа... Поддерживается HTML-форматирование" style="width:100%; padding: 12px; background: #1e2a1e; border: 1px solid #3e5a3e; border-radius: 8px; color: #eee; font-family: inherit; resize: vertical; font-size: 0.9rem;"></textarea>
+                    <div class="admin-hint">Поддерживается HTML-форматирование: &lt;b&gt;жирный&lt;/b&gt;, &lt;i&gt;курсив&lt;/i&gt;, &lt;ul&gt;&lt;li&gt;список&lt;/li&gt;&lt;/ul&gt;</div>
+                </div>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-image"></i> URL изображения</label>
+                        <input type="text" id="adminHeroImage" placeholder="/Resources/hero.jpg">
+                        <div class="admin-hint">Оставьте пустым для стандартного изображения</div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-upload"></i> Загрузить изображение</label>
+                        <input type="file" id="adminHeroImageFile" accept="image/*">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap;">
+                    <button onclick="saveHero()" class="admin-submit-btn">
+                        <i class="fas fa-save"></i> Сохранить
+                    </button>
+                    <button onclick="resetHeroForm()" class="admin-reset-btn">
+                        <i class="fas fa-undo"></i> Очистить форму
+                    </button>
+                </div>
+                
+                <div id="adminFormMessage" class="admin-form-message" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Вкладка: Детали -->
+        <div id="adminTabDetails" class="admin-tab-content">
+            <div class="admin-hero-form">
+                <h4><i class="fas fa-list"></i> Детальная информация</h4>
+                <div class="admin-hint" style="margin-bottom: 15px;">
+                    <i class="fas fa-info-circle"></i> Сначала сохраните персонажа на вкладке "Основное"
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-user"></i> Полное имя</label>
+                    <input type="text" id="adminDetailsFullName" placeholder="Например: Шматко Олег Николаевич">
+                </div>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Возраст</label>
+                        <input type="text" id="adminDetailsAge" placeholder="Например: 45+">
+                    </div>
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-video"></i> Появление</label>
+                        <input type="text" id="adminDetailsAppearance" placeholder="1 сезон, 2 серия">
+                    </div>
+                </div>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-sign-out-alt"></i> Исчезновение</label>
+                        <input type="text" id="adminDetailsDisappearance" placeholder="12 сезон, 30 серия">
+                    </div>
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-tags"></i> Прозвища</label>
+                        <input type="text" id="adminDetailsNicknames" placeholder="Шматко, Николаич...">
+                        <div class="admin-hint">Укажите через запятую</div>
+                    </div>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-star"></i> Звания (подробно)</label>
+                    <textarea id="adminDetailsRanks" rows="3" placeholder="Прапорщик (с 1 серии 1 сезона)&#10;Старший прапорщик (с 9 серии 1 сезона)"></textarea>
+                    <div class="admin-hint">Каждое звание на новой строке</div>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-briefcase"></i> Должности (подробно)</label>
+                    <textarea id="adminDetailsPositions" rows="3" placeholder="Старшина 2 роты (3 раза)&#10;Командир взвода (2 раза)"></textarea>
+                    <div class="admin-hint">Каждая должность на новой строке</div>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-quote-right"></i> Цитаты</label>
+                    <textarea id="adminDetailsQuotes" rows="3" placeholder="«Ё-моё!»&#10;«Интересно девки пляшут!»"></textarea>
+                    <div class="admin-hint">Каждая цитата на новой строке</div>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-lightbulb"></i> Интересные факты</label>
+                    <textarea id="adminDetailsFacts" rows="3" placeholder="Прототипом персонажа послужил...&#10;Актёр сыграл в 17 сезонах"></textarea>
+                    <div class="admin-hint">Каждый факт на новой строке</div>
+                </div>
+                
+                <!-- ДРУЗЬЯ И ВРАГИ (списком) -->
+                <div class="admin-relations-block">
+                    <div class="admin-relations-header">
+                        <h4 style="color: #ffd966; margin: 0;">
+                            <i class="fas fa-handshake"></i> Друзья
+                        </h4>
+                        <button onclick="addRelation('friend')" class="admin-add-relation-btn">
+                            <i class="fas fa-plus"></i> Добавить
+                        </button>
+                    </div>
+                    <div id="adminFriendsContainer" class="admin-relations-container">
+                        <!-- Поля будут добавлены через JS -->
+                    </div>
+                </div>
+                
+                <div class="admin-relations-block">
+                    <div class="admin-relations-header">
+                        <h4 style="color: #ffd966; margin: 0;">
+                            <i class="fas fa-fist-raised"></i> Враги
+                        </h4>
+                        <button onclick="addRelation('enemy')" class="admin-add-relation-btn">
+                            <i class="fas fa-plus"></i> Добавить
+                        </button>
+                    </div>
+                    <div id="adminEnemiesContainer" class="admin-relations-container">
+                        <!-- Поля будут добавлены через JS -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap;">
+                    <button onclick="saveHeroDetails()" class="admin-submit-btn">
+                        <i class="fas fa-save"></i> Сохранить детали
+                    </button>
+                    <button onclick="loadHeroDetails()" class="admin-reset-btn">
+                        <i class="fas fa-sync"></i> Загрузить детали
+                    </button>
+                </div>
+                
+                <div id="adminDetailsMessage" class="admin-form-message" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Вкладка: Фото -->
+        <div id="adminTabGallery" class="admin-tab-content">
+            <div class="admin-hero-form">
+                <h4><i class="fas fa-images"></i> Управление фотографиями</h4>
+                <div class="admin-hint" style="margin-bottom: 15px;">
+                    <i class="fas fa-info-circle"></i> Сначала сохраните персонажа на вкладке "Основное"
+                </div>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-link"></i> URL фото</label>
+                        <input type="text" id="adminGalleryUrl" placeholder="https://example.com/photo.jpg">
+                    </div>
+                    <div class="admin-form-group">
+                        <label><i class="fas fa-tag"></i> Подпись</label>
+                        <input type="text" id="adminGalleryCaption" placeholder="Алексей Маклаков сейчас">
+                    </div>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label><i class="fas fa-upload"></i> Загрузить фото</label>
+                    <input type="file" id="adminGalleryFile" accept="image/*">
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap;">
+                    <button onclick="addGalleryPhoto()" class="admin-submit-btn">
+                        <i class="fas fa-plus"></i> Добавить фото
+                    </button>
+                    <button onclick="clearGalleryForm()" class="admin-reset-btn">
+                        <i class="fas fa-undo"></i> Очистить
+                    </button>
+                </div>
+                
+                <div id="adminGalleryMessage" class="admin-form-message" style="display: none;"></div>
+                
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #ffd966; margin-bottom: 15px;">
+                        <i class="fas fa-images"></i> Текущие фото
+                    </h4>
+                    <div id="adminGalleryList" class="admin-gallery-grid">
+                        <div class="loading-spinner">Нет фото</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка: Список -->
+        <div id="adminTabList" class="admin-tab-content">
+            <div class="admin-hero-list">
+                <h4><i class="fas fa-list-ul"></i> Все персонажи</h4>
+                <div class="admin-hero-search">
+                    <input type="text" id="adminHeroSearch" placeholder="Поиск по имени или актёру..." oninput="filterAdminHeroes()">
+                </div>
+                <div id="adminHeroesList" class="admin-sort-list">
+                    <div class="loading-spinner">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="secretAdminBtn" class="secret-admin-btn" title="Кликните 3 раза для доступа к админ-панели персонажей"></div>
 </div>
 
-<!-- <script src="js/heroes-data.js"></script>
-<script src="js/heroes.js"></script> -->
+<script src="js/heroes.js"></script>
 </body>
 </html>
