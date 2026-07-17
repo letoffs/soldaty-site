@@ -267,9 +267,9 @@ function renderHeroPageContent(hero) {
         </div>
         
         <div class="hero-page-tabs">
-            <button class="hero-page-tab active" onclick="switchHeroPageTab('bio')">📖 Биография</button>
-            <button class="hero-page-tab" onclick="switchHeroPageTab('details')">📋 Детали</button>
-            <button class="hero-page-tab" onclick="switchHeroPageTab('gallery')">🖼️ Фото</button>
+            <button class="hero-page-tab active" onclick="switchHeroPageTab('bio')">Биография</button>
+            <button class="hero-page-tab" onclick="switchHeroPageTab('details')">Детали</button>
+            <button class="hero-page-tab" onclick="switchHeroPageTab('gallery')">Фото</button>
         </div>
         
         <div id="heroPageTabBio" class="hero-page-tab-content active">
